@@ -3,11 +3,11 @@
  * Licensed under the Apache License, Version 2.0.
  */
 
-import { defineConfig, Plugin, ResolvedConfig, loadEnv } from "vite";
 import tailwindcss from "@tailwindcss/vite";
-import { resolve, join, relative, dirname } from "path";
-import { readFile, mkdir, writeFile, readdir } from "fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { dirname, join, relative, resolve } from "path";
 import { minify as terserMinify } from "terser";
+import { defineConfig, loadEnv, Plugin, ResolvedConfig } from "vite";
 
 const CURRENT_DIR = process.cwd();
 const PROJECT_ROOT = resolve(CURRENT_DIR, "..");
@@ -120,14 +120,17 @@ export default defineConfig(({ mode }) => {
     },
   } as const;
 
+  const aliasConfig = {
+    "@": resolve(CURRENT_DIR, "src"),
+    "@assets": resolve(CURRENT_DIR, "src/assets"),
+  } as const;
+
   return {
     plugins: [
       tailwindcss(),
       createLuciJsCompressPlugin(),
       createRedirectPlugin(),
     ],
-
-    publicDir: resolve(CURRENT_DIR, "src/assets"),
 
     build: {
       outDir: BUILD_OUTPUT,
@@ -147,6 +150,10 @@ export default defineConfig(({ mode }) => {
       host: DEV_HOST,
       port: DEV_PORT,
       proxy: proxyConfig,
+    },
+
+    resolve: {
+      alias: aliasConfig,
     },
   };
 });

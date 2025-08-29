@@ -50,7 +50,9 @@
 			<ul class="nav" id="topmenu" style="display:none"></ul>
 			<div class="mobile-controls">
 				<div class="mobile-menu-toggle" id="mobile-menu-btn" title="{{ _('Menu') }}">
-					<img src="{{ media }}/images/menu.svg" alt="Menu" />
+					<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+						<path d="M195.584 245.76h571.392A31.66208 31.66208 0 0 1 798.72 277.36064v15.79008a31.66208 31.66208 0 0 1-31.744 31.60064H195.584A31.66208 31.66208 0 0 1 163.84 293.15072v-15.79008A31.66208 31.66208 0 0 1 195.584 245.76z m158.72 236.97408H766.976a31.66208 31.66208 0 0 1 31.744 31.60064v15.79008a31.66208 31.66208 0 0 1-31.744 31.60064H354.304A31.66208 31.66208 0 0 1 322.56 530.14528v-15.81056a31.66208 31.66208 0 0 1 31.744-31.60064z m-158.72 236.97408h571.392A31.68256 31.68256 0 0 1 798.72 751.32928v15.81056A31.66208 31.66208 0 0 1 766.976 798.72H195.584A31.66208 31.66208 0 0 1 163.84 767.11936v-15.79008a31.66208 31.66208 0 0 1 31.744-31.60064z" fill="currentColor"/>
+					</svg>
 				</div>
 			</div>
 			<div id="indicators" class="pull-right"></div>
@@ -61,7 +63,12 @@
 			<nav class="mobile-nav">
 				<div class="mobile-nav-header">
 					<div class="mobile-nav-close" id="mobile-nav-close" title="{{ _('Close Menu') }}">
-						<img src="{{ media }}/images/collapse.svg" alt="Close" />
+						<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+							<rect x="194.3" y="724.1" width="641.5" height="71.2" rx="31.6" ry="31.6" fill="currentColor"/>
+							<rect x="194.3" y="506.2" width="327.4" height="71.8" rx="31.6" ry="31.6" fill="currentColor"/>
+							<rect x="194.3" y="290.5" width="327.4" height="71.9" rx="31.6" ry="31.6" fill="currentColor"/>
+							<path d="M614.1 574.9l137.8-140.6-137.8-140.7 41.9-42.8 179.8 183.5L656 617.7l-41.9-42.8z" fill="currentColor"/>
+						</svg>
 					</div>
 				</div>
 				<ul class="mobile-nav-list" id="mobile-nav-list">

@@ -217,14 +217,14 @@
         & .mobile-menu-toggle {
           @apply max-md:inline-flex max-md:h-10 max-md:w-10 max-md:cursor-pointer max-md:items-center max-md:justify-center max-md:rounded-xl max-md:bg-white/10 max-md:p-2 max-md:backdrop-blur-sm max-md:transition-all max-md:duration-200 max-md:hover:scale-105 max-md:hover:bg-white/20 max-md:active:scale-95 sm:hidden max-md:dark:bg-slate-800/30 max-md:dark:hover:bg-slate-700/40;
 
-          & img {
-            @apply max-md:h-6 max-md:w-6 max-md:brightness-0 max-md:filter max-md:transition-transform max-md:duration-200 max-md:dark:brightness-100;
+          & svg {
+            @apply max-md:h-6 max-md:w-6 max-md:text-slate-900 max-md:transition-transform max-md:duration-200 max-md:dark:text-slate-100;
           }
 
           &.active {
             @apply max-md:bg-aurora-sky/25 max-md:dark:bg-aurora-sky/20;
 
-            & img {
+            & svg {
               @apply max-md:rotate-180;
             }
           }
@@ -256,8 +256,8 @@
           & .mobile-nav-close {
             @apply max-md:flex max-md:h-12 max-md:w-12 max-md:cursor-pointer max-md:items-center max-md:justify-center max-md:rounded-lg max-md:bg-white/10 max-md:p-2 max-md:transition-all max-md:duration-200 max-md:hover:scale-105 max-md:hover:bg-white/20 max-md:active:scale-95 max-md:dark:bg-slate-800/20 max-md:dark:hover:bg-slate-700/30;
 
-            & img {
-              @apply max-md:h-6 max-md:w-6 max-md:brightness-0 max-md:filter max-md:transition-transform max-md:duration-200 max-md:dark:brightness-100;
+            & svg {
+              @apply max-md:h-6 max-md:w-6 max-md:text-slate-900 max-md:transition-transform max-md:duration-200 max-md:dark:text-slate-100;
             }
           }
         }
@@ -303,16 +303,16 @@
 
           &[data-indicator="poll-status"] {
             &[data-style="active"]::before {
-              @apply bg-[url('./images/refresh.svg')];
+              @apply bg-[url('@assets/icons/refresh.svg')];
             }
 
             &[data-style="inactive"]::before {
-              @apply bg-[url('./images/pause.svg')];
+              @apply bg-[url('@assets/icons/pause.svg')];
             }
           }
 
           &[data-indicator="uci-changes"]::before {
-            @apply bg-[url('./images/setting.svg')];
+            @apply bg-[url('@assets/icons/setting.svg')];
           }
 
           &[data-style="active"] {
@@ -391,7 +391,12 @@
 
   @layer input {
     input[type="text"],
-    input[type="password"] {
+    input[type="password"],
+    input[type="email"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="search"] {
       @apply focus:border-aurora-sky focus:ring-aurora-sky/20 dark:focus:border-aurora-teal-400 dark:focus:ring-aurora-teal-400/30 rounded-lg border border-slate-300/70 bg-white px-3 py-1.5 text-sm font-normal text-slate-900 placeholder-slate-400 shadow-sm transition-all duration-200 focus:bg-white focus:ring-2 focus:outline-none dark:border-gray-600/60 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:bg-gray-900;
     }
   }
@@ -550,15 +555,8 @@
 
   @layer select {
     select {
-      @apply focus:border-aurora-sky focus:ring-aurora-sky/20 dark:focus:border-aurora-teal-400 dark:focus:ring-aurora-teal-400/30 rounded-lg border border-slate-300/70 bg-white px-3 py-1.5 text-sm font-normal text-slate-900 shadow-sm transition-all duration-200 focus:bg-white focus:ring-2 focus:outline-none dark:border-gray-600/60 dark:bg-gray-900 dark:text-gray-100 dark:focus:bg-gray-900;
-    }
-
-    input[type="email"],
-    input[type="number"],
-    input[type="tel"],
-    input[type="url"],
-    input[type="search"] {
-      @apply focus:border-aurora-sky focus:ring-aurora-sky/20 dark:focus:border-aurora-teal-400 dark:focus:ring-aurora-teal-400/30 rounded-lg border border-slate-300/70 bg-white px-3 py-1.5 text-sm font-normal text-slate-900 placeholder-slate-400 shadow-sm transition-all duration-200 focus:bg-white focus:ring-2 focus:outline-none dark:border-gray-600/60 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:bg-gray-900;
+      @apply focus:border-aurora-sky focus:ring-aurora-sky/20 dark:focus:border-aurora-teal-400 dark:focus:ring-aurora-teal-400/30 appearance-none rounded-lg border border-slate-300/70 bg-white px-3 py-1.5 pr-10 text-sm font-normal text-slate-900 shadow-sm transition-all duration-200 focus:bg-white focus:ring-2 focus:outline-none dark:border-gray-600/60 dark:bg-gray-900 dark:text-gray-100 dark:focus:bg-gray-900;
+      @apply bg-[url('@assets/icons/chevron-down.svg')] bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat;
     }
   }
 
@@ -642,6 +640,12 @@
           @apply h-4 w-4 flex-none align-middle;
         }
         & > span {
+          &.zonebadge {
+            &[style*="--zone-color-rgb:238, 238, 238"] {
+              @apply dark:!bg-slate-700/60;
+            }
+          }
+
           @apply truncate;
         }
       }
@@ -672,7 +676,7 @@
       }
 
       & > ul.dropdown {
-        @apply invisible absolute left-0 z-50 mt-1 min-w-[140px] rounded-lg border border-slate-200/60 bg-white/95 py-1 shadow-xl backdrop-blur-sm dark:border-slate-600/40 dark:bg-slate-800/95;
+        @apply invisible absolute left-0 z-50 mt-1 min-w-[140px] overflow-y-auto rounded-lg border border-slate-200/60 bg-white/95 py-1 shadow-xl backdrop-blur-sm dark:border-slate-600/40 dark:bg-slate-800/95;
 
         & > li {
           @apply hover:bg-aurora-sky/8 dark:hover:bg-aurora-sky/15 w-full cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300;
@@ -855,8 +859,13 @@
         & strong {
           @apply font-semibold tracking-wide;
         }
+
         & .zonebadge {
           @apply rounded-sm transition-all duration-200 max-md:rounded-sm;
+        }
+
+        &[style*="background-color: rgb(238, 238, 238)"] {
+          @apply dark:!bg-slate-700/60;
         }
       }
 
