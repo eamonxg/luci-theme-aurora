@@ -294,11 +294,15 @@
           @apply relative inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-transparent transition-all duration-200 hover:bg-white/10 active:scale-95 active:bg-white/15 max-md:h-10 max-md:w-10 dark:hover:bg-slate-800/30 dark:active:bg-slate-700/40;
 
           &::before {
-            @apply absolute inset-0 bg-size-[22px] bg-center bg-no-repeat opacity-70 brightness-0 filter transition-opacity duration-200 content-[''] dark:opacity-80 dark:brightness-100;
+            @apply absolute inset-0 bg-size-[22px] bg-center bg-no-repeat opacity-70 brightness-[0.3] contrast-100 transition-opacity duration-200 content-[''];
           }
 
           &:hover::before {
             @apply opacity-100;
+          }
+
+          .dark &::before {
+            @apply brightness-100 invert;
           }
 
           &[data-indicator="poll-status"] {
@@ -317,9 +321,8 @@
 
           &[data-style="active"] {
             &::before {
-              @apply opacity-90 dark:opacity-100;
+              @apply opacity-90;
             }
-
             &:hover::before {
               @apply opacity-100;
             }
