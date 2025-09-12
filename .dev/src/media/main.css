@@ -49,17 +49,17 @@
   --color-aurora-teal-950: oklch(28.2% 0.052 193.864);
 
   --color-aurora-sky: #499ecb;
-  --color-aurora-sky-50: oklch(97.4% 0.015 242.187);
-  --color-aurora-sky-100: oklch(94.6% 0.031 243.059);
-  --color-aurora-sky-200: oklch(89.7% 0.061 244.128);
-  --color-aurora-sky-300: oklch(82.5% 0.108 245.306);
-  --color-aurora-sky-400: oklch(73.8% 0.159 246.584);
-  --color-aurora-sky-500: oklch(68.5% 0.169 237.3);
-  --color-aurora-sky-600: oklch(56% 0.2 245);
-  --color-aurora-sky-700: oklch(49.1% 0.156 249.823);
-  --color-aurora-sky-800: oklch(42.6% 0.127 250.694);
-  --color-aurora-sky-900: oklch(37.8% 0.103 251.546);
-  --color-aurora-sky-950: oklch(27.1% 0.072 253.189);
+  --color-aurora-sky-50: oklch(97.8% 0.012 214.3);
+  --color-aurora-sky-100: oklch(95.2% 0.025 214.3);
+  --color-aurora-sky-200: oklch(90.1% 0.051 214.3);
+  --color-aurora-sky-300: oklch(82.8% 0.085 214.3);
+  --color-aurora-sky-400: oklch(73.5% 0.128 214.3);
+  --color-aurora-sky-500: oklch(68.5% 0.142 214.3);
+  --color-aurora-sky-600: oklch(58.2% 0.135 214.3);
+  --color-aurora-sky-700: oklch(49.8% 0.118 214.3);
+  --color-aurora-sky-800: oklch(42.6% 0.095 214.3);
+  --color-aurora-sky-900: oklch(36.1% 0.072 214.3);
+  --color-aurora-sky-950: oklch(25.8% 0.048 214.3);
 
   --color-aurora-night-slate: #0f172a;
   --color-aurora-night-slate-50: oklch(96.8% 0.008 245.123);
@@ -627,7 +627,7 @@
       }
 
       & > .open {
-        @apply flex flex-none shrink-0 cursor-pointer items-center justify-center border-l border-slate-400 px-2.5 py-0.5 text-sm text-slate-400 hover:text-slate-600 dark:border-slate-500 dark:text-slate-500 dark:hover:text-slate-300;
+        @apply flex flex-none shrink-0 cursor-pointer items-center justify-center border-l border-slate-300/70 px-2.5 py-0.5 text-sm text-slate-600 transition-colors duration-200 hover:border-slate-400/80 hover:text-slate-800 dark:border-slate-600/70 dark:text-slate-400 dark:hover:border-slate-500/80 dark:hover:text-slate-200;
       }
     }
   }
@@ -903,19 +903,23 @@
 
               & .cbi-section-node {
                 @apply space-y-4 max-md:space-y-3;
-              }
 
-              & .cbi-value {
-                @apply space-y-1;
-
-                & .cbi-value-title {
-                  @apply text-right text-sm font-medium text-slate-700 max-md:text-xs dark:text-slate-300;
+                & .alert-message {
+                  @apply mt-3 mb-0 rounded-lg p-2 max-md:p-1.5;
                 }
 
-                & .cbi-value-field {
-                  & input[type="text"],
-                  & input[type="password"] {
-                    @apply w-full rounded-lg px-3 py-2 text-sm max-md:text-sm dark:bg-slate-700;
+                & .cbi-value {
+                  @apply space-y-1;
+
+                  & .cbi-value-title {
+                    @apply text-right text-sm font-medium text-slate-700 max-md:text-xs dark:text-slate-300;
+                  }
+
+                  & .cbi-value-field {
+                    & input[type="text"],
+                    & input[type="password"] {
+                      @apply w-full rounded-lg px-3 py-2 text-sm max-md:text-sm dark:bg-slate-700;
+                    }
                   }
                 }
               }

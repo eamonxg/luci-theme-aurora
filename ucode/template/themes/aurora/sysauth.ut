@@ -25,17 +25,16 @@
 						<input name="luci_password" id="luci_password" type="password" autocomplete="current-password">
 					</div>
 				</div>
+				{% if (fuser): %}
+				<div class="alert-message error">
+					{{ _('Invalid username and/or password! Please try again.') }}
+				</div>
+				{% endif %}
 			</div>
 		</div>
 	</form>
 
 	<hr>
-
-	{% if (fuser): %}
-	<div class="alert-message error">
-		{{ _('Invalid username and/or password! Please try again.') }}
-	</div>
-	{% endif %}
 
 	<button class="btn cbi-button-positive important">{{ _('Log in') }}</button>
 </section>
