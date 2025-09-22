@@ -203,7 +203,7 @@
           @apply max-md:ml-5 max-md:cursor-pointer max-md:transition-all max-md:duration-200 max-md:hover:scale-105 max-md:active:scale-95;
 
           & svg {
-            @apply size-6 max-md:text-slate-900 max-md:transition-transform max-md:duration-200 max-md:dark:text-slate-100;
+            @apply size-5 max-md:text-slate-900 max-md:transition-transform max-md:duration-200 max-md:dark:text-slate-100;
           }
 
           &.active {
@@ -218,7 +218,7 @@
         @apply flex shrink-0 flex-row-reverse gap-5 max-md:order-2 max-md:shrink-0 md:gap-6;
 
         & span[data-indicator] {
-          @apply size-6 cursor-pointer text-transparent before:absolute before:size-6 before:bg-current before:text-slate-900 before:content-['\00A0'] dark:before:text-slate-100;
+          @apply size-5 cursor-pointer text-transparent before:absolute before:size-5 before:bg-current before:text-slate-900 before:content-['\00A0'] dark:before:text-slate-100;
           &[data-indicator="poll-status"] {
             &[data-style="active"] {
               @apply before:[mask:url('@assets/icons/refresh.svg')_center/cover_no-repeat];
@@ -261,7 +261,7 @@
             @apply max-md:cursor-pointer max-md:transition-all max-md:duration-200 max-md:hover:scale-105 max-md:active:scale-95;
 
             & svg {
-              @apply size-6 max-md:text-slate-900 max-md:transition-transform max-md:duration-200 max-md:dark:text-slate-100;
+              @apply size-5 max-md:text-slate-900 max-md:transition-transform max-md:duration-200 max-md:dark:text-slate-100;
             }
           }
         }
