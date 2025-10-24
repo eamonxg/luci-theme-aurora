@@ -24,6 +24,7 @@
 		<title>{{ striptags(`${boardinfo.hostname ?? '?'}${node ? ` - ${node.title}` : ''}`) }} - LuCI</title>
 		<script>
 			const stored = localStorage.getItem('aurora.theme');
+			
 			const applyTheme = (theme) => {
 				const themes = ['light', 'dark', 'device'];
 				const currentTheme = themes.includes(theme) ? theme : 'device';
@@ -40,13 +41,12 @@
 				});
 			};
 
-			applyTheme(stored);
-
 			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
 				if ((stored || 'device') === 'device') applyTheme('device');
 			});
 
 			document.addEventListener('DOMContentLoaded', () => {
+				applyTheme(stored);
 				document.querySelectorAll('.theme-switcher .theme-option').forEach(option => {
 					option.addEventListener('click', () => applyTheme(option.dataset.theme));
 				});
