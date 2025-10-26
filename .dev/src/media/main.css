@@ -433,6 +433,7 @@
       }
     }
   }
+
   @layer button {
     button,
     .btn,
@@ -483,6 +484,10 @@
 
     .cbi-input-text {
       @apply min-w-20 max-md:min-w-14;
+    }
+
+    #localtime {
+      @apply min-w-70;
     }
 
     input[type="radio"],
