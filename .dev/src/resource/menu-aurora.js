@@ -264,13 +264,17 @@ return baseclass.extend({
             }
 
             showTimer = setTimeout(() => {
-              document
-                .querySelectorAll(".desktop-nav")
-                .forEach((n) => n.classList.remove("active"));
+              const wasActive = nav.classList.contains("active");
 
-              document
-                .querySelectorAll("#topmenu a")
-                .forEach((a) => a.classList.remove("menu-active"));
+              document.querySelectorAll(".desktop-nav").forEach((n) => {
+                if (n !== nav) n.classList.remove("active");
+              });
+
+              document.querySelectorAll("#topmenu a").forEach((a) => {
+                if (a !== menuLink) a.classList.remove("menu-active");
+              });
+
+              if (wasActive) return;
 
               menuLink.classList.add("menu-active");
               header.classList.add("has-desktop-nav");
@@ -294,7 +298,7 @@ return baseclass.extend({
                   }
                 });
               });
-            }, 150);
+            }, 100);
           });
 
           li.addEventListener("mouseleave", () => {
@@ -319,7 +323,7 @@ return baseclass.extend({
 
           hideTimer = setTimeout(() => {
             this.hideDesktopNav();
-          }, 200);
+          }, 150);
         };
 
         header.addEventListener("mouseleave", hideMenu);
