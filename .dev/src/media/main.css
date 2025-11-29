@@ -12,11 +12,36 @@
 }
 
 :root {
+  --background: oklch(0.9824 0.0013 286.3757);
+  --text: oklch(0.3211 0 0);
+  --background-start: #e2e8f0;
+  --background-mid: #f1f5f9;
+  --background-end: #f8fafc;
+
   --primary: #499ecb;
+  --primary-text: #499ecb;
   --secondary: #0f2e5d;
-  --start: #e2e8f0;
-  --mid: #f1f5f9;
-  --end: #f8fafc;
+  --secondary-text: #0f2e5d;
+  --accent: #0f2e5d;
+  --accent-text: #0f2e5d;
+  --muted: #0f2e5d;
+  --muted-text: #0f2e5d;
+  --destructive: #0f2e5d;
+  --destructive-text: #0f2e5d;
+  --ring: #0f2e5d;
+
+  --info: rgb(240 249 255/0.5);
+  --info-text: rgb(12 74 110);
+  --info-border: rgb(14 165 233/0.2);
+  --warning: rgb(255 251 235/0.5);
+  --warning-text: rgb(120 53 15);
+  --warning-border: rgb(245 158 11/0.2);
+  --success: rgb(236 253 245/0.5);
+  --success-text: rgb(6 78 59);
+  --success-border: rgb(16 185 129/0.2);
+  --error: rgb(254 242 242/0.5);
+  --error-text: rgb(127 29 29);
+  --error-border: rgb(254 242 242/0.2);
 
   --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
@@ -44,12 +69,37 @@
 }
 
 [data-darkmode="true"] {
-  --primary: #00817d;
-  --secondary: #00a199;
+  --background: oklch(0.9824 0.0013 286.3757);
+  --text: oklch(0.3211 0 0);
+  --background-start: #0f172a;
+  --background-mid: #134e4a;
+  --background-end: #065f46;
 
-  --start: #0f172a;
-  --mid: #134e4a;
-  --end: #065f46;
+  --primary: #00817d;
+  --primary-text: #499ecb;
+  --secondary: #0f2e5d;
+  --secondary-text: #0f2e5d;
+  --muted: #0f2e5d;
+  --muted-text: #0f2e5d;
+  --accent: #0f2e5d;
+  --accent-text: #0f2e5d;
+  --destructive: #0f2e5d;
+  --destructive-text: #0f2e5d;
+  --ring: #0f2e5d;
+  --border: oklch(0.8699 0 0);
+
+  --info: rgb(14 165 233/0.1);
+  --info-text: rgb(186 230 253);
+  --info-border: rgb(14 165 233/0.3);
+  --warning: rgb(245 158 11/0.1);
+  --warning-text: rgb(253 230 138);
+  --warning-border: rgb(245 158 11/0.3);
+  --success: rgb(16 185 129/0.1);
+  --success-text: rgb(167 243 208);
+  --success-border: rgb(16 185 129/0.3);
+  --error: rgb(239 68 68/0.1);
+  --error-text: rgb(254 202 202);
+  --error-border: rgb(239 68 68 / 0.3);
 
   --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
@@ -157,11 +207,38 @@
 }
 
 @theme inline {
+  --color-background: var(--background);
+  --color-text: var(--text);
+  --color-aurora-start: var(--background-start);
+  --color-aurora-mid: var(--background-mid);
+  --color-aurora-end: var(--background-end);
+
   --color-primary: var(--primary);
+  --color-primary-text: var(--primary-text);
   --color-secondary: var(--secondary);
-  --color-aurora-start: var(--start);
-  --color-aurora-mid: var(--mid);
-  --color-aurora-end: var(--end);
+  --color-secondary-text: var(--secondary-text);
+
+  --color-muted: var(--muted);
+  --color-muted-text: var(--muted-text);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-destructive: var(--destructive);
+  --color-destructive-text: var(--destructive-text);
+  --color-ring: var(--ring);
+  --color-border: var(--border);
+
+  --color-info: var(--info);
+  --color-info-text: var(--info-text);
+  --color-info-border: var(--info-border);
+  --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
+  --color-warning-border: var(--warning-border);
+  --color-success: var(--success);
+  --color-success-text: var(--success-text);
+  --color-success-border: var(--success-border);
+  --color-error: var(--error);
+  --color-error-text: var(--error-text);
+  --color-error-border: var(--error-border);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
@@ -802,16 +879,16 @@
     .cbi-tooltip {
       @apply absolute z-110 max-w-xs scale-95 transform rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-xs break-normal whitespace-normal text-slate-900 opacity-0 shadow-xl backdrop-blur-xl transition-all duration-300 ease-out dark:border-slate-700/60 dark:bg-slate-900 dark:text-slate-100 dark:shadow-black/40;
       &.error {
-        @apply border border-red-200/40 bg-gradient-to-br from-red-50 via-red-100 to-red-50 text-red-900 shadow-red-500/10 dark:border-red-500/30 dark:from-red-900/40 dark:via-red-800/30 dark:to-red-900/40 dark:text-red-200 dark:shadow-red-400/10;
+        @apply border-error-border bg-error text-error-text;
       }
       &.success {
-        @apply border border-emerald-200/40 bg-gradient-to-br from-emerald-50 via-emerald-100 to-emerald-50 text-emerald-900 shadow-emerald-500/10 dark:border-emerald-500/30 dark:from-emerald-900/40 dark:via-emerald-800/30 dark:to-emerald-900/40 dark:text-emerald-200 dark:shadow-emerald-400/10;
+        @apply border-success-border bg-success text-success-text;
       }
       &.info {
-        @apply border border-blue-200/40 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50 text-blue-900 shadow-blue-500/10 dark:border-blue-500/30 dark:from-blue-900/40 dark:via-blue-800/30 dark:to-blue-900/40 dark:text-blue-200 dark:shadow-blue-400/10;
+        @apply border-info-border bg-info text-info-text;
       }
       &.notice {
-        @apply border border-amber-200/40 bg-gradient-to-br from-amber-50 via-amber-100 to-amber-50 text-amber-900 shadow-amber-500/10 dark:border-amber-500/30 dark:from-amber-900/40 dark:via-amber-800/30 dark:to-amber-900/40 dark:text-amber-200 dark:shadow-amber-400/10;
+        @apply border-warning-border bg-warning text-warning-text;
       }
     }
 
@@ -831,7 +908,7 @@
 
   @layer message {
     .alert-message {
-      @apply sticky top-14 z-40 mb-4 rounded-4xl border border-slate-200/30 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 shadow-sm max-md:mx-0 max-md:mb-3 max-md:rounded-3xl max-md:p-4 dark:border-slate-600/20 dark:from-slate-800/80 dark:via-slate-800/60 dark:to-slate-800/80;
+      @apply sticky top-14 z-40 mb-4 rounded-2xl border border-slate-200/30 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-6 shadow-sm max-md:mx-0 max-md:mb-3 max-md:rounded-3xl max-md:p-4 dark:border-slate-600/20 dark:from-slate-800/80 dark:via-slate-800/60 dark:to-slate-800/80;
 
       &.modal {
         @apply static top-auto;
@@ -846,21 +923,21 @@
       }
 
       &.success {
-        @apply border-emerald-200/40 bg-gradient-to-br from-emerald-50 via-emerald-100 to-emerald-50 text-emerald-900 shadow-emerald-500/10 dark:border-emerald-500/30 dark:from-emerald-900/40 dark:via-emerald-800/30 dark:to-emerald-900/40 dark:text-emerald-200 dark:shadow-emerald-400/10;
+        @apply border-success-border bg-success text-success-text;
       }
 
       &.info {
-        @apply border-blue-200/40 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50 text-blue-900 shadow-blue-500/10 dark:border-blue-500/30 dark:from-blue-900/40 dark:via-blue-800/30 dark:to-blue-900/40 dark:text-blue-200 dark:shadow-blue-400/10;
+        @apply border-info-border bg-info text-info-text;
       }
 
       &.warning,
       &.notice {
-        @apply border-amber-200/40 bg-gradient-to-br from-amber-50 via-amber-100 to-amber-50 text-amber-900 shadow-amber-500/10 dark:border-amber-500/30 dark:from-amber-900/40 dark:via-amber-800/30 dark:to-amber-900/40 dark:text-amber-200 dark:shadow-amber-400/10;
+        @apply border-warning-border bg-warning text-warning-text;
       }
 
       &.error,
       &.danger {
-        @apply border-red-200/40 bg-gradient-to-br from-red-50 via-red-100 to-red-50 text-red-900 shadow-red-500/10 dark:border-red-500/30 dark:from-red-900/40 dark:via-red-800/30 dark:to-red-900/40 dark:text-red-200 dark:shadow-red-400/10;
+        @apply border-error-border bg-error text-error-text;
       }
 
       h4,
@@ -901,19 +978,19 @@
       @apply rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 uppercase dark:bg-slate-700/80 dark:text-slate-200;
 
       &.important {
-        @apply bg-blue-100 text-blue-900 dark:bg-blue-200 dark:text-blue-900;
+        @apply bg-info text-info-text;
       }
 
       &.warning {
-        @apply bg-red-100 text-red-900 dark:bg-red-200 dark:text-red-900;
+        @apply bg-error text-error-text;
       }
 
       &.success {
-        @apply bg-emerald-100 text-emerald-900 dark:bg-emerald-200 dark:text-emerald-900;
+        @apply bg-success text-success-text;
       }
 
       &.notice {
-        @apply bg-yellow-100 text-yellow-900 dark:bg-yellow-200 dark:text-yellow-900;
+        @apply bg-warning text-warning-text;
       }
     }
 
