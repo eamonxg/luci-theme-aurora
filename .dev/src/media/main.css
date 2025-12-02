@@ -376,17 +376,14 @@
         @apply relative flex h-14 items-center justify-between px-6 py-3 max-md:px-4 max-md:py-2;
       }
 
+      /* Disable Aurora's global desktop overlay bar */
       & .desktop-menu-container {
-        @apply pointer-events-none absolute inset-x-0 top-0 z-30 h-0 w-full overflow-hidden opacity-0 transition-all duration-150 ease-in-out before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-full before:min-h-full before:bg-white/40 before:backdrop-blur-xl before:backdrop-saturate-150 max-md:hidden dark:before:bg-gray-900/90;
-
-        &.active {
-          @apply pointer-events-auto opacity-100;
-        }
+        @apply hidden max-md:hidden;
       }
 
       &.has-desktop-nav {
         & .desktop-menu-container {
-          @apply pointer-events-auto opacity-100;
+          @apply hidden max-md:hidden;
         }
       }
 
@@ -409,20 +406,22 @@
           }
 
           & .desktop-nav {
-            @apply pointer-events-none fixed top-14 left-0 z-40 px-0 pt-0 pb-6 opacity-0 transition-all duration-150 max-md:hidden;
+            /* Position relative to each menu item, not the viewport */
+            @apply pointer-events-none absolute left-0 top-full z-40 mt-2 px-0 pt-0 pb-0 opacity-0 transition-all duration-150 max-md:hidden;
 
             &.active {
               @apply pointer-events-auto opacity-100;
             }
 
             & .desktop-nav-list {
-              @apply grid w-max list-none grid-cols-4 gap-x-4 gap-y-2;
+              /* Single-column, boxed dropdown */
+              @apply flex w-max list-none flex-col gap-y-1 rounded-xl border border-slate-200/60 bg-white/95 px-0 py-2 shadow-xl dark:border-slate-600/40 dark:bg-slate-800/95;
 
               & > li {
                 @apply m-0 list-none;
 
                 & > a {
-                  @apply block px-4 py-3 whitespace-nowrap text-slate-700 no-underline hover:text-slate-900 hover:underline hover:decoration-2 hover:underline-offset-4 dark:text-slate-300 hover:dark:text-slate-100;
+                  @apply block whitespace-nowrap px-4 py-2 text-xs font-medium text-slate-700 no-underline hover:text-slate-900 hover:underline hover:decoration-2 hover:underline-offset-4 dark:text-slate-300 hover:dark:text-slate-100;
                 }
               }
             }
