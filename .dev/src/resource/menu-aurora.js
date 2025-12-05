@@ -214,129 +214,12 @@ return baseclass.extend({
     if (!children.length || level > 1) return E([]);
 
     if (level === 0) {
-      const container = document.querySelector(".desktop-menu-container");
-      const overlay = document.querySelector(".desktop-menu-overlay");
-      const header = document.querySelector("header");
+      const navType = document.body?.dataset?.navType || "mega-menu";
 
-      let showTimer = null;
-      let hideTimer = null;
-
-      children.forEach((child) => {
-        const submenu = ui.menu.getChildren(child);
-        const hasSubmenu = submenu.length > 0;
-
-        const li = E(
-          "li",
-          {
-            class: hasSubmenu ? "has-desktop-nav" : "",
-          },
-          [
-            E(
-              "a",
-              {
-                class: "menu",
-                href: hasSubmenu ? "#" : L.url(url, child.name),
-              },
-              [_(child.title)],
-            ),
-          ],
-        );
-
-        ul.appendChild(li);
-
-        if (hasSubmenu) {
-          const nav = E(
-            "div",
-            {
-              class: "desktop-nav",
-            },
-            [this.renderMainMenu(child, `${url}/${child.name}`, level + 1)],
-          );
-
-          li.appendChild(nav);
-
-          const menuLink = li.querySelector("a");
-
-          li.addEventListener("mouseenter", () => {
-            if (hideTimer) {
-              clearTimeout(hideTimer);
-              hideTimer = null;
-            }
-
-            showTimer = setTimeout(() => {
-              const wasActive = nav.classList.contains("active");
-
-              document.querySelectorAll(".desktop-nav").forEach((n) => {
-                if (n !== nav) n.classList.remove("active");
-              });
-
-              document.querySelectorAll("#topmenu a").forEach((a) => {
-                if (a !== menuLink) a.classList.remove("menu-active");
-              });
-
-              if (wasActive) return;
-
-              menuLink.classList.add("menu-active");
-              header.classList.add("has-desktop-nav");
-
-              requestAnimationFrame(() => {
-                const navHeight = nav.scrollHeight;
-                const headerHeight =
-                  header.querySelector(".header-content")?.offsetHeight || 56;
-                const totalHeight = headerHeight + navHeight;
-
-                if (container) {
-                  container.style.height = `${totalHeight}px`;
-                }
-
-                requestAnimationFrame(() => {
-                  nav.classList.add("active");
-                  overlay.classList.add("active");
-
-                  if (container) {
-                    container.classList.add("active");
-                  }
-                });
-              });
-            }, 100);
-          });
-
-          li.addEventListener("mouseleave", () => {
-            if (showTimer) {
-              clearTimeout(showTimer);
-              showTimer = null;
-            }
-          });
-
-          menuLink.addEventListener("click", (e) => {
-            e.preventDefault();
-          });
-        }
-      });
-
-      if (header && overlay) {
-        const hideMenu = () => {
-          if (showTimer) {
-            clearTimeout(showTimer);
-            showTimer = null;
-          }
-
-          hideTimer = setTimeout(() => {
-            this.hideDesktopNav();
-          }, 150);
-        };
-
-        header.addEventListener("mouseleave", hideMenu);
-        overlay.addEventListener("mouseenter", hideMenu);
-
-        header.addEventListener("mouseenter", () => {
-          if (hideTimer) {
-            clearTimeout(hideTimer);
-            hideTimer = null;
-          }
-        });
-
-        overlay.addEventListener("click", () => this.hideDesktopNav());
+      if (navType === "mega-menu") {
+        this.initMegaMenu(children, url, ul);
+      } else {
+        this.initBoxedDropdown(children, url, ul);
       }
     } else {
       children.forEach((child) => {
@@ -352,22 +235,228 @@ return baseclass.extend({
     return ul;
   },
 
+  initMegaMenu(children, url, ul) {
+    const container = document.querySelector(".desktop-menu-container");
+    const overlay = document.querySelector(".desktop-menu-overlay");
+    const header = document.querySelector("header");
+
+    if (!header || !overlay) return;
+
+    let showTimer = null;
+    let hideTimer = null;
+
+    children.forEach((child) => {
+      const submenu = ui.menu.getChildren(child);
+      const hasSubmenu = submenu.length > 0;
+
+      const li = E(
+        "li",
+        {
+          class: hasSubmenu ? "has-desktop-nav" : "",
+        },
+        [
+          E(
+            "a",
+            {
+              class: "menu",
+              href: hasSubmenu ? "#" : L.url(url, child.name),
+            },
+            [_(child.title)],
+          ),
+        ],
+      );
+
+      ul.appendChild(li);
+
+      if (hasSubmenu) {
+        const nav = E(
+          "div",
+          {
+            class: "desktop-nav",
+          },
+          [this.renderMainMenu(child, `${url}/${child.name}`, 1)],
+        );
+
+        li.appendChild(nav);
+
+        const menuLink = li.querySelector("a");
+
+        li.addEventListener("mouseenter", () => {
+          if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+          }
+
+          showTimer = setTimeout(() => {
+            const wasActive = nav.classList.contains("active");
+
+            document.querySelectorAll(".desktop-nav").forEach((n) => {
+              if (n !== nav) n.classList.remove("active");
+            });
+
+            document.querySelectorAll("#topmenu a").forEach((a) => {
+              if (a !== menuLink) a.classList.remove("menu-active");
+            });
+
+            if (wasActive) return;
+
+            menuLink.classList.add("menu-active");
+            header.classList.add("has-desktop-nav");
+
+            requestAnimationFrame(() => {
+              const navHeight = nav.scrollHeight;
+              const headerHeight =
+                header.querySelector(".header-content")?.offsetHeight || 56;
+              const totalHeight = headerHeight + navHeight;
+
+              if (container) {
+                container.style.height = `${totalHeight}px`;
+              }
+
+              requestAnimationFrame(() => {
+                nav.classList.add("active");
+                overlay.classList.add("active");
+
+                if (container) {
+                  container.classList.add("active");
+                }
+              });
+            });
+          }, 100);
+        });
+
+        li.addEventListener("mouseleave", () => {
+          if (showTimer) {
+            clearTimeout(showTimer);
+            showTimer = null;
+          }
+        });
+
+        menuLink.addEventListener("click", (e) => {
+          e.preventDefault();
+        });
+      }
+    });
+
+    const hideMenu = () => {
+      if (showTimer) {
+        clearTimeout(showTimer);
+        showTimer = null;
+      }
+
+      hideTimer = setTimeout(() => {
+        this.hideDesktopNav();
+      }, 150);
+    };
+
+    header.addEventListener("mouseleave", hideMenu);
+    overlay.addEventListener("mouseenter", hideMenu);
+
+    header.addEventListener("mouseenter", () => {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+    });
+
+    overlay.addEventListener("click", () => this.hideDesktopNav());
+  },
+
+  initBoxedDropdown(children, url, ul) {
+    children.forEach((child) => {
+      const submenu = ui.menu.getChildren(child);
+      const hasSubmenu = submenu.length > 0;
+
+      const li = E("li", {}, [
+        E(
+          "a",
+          {
+            class: "menu",
+            href: hasSubmenu ? "#" : L.url(url, child.name),
+          },
+          [_(child.title)],
+        ),
+      ]);
+
+      ul.appendChild(li);
+
+      if (hasSubmenu) {
+        const nav = E(
+          "div",
+          {
+            class: "desktop-nav",
+          },
+          [this.renderMainMenu(child, `${url}/${child.name}`, 1)],
+        );
+
+        li.appendChild(nav);
+
+        const menuLink = li.querySelector("a");
+        let showTimer = null;
+        let hideTimer = null;
+
+        li.addEventListener("mouseenter", () => {
+          if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+          }
+
+          showTimer = setTimeout(() => {
+            document.querySelectorAll(".desktop-nav").forEach((n) => {
+              if (n !== nav) n.classList.remove("active");
+            });
+
+            document.querySelectorAll("#topmenu a").forEach((a) => {
+              if (a !== menuLink) a.classList.remove("menu-active");
+            });
+
+            menuLink.classList.add("menu-active");
+            nav.classList.add("active");
+          }, 100);
+        });
+
+        li.addEventListener("mouseleave", () => {
+          if (showTimer) {
+            clearTimeout(showTimer);
+            showTimer = null;
+          }
+
+          hideTimer = setTimeout(() => {
+            nav.classList.remove("active");
+            menuLink.classList.remove("menu-active");
+          }, 150);
+        });
+
+        menuLink.addEventListener("click", (e) => {
+          e.preventDefault();
+        });
+      }
+    });
+  },
+
   hideDesktopNav() {
+    const navType = document.body?.dataset?.navType || "mega-menu";
+
     document
       .querySelectorAll(".desktop-nav")
       .forEach((nav) => nav.classList.remove("active"));
-    document.querySelector("header")?.classList.remove("has-desktop-nav");
-
-    const container = document.querySelector(".desktop-menu-container");
-    if (container) {
-      container.classList.remove("active");
-      container.style.height = "";
-    }
-
-    document.querySelector(".desktop-menu-overlay")?.classList.remove("active");
     document
       .querySelectorAll("#topmenu a")
       .forEach((a) => a.classList.remove("menu-active"));
+
+    if (navType === "mega-menu") {
+      document.querySelector("header")?.classList.remove("has-desktop-nav");
+
+      const container = document.querySelector(".desktop-menu-container");
+      if (container) {
+        container.classList.remove("active");
+        container.style.height = "";
+      }
+
+      document
+        .querySelector(".desktop-menu-overlay")
+        ?.classList.remove("active");
+    }
   },
 
   renderModeMenu(tree) {

@@ -325,17 +325,19 @@
         @apply relative flex h-14 items-center justify-between px-6 py-3 max-md:px-4 max-md:py-2;
       }
 
-      & .desktop-menu-container {
-        @apply pointer-events-none absolute inset-x-0 top-0 z-30 h-0 w-full overflow-hidden opacity-0 transition-all duration-150 ease-in-out before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-full before:min-h-full before:bg-white/40 before:backdrop-blur-xl before:backdrop-saturate-150 max-md:hidden dark:before:bg-gray-900/90;
-
-        &.active {
-          @apply pointer-events-auto opacity-100;
-        }
-      }
-
-      &.has-desktop-nav {
+      [data-nav-type="mega-menu"] & {
         & .desktop-menu-container {
-          @apply pointer-events-auto opacity-100;
+          @apply pointer-events-none absolute inset-x-0 top-0 z-30 h-0 w-full overflow-hidden opacity-0 transition-all duration-150 ease-in-out before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-full before:min-h-full before:bg-white/40 before:backdrop-blur-xl before:backdrop-saturate-150 max-md:hidden dark:before:bg-gray-900/90;
+
+          &.active {
+            @apply pointer-events-auto opacity-100;
+          }
+        }
+
+        &.has-desktop-nav {
+          & .desktop-menu-container {
+            @apply pointer-events-auto opacity-100;
+          }
         }
       }
 
@@ -372,6 +374,24 @@
 
                 & > a {
                   @apply block px-4 py-3 whitespace-nowrap text-slate-700 no-underline hover:text-slate-900 hover:underline hover:decoration-2 hover:underline-offset-4 dark:text-slate-300 hover:dark:text-slate-100;
+                }
+              }
+            }
+          }
+
+          [data-nav-type="boxed-dropdown"] & {
+            & .desktop-nav {
+              @apply absolute top-full left-0 mt-1 min-w-48 rounded-xl border border-slate-200/60 bg-white/95 shadow-lg backdrop-blur-sm dark:border-slate-600/40 dark:bg-slate-800/95;
+
+              & .desktop-nav-list {
+                @apply m-0 list-none p-1.5;
+
+                & > li {
+                  @apply m-0 list-none;
+
+                  & > a {
+                    @apply block rounded-lg px-3 py-2 text-sm text-slate-700 no-underline transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100;
+                  }
                 }
               }
             }
@@ -1422,11 +1442,13 @@
       }
     }
 
-    .desktop-menu-overlay {
-      @apply pointer-events-none fixed inset-0 z-50 bg-black/20 opacity-0 transition-all duration-300 max-md:hidden;
+    [data-nav-type="mega-menu"] {
+      & .desktop-menu-overlay {
+        @apply pointer-events-none fixed inset-0 z-50 bg-black/20 opacity-0 transition-all duration-300 max-md:hidden;
 
-      &.active {
-        @apply pointer-events-auto opacity-100 backdrop-blur-sm;
+        &.active {
+          @apply pointer-events-auto opacity-100 backdrop-blur-sm;
+        }
       }
     }
   }

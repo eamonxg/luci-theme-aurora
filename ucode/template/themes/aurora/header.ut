@@ -16,6 +16,7 @@
 	const boardinfo = ubus.call('system', 'board');
 	const uci = cursor();
 	const tokens = uci.get_all('aurora', 'theme') || {};
+	const nav_submenu_type = tokens.nav_submenu_type;
 
 	http.prepare_content('text/html; charset=UTF-8');
 -%}
@@ -92,7 +93,7 @@
 		<script src="{{ resource }}/cbi.js"></script>
 	</head>
 
-	<body class="lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}">
+	<body class="lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}" data-nav-type="{{ nav_submenu_type || 'mega-menu' }}">
 		{% if (!blank_page): %}
 		<header>
 			<div class="header-content">
@@ -108,12 +109,16 @@
 					</div>
 				</div>
 				<div id="indicators" class="pull-right"></div>
-			</div>
+		</div>
 
+		{% if (nav_submenu_type == 'mega-menu'): %}
 			<div class="desktop-menu-container"></div>
 		</header>
 
 		<div class="desktop-menu-overlay"></div>
+		{% else %}
+		</header>
+		{% endif %}
 
 		<div class="mobile-menu-overlay" id="mobile-menu-overlay">
 			<nav class="mobile-nav">
