@@ -1,0 +1,84 @@
+name: Build and Commit
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - '.dev/src/**'
+      - '.dev/public/**'
+      - '.dev/scripts/**'
+      - '.dev/vite.config.ts'
+      - '.dev/package.json'
+      - '.dev/pnpm-lock.yaml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-commit:
+    name: Build frontend assets
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[build]')"
+
+    defaults:
+      run:
+        working-directory: .dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack and use latest pnpm
+        run: |
+          corepack enable
+          corepack use pnpm@latest
+          echo "pnpm version: $(pnpm --version)"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend assets
+        run: pnpm build
+
+      - name: Check for build output changes
+        id: check-changes
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -n "$(git status --porcelain htdocs/)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "📦 Changes detected in htdocs/:"
+            git status --short htdocs/
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "✅ No changes in build output"
+          fi
+
+      - name: Commit and push build outputs
+        if: steps.check-changes.outputs.has_changes == 'true'
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add htdocs/
+          git commit -m "build: regenerate frontend assets [build]
+
+Compile source changes from .dev/:
+- CSS: src/media/ → htdocs/luci-static/aurora/main.css
+- JS: src/resource/ → htdocs/luci-static/resources/
+- Assets: public/aurora/ → htdocs/luci-static/aurora/
+
+Built with: pnpm@$(pnpm --version)"
+          git push
