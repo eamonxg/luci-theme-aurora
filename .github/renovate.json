@@ -1,0 +1,26 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":dependencyDashboard"
+  ],
+  "labels": ["dependencies"],
+  "vulnerabilityAlerts": {
+    "labels": ["security"]
+  },
+  "packageRules": [
+    {
+      "matchDepTypes": ["devDependencies"],
+      "groupName": "all devDependencies",
+      "automerge": true,
+      "automergeStrategy": "squash"
+    },
+    {
+      "matchPackageNames": ["pnpm"],
+      "enabled": false
+    }
+  ],
+  "rebaseWhen": "behind-base-branch"
+}
