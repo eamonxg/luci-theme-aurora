@@ -11,6 +11,10 @@
   "vulnerabilityAlerts": {
     "labels": ["security"]
   },
+  "schedule": [
+    "before 9am on monday"
+  ],
+  "timezone": "Asia/Shanghai",
   "packageRules": [
     {
       "matchPackageNames": ["pnpm"],
