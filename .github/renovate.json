@@ -4,7 +4,8 @@
     "config:recommended",
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)",
-    ":dependencyDashboard"
+    ":dependencyDashboard",
+    "group:all"
   ],
   "labels": ["dependencies"],
   "vulnerabilityAlerts": {
@@ -12,15 +13,15 @@
   },
   "packageRules": [
     {
-      "matchDepTypes": ["devDependencies"],
-      "groupName": "all devDependencies",
-      "automerge": true,
-      "automergeStrategy": "squash"
-    },
-    {
       "matchPackageNames": ["pnpm"],
       "enabled": false
+    },
+    {
+      "groupName": "all dependencies",
+      "matchPackagePatterns": ["*"]
     }
   ],
+  "separateMajorMinor": false,
+  "separateMinorPatch": false,
   "rebaseWhen": "behind-base-branch"
 }
