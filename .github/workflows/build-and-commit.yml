@@ -65,6 +65,26 @@ jobs:
             echo "✅ No changes in build output"
           fi
 
+      - name: Generate build report
+        if: steps.check-changes.outputs.has_changes == 'true'
+        id: build-report
+        working-directory: ${{ github.workspace }}
+        run: |
+          echo "## Changed Files" > /tmp/build-report.txt
+          echo "" >> /tmp/build-report.txt
+          git diff --name-status htdocs/ >> /tmp/build-report.txt
+          echo "" >> /tmp/build-report.txt
+          echo "## File Sizes" >> /tmp/build-report.txt
+          echo "" >> /tmp/build-report.txt
+          echo "| File | Size |" >> /tmp/build-report.txt
+          echo "|------|------|" >> /tmp/build-report.txt
+          find htdocs/ -type f \( -name "*.css" -o -name "*.js" -o -name "*.woff*" \) -exec ls -lh {} \; | awk '{print "| " $9 " | " $5 " |"}' >> /tmp/build-report.txt
+          echo "" >> /tmp/build-report.txt
+          echo "## Total Size" >> /tmp/build-report.txt
+          echo "" >> /tmp/build-report.txt
+          du -sh htdocs/ | awk '{print "**" $1 "**"}' >> /tmp/build-report.txt
+          cat /tmp/build-report.txt
+
       - name: Commit and push build outputs
         if: steps.check-changes.outputs.has_changes == 'true'
         working-directory: ${{ github.workspace }}
@@ -72,12 +92,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add htdocs/
-          git commit -m "build: regenerate frontend assets [build]
-
-Compile source changes from .dev/:
-- CSS: src/media/ → htdocs/luci-static/aurora/main.css
-- JS: src/resource/ → htdocs/luci-static/resources/
-- Assets: public/aurora/ → htdocs/luci-static/aurora/
-
-Built with: pnpm@$(pnpm --version)"
+          git commit -F /tmp/build-report.txt
           git push
