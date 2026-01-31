@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - main
     paths:
       - '.dev/src/**'
       - '.dev/public/**'
@@ -39,7 +38,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: 'lts/*'
 
       - name: Enable Corepack and use latest pnpm
         run: |
