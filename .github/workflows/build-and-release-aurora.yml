@@ -36,7 +36,7 @@ jobs:
             sdk_dir: apk_SDK
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -60,7 +60,7 @@ jobs:
 
       - name: Cache SDK
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.TMP }}/${{ matrix.target.sdk_dir }}
           key: ${{ steps.sdk.outputs.tar }}-${{ matrix.target.type }}-${{ hashFiles('.sdk-meta') }}
@@ -109,7 +109,7 @@ jobs:
           make package/${{ env.THEME }}/compile -j$(nproc) V=s
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.THEME }}-${{ github.ref_name }}-${{ matrix.target.type }}
           path: |
