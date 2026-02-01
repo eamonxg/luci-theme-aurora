@@ -23,7 +23,7 @@ jobs:
   build-and-commit:
     name: Build frontend assets
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[build]')"
+    if: "!startsWith(github.event.head_commit.message, 'build:')"
 
     defaults:
       run:
@@ -70,19 +70,11 @@ jobs:
         id: build-report
         working-directory: ${{ github.workspace }}
         run: |
-          echo "## Changed Files" > /tmp/build-report.txt
+          echo "Changed Files:" > /tmp/build-report.txt
+          git diff --name-status htdocs/ | sed 's/^/  - /' >> /tmp/build-report.txt
           echo "" >> /tmp/build-report.txt
-          git diff --name-status htdocs/ >> /tmp/build-report.txt
-          echo "" >> /tmp/build-report.txt
-          echo "## File Sizes" >> /tmp/build-report.txt
-          echo "" >> /tmp/build-report.txt
-          echo "| File | Size |" >> /tmp/build-report.txt
-          echo "|------|------|" >> /tmp/build-report.txt
-          find htdocs/ -type f \( -name "*.css" -o -name "*.js" -o -name "*.woff*" \) -exec ls -lh {} \; | awk '{print "| " $9 " | " $5 " |"}' >> /tmp/build-report.txt
-          echo "" >> /tmp/build-report.txt
-          echo "## Total Size" >> /tmp/build-report.txt
-          echo "" >> /tmp/build-report.txt
-          du -sh htdocs/ | awk '{print "**" $1 "**"}' >> /tmp/build-report.txt
+          echo "Build Size:" >> /tmp/build-report.txt
+          ls -lh htdocs/luci-static/aurora/main.css htdocs/luci-static/resources/view/aurora/sysauth.js htdocs/luci-static/resources/menu-aurora.js 2>/dev/null | awk '{size=$5; if(size ~ /^[0-9]+$/ && size < 1024) size=size"B"; printf "  - %-53s %s\n", $9, size}' >> /tmp/build-report.txt
           cat /tmp/build-report.txt
 
       - name: Commit and push build outputs
@@ -91,6 +83,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add htdocs/
-          git commit -F /tmp/build-report.txt
+          git add htdocs/ .dev/package.json
+          {
+            echo "build: update frontend assets"
+            echo ""
+            cat /tmp/build-report.txt
+          } | git commit -F -
           git push
