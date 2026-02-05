@@ -68,8 +68,6 @@
 
   --panel-bg: oklch(1 0 0);
 
-  --tab-bg: oklch(from var(--page-bg) calc(l - 0.02) c h);
-
   --tooltip-bg: oklch(from var(--page-bg) calc(l - 0.015) c h);
 
   --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
@@ -136,8 +134,6 @@
 
   --panel-bg: oklch(0.279 0.041 260.031);
 
-  --tab-bg: oklch(from var(--page-bg) calc(l + 0.06) c h);
-
   --tooltip-bg: oklch(from var(--page-bg) calc(l + 0.06) c h);
 }
 
@@ -159,8 +155,6 @@
 
   --color-header-bg: var(--header-bg);
   --color-header-interactive: var(--header-interactive);
-
-  --color-tab-bg: var(--tab-bg);
 
   --color-progress-bar-start: var(--progress-bar-start);
   --color-progress-bar-end: var(--progress-bar-end);
