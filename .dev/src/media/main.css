@@ -81,7 +81,7 @@
   --background: oklch(0.32 0.059 188.42);
   --foreground: oklch(0.968 0.007 247.896);
 
-  --primary: oklch(0.60 0.13 188.745);
+  --primary: oklch(0.6 0.13 188.745);
   --primary-foreground: oklch(1 0 0);
 
   --secondary: oklch(0.372 0.044 257.287);
@@ -1183,7 +1183,7 @@
         }
 
         &.active {
-          @apply border-primary bg-primary text-white;
+          @apply border-primary bg-primary text-primary-foreground;
         }
       }
 
