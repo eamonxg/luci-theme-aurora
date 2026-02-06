@@ -16,6 +16,7 @@
   --foreground: oklch(0.208 0.042 265.755);
 
   --primary: oklch(0.68 0.11 233);
+  --primary-foreground: oklch(1 0 0);
 
   --secondary: oklch(0.929 0.013 255.508);
   --secondary-foreground: oklch(0.372 0.044 257.287);
@@ -81,6 +82,7 @@
   --foreground: oklch(0.968 0.007 247.896);
 
   --primary: oklch(0.60 0.13 188.745);
+  --primary-foreground: oklch(1 0 0);
 
   --secondary: oklch(0.372 0.044 257.287);
   --secondary-foreground: oklch(0.928 0.006 264.531);
@@ -145,6 +147,7 @@
   --color-panel-bg: var(--panel-bg);
 
   --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
 
   --color-border: var(--border);
 
@@ -698,7 +701,7 @@
     .cbi-button-reload,
     .cbi-button-add,
     .cbi-button-edit {
-      @apply border-primary bg-primary hover:bg-primary/90 text-white;
+      @apply border-primary bg-primary hover:bg-primary/90 text-primary-foreground;
     }
 
     .cbi-button-positive,
