@@ -77,10 +77,10 @@
 }
 
 [data-darkmode="true"] {
-  --background: oklch(0.3861 0.059 188.42);
+  --background: oklch(0.32 0.059 188.42);
   --foreground: oklch(0.968 0.007 247.896);
 
-  --primary: oklch(0.48 0.118 190.485);
+  --primary: oklch(0.60 0.13 188.745);
 
   --secondary: oklch(0.372 0.044 257.287);
   --secondary-foreground: oklch(0.928 0.006 264.531);
