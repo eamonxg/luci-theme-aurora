@@ -16,7 +16,6 @@
   --foreground: oklch(0.208 0.042 265.755);
 
   --primary: oklch(0.68 0.11 233);
-  --primary-foreground: oklch(0.6656 0.1055 234.61);
 
   --secondary: oklch(0.929 0.013 255.508);
   --secondary-foreground: oklch(0.372 0.044 257.287);
@@ -82,7 +81,6 @@
   --foreground: oklch(0.968 0.007 247.896);
 
   --primary: oklch(0.48 0.118 190.485);
-  --primary-foreground: oklch(0.73 0.168 188.745);
 
   --secondary: oklch(0.372 0.044 257.287);
   --secondary-foreground: oklch(0.928 0.006 264.531);
@@ -147,7 +145,6 @@
   --color-panel-bg: var(--panel-bg);
 
   --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
 
   --color-border: var(--border);
 
@@ -517,7 +514,7 @@
       @apply text-secondary-foreground mt-2 flex min-h-16 flex-wrap items-center justify-between text-xs;
 
       & a {
-        @apply text-primary-foreground;
+        @apply text-primary;
       }
 
       & span {
@@ -707,7 +704,7 @@
     .cbi-button-positive,
     .cbi-button-fieldadd,
     .cbi-button-save {
-      @apply border-primary/25 bg-primary/25 text-primary-foreground hover:bg-primary/30;
+      @apply border-primary/25 bg-primary/25 text-primary hover:bg-primary/30;
     }
 
     .cbi-button-negative,
@@ -868,7 +865,7 @@
             @apply flex;
 
             &[selected] {
-              @apply bg-primary/20 text-primary-foreground;
+              @apply bg-primary/20 text-primary;
             }
 
             &[unselectable] {
@@ -1269,7 +1266,7 @@
         & h4 {
           @apply mb-0 text-center;
           & em {
-            @apply text-primary-foreground font-semibold;
+            @apply text-primary font-semibold;
           }
         }
 
@@ -1893,7 +1890,7 @@
           @apply text-muted-foreground fixed bottom-0 left-1/2 -translate-x-1/2 pb-4 text-center text-xs whitespace-nowrap max-md:pb-3;
 
           & a {
-            @apply text-primary-foreground hover:text-primary;
+            @apply text-primary hover:text-primary;
           }
         }
       }
