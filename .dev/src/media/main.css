@@ -61,7 +61,7 @@
   --progress-bar-start: oklch(0.68 0.11 233);
   --progress-bar-end: oklch(0.7535 0.1034 198.37);
 
-  --header-bg: oklch(from var(--page-bg) calc(l + 0.01) c h);
+  --header-bg: oklch(from var(--background) l c h);
   --header-interactive: oklch(from var(--header-bg) calc(l - 0.12) c h);
 
   --page-bg: oklch(1 0 0);
@@ -127,7 +127,7 @@
   --progress-bar-start: oklch(0.4318 0.0865 166.91);
   --progress-bar-end: oklch(62.1% 0.145 189.632);
 
-  --header-bg: oklch(from var(--page-bg) calc(l + 0.02) c h);
+  --header-bg: oklch(from var(--page-bg) l c h);
   --header-interactive: oklch(from var(--header-bg) calc(l + 0.24) c h);
 
   --page-bg: oklch(0.21 0.034 264.665);
