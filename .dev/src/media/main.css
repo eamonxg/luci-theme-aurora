@@ -1464,7 +1464,7 @@
         @apply w-1/3;
       }
 
-      & .cbi-value-first-field {
+      & .cbi-section-table-titles {
         @apply font-bold;
       }
 
@@ -1472,14 +1472,14 @@
       & .cbi-section-table-descr.named,
       & .cbi-section-table-row[data-title] {
         @apply before:border-border before:table-cell before:px-3 before:py-3 before:align-middle before:text-base before:font-semibold before:content-[attr(data-title)] before:max-md:flex before:max-md:flex-[0_0_100%] before:max-md:px-3 before:max-md:py-2.5 before:max-md:text-sm before:md:border-b;
-        &.cbi-value-first-field,
-        &:has(.cbi-value-first-field) {
+        &:not([data-title]),
+        &:has(td.cbi-section-table-titles) {
           @apply before:content-none;
         }
       }
 
       & .cbi-section-table-titles.named {
-        @apply before:bg-panel-bg before:max-md:bg-panel-bg before:md:rounded-tl-2xl;
+        @apply before:bg-label-surface before:max-md:bg-label-surface before:md:rounded-tl-2xl;
       }
 
       & tbody,
@@ -1493,12 +1493,15 @@
         @apply has-[.cbi-progressbar]:max-md:flex has-[.cbi-progressbar]:max-md:items-center has-[.cbi-progressbar]:max-md:justify-center;
 
         &:first-child {
-          & .th,
-          & .td,
-          & th,
-          & td {
-            @apply first:md:rounded-tl-2xl;
+          &:not([data-title]) {
+            & .th,
+            & .td {
+              @apply first:md:rounded-tl-2xl;
+            }
+          }
 
+          & .th,
+          & .td {
             @apply last:md:rounded-tr-2xl;
           }
         }
@@ -1509,10 +1512,7 @@
             @apply before:rounded-bl-2xl before:border-b-0;
           }
           .td {
-            @apply border-b-0 last:md:rounded-br-2xl;
-          }
-          &:not([data-title]) .td {
-            @apply first:md:rounded-bl-2xl;
+            @apply border-b-0 first:md:rounded-bl-2xl last:md:rounded-br-2xl;
           }
         }
 
@@ -1617,7 +1617,7 @@
 
       & td,
       & .td {
-        @apply border-border table-cell border-b px-3 py-3 align-middle text-base break-words whitespace-normal max-md:flex-[1_1_50%] max-md:border-0 max-md:px-1 max-md:py-1 max-md:text-sm;
+        @apply border-border table-cell border-b px-3 py-3 align-middle text-base wrap-break-word whitespace-normal max-md:flex-[1_1_50%] max-md:border-0 max-md:px-1 max-md:py-1 max-md:text-sm;
         @apply before:hidden before:content-[attr(data-title)] before:max-md:mb-1 before:max-md:block before:max-md:text-xs before:max-md:font-semibold before:max-md:tracking-wider;
 
         #cbi-samba4 & {
