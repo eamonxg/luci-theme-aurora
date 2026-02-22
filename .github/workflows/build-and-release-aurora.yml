@@ -11,117 +11,19 @@ permissions:
 
 jobs:
   build:
-    name: build luci-theme-aurora ${{ matrix.target.type }}
+    name: build luci-theme-aurora ${{ matrix.pkg_type }}
     runs-on: ubuntu-latest
-    env:
-      TMP: tmp
-      THEME: luci-theme-aurora
     strategy:
       matrix:
-        target:
-          - type: ipk
-            arch: x86_64
-            cpu_dir: x86
-            sub_dir: 64
-            sdk_url: https://downloads.openwrt.org/releases/24.10.3
-            sdk_cpu: x86-64
-            sdk_dir: ipk_SDK
-
-          - type: apk
-            arch: x86_64
-            cpu_dir: x86
-            sub_dir: 64
-            sdk_url: https://downloads.openwrt.org/snapshots
-            sdk_cpu: x86-64
-            sdk_dir: apk_SDK
-
+        pkg_type: [ipk, apk]
     steps:
-      - uses: actions/checkout@v6
+      - uses: eamonxg/build-luci-package@master
         with:
-          fetch-depth: 0
-
-      - name: Install build deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential curl ca-certificates xz-utils zstd git python3 rsync
-
-      - name: Get SDK metadata
-        id: sdk
-        run: |
-          INDEX_URL="${{ matrix.target.sdk_url }}/targets/${{ matrix.target.cpu_dir }}/${{ matrix.target.sub_dir }}/"
-          SDK_TAR=$(curl -s "$INDEX_URL" | grep -oE "openwrt-sdk[^\"]*${{ matrix.target.sdk_cpu }}[^\"]*\.tar\.(zst|xz)" | head -n 1)
-
-          echo "SDK: $SDK_TAR"
-          curl -sI "$INDEX_URL/$SDK_TAR" | grep -iE '^(etag|last-modified|content-length):' > .sdk-meta
-          cat .sdk-meta
-
-          echo "url=$INDEX_URL" >> $GITHUB_OUTPUT
-          echo "tar=$SDK_TAR" >> $GITHUB_OUTPUT
-
-      - name: Cache SDK
-        id: cache
-        uses: actions/cache@v5
-        with:
-          path: ${{ env.TMP }}/${{ matrix.target.sdk_dir }}
-          key: ${{ steps.sdk.outputs.tar }}-${{ matrix.target.type }}-${{ hashFiles('.sdk-meta') }}
-
-      - name: Download SDK
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          echo "Cache MISS - Downloading SDK"
-          mkdir -p "$TMP"
-          curl -SLk --connect-timeout 30 --retry 2 "${{ steps.sdk.outputs.url }}/${{ steps.sdk.outputs.tar }}" -o "$TMP/${{ steps.sdk.outputs.tar }}"
-          cd "$TMP"
-          if echo "${{ steps.sdk.outputs.tar }}" | grep -q \.zst$; then
-            zstd -d "${{ steps.sdk.outputs.tar }}" -o SDK.tar && tar xf SDK.tar
-          else
-            tar xf "${{ steps.sdk.outputs.tar }}"
-          fi
-          mv $(ls -d openwrt-sdk-* | head -n 1) "${{ matrix.target.sdk_dir }}"
-
-      - name: Copy ${{ env.THEME }} source
-        run: |
-          mkdir -p "$TMP"/${{ matrix.target.sdk_dir }}/package/${{ env.THEME }}
-          rsync -a --delete ./ "$TMP"/${{ matrix.target.sdk_dir }}/package/${{ env.THEME }}/ \
-            --exclude .git --exclude .github --exclude .vscode --exclude .dev --exclude "$TMP"
-
-      - name: Build ${{ env.THEME }}
-        run: |
-          cd "$TMP"/${{ matrix.target.sdk_dir }}
-          cp feeds.conf.default feeds.conf
-          echo "=== feeds.conf ==="
-          cat feeds.conf
-          echo "---------- testing feed git URLs ----------"
-          grep -E '^[[:space:]]*src-git' feeds.conf | while read -r line; do
-            name=$(echo "$line" | awk '{print $(NF-1)}')
-            url_with_rev=$(echo "$line" | awk '{print $NF}')
-            url_base=${url_with_rev%%^*}
-            url=${url_base%%;*}
-            if git ls-remote "$url" HEAD >/dev/null 2>&1; then
-              echo "OK: $name $url_with_rev (remote: $url)"
-            else
-              echo "FAILED: $name $url_with_rev (remote: $url)"
-            fi
-          done
-          ./scripts/feeds update -f base luci
-          ./scripts/feeds install -p luci-base 
-          make defconfig
-          make package/${{ env.THEME }}/compile -j$(nproc) V=s
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ env.THEME }}-${{ github.ref_name }}-${{ matrix.target.type }}
-          path: |
-            ${{ env.TMP }}/${{ matrix.target.sdk_dir }}/bin/packages/${{ matrix.target.arch }}/base/*${{ env.THEME }}*.[ai]pk
-
-      - name: Release ${{ env.THEME }}
-        uses: softprops/action-gh-release@v2
-        if: github.ref_type == 'tag'
-        with:
-          name: ${{ env.THEME }}-${{ github.ref_name }}
-          body_path: ${{ github.workspace }}/.dev/docs/changelog/${{ github.ref_name }}.md
-          draft: false
-          prerelease: false
-          files: |
-            ${{ env.TMP }}/${{ matrix.target.sdk_dir }}/bin/packages/${{ matrix.target.arch }}/base/*${{ env.THEME }}*.[ai]pk
+          package: luci-theme-aurora
+          pkg_type: ${{ matrix.pkg_type }}
+          prep_script: |
+            ./scripts/feeds update -f base luci
+            ./scripts/feeds install -p luci-base
+          artifact_paths: |
+            bin/packages/$ARCH/base/*luci-theme-aurora*.[ai]pk
+          release_body_path: .dev/docs/changelog/${{ github.ref_name }}.md
