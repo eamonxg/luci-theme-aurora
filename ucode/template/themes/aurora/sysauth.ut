@@ -49,7 +49,8 @@
 		</form>
 
 		<div class="login-footer">
-			<p>© 2025–<span id="current-year"></span> | <a href="https://github.com/eamonxg/luci-theme-aurora" target="_blank">Aurora Theme</a></p>
+			<p><a href="{{ entityencode(version.disturl ?? '#', true) }}" target="_blank" rel="noreferrer">{{ version.distname }}</a> · <a href="https://github.com/openwrt/luci" target="_blank" rel="noreferrer">{{ version.luciname }}</a></p>
+			<p><a href="https://github.com/eamonxg/luci-theme-aurora" target="_blank" rel="noreferrer">Aurora Theme</a> © 2025-<span id="current-year"></span></p>
 		</div>
 	</div>
 </div>
