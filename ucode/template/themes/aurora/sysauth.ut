@@ -49,14 +49,12 @@
 		</form>
 
 		<div class="login-footer">
-			<p><a href="{{ entityencode(version.disturl ?? '#', true) }}" target="_blank" rel="noreferrer">{{ version.distname }}</a> · <a href="https://github.com/openwrt/luci" target="_blank" rel="noreferrer">{{ version.luciname }}</a></p>
-			<p><a href="https://github.com/eamonxg/luci-theme-aurora" target="_blank" rel="noreferrer">Aurora Theme</a> © 2025-<span id="current-year"></span></p>
+			<p><a href="{{ entityencode(version.disturl ?? '#', true) }}" target="_blank" rel="noreferrer">{{ version.distname }}</a> . <a href="https://github.com/openwrt/luci" target="_blank" rel="noreferrer">{{ version.luciname }}</a> . <a href="https://github.com/eamonxg/luci-theme-aurora" target="_blank" rel="noreferrer">Aurora Theme</a></p>
 		</div>
 	</div>
 </div>
 
 <script>
-document.getElementById('current-year').textContent = new Date().getFullYear();
 document.getElementById('luci_username').value ? document.getElementById('luci_password').focus() : document.getElementById('luci_username').focus();
 </script>
 
