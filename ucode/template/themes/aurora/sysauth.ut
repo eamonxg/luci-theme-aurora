@@ -49,7 +49,7 @@
 		</form>
 
 		<div class="login-footer">
-			<p><a href="{{ entityencode(version.disturl ?? '#', true) }}" target="_blank" rel="noreferrer">{{ version.distname }}</a> . <a href="https://github.com/openwrt/luci" target="_blank" rel="noreferrer">{{ version.luciname }}</a> . <a href="https://github.com/eamonxg/luci-theme-aurora" target="_blank" rel="noreferrer">Aurora Theme</a></p>
+			<p>© <a href="https://github.com/eamonxg/luci-theme-aurora/graphs/contributors" target="_blank" rel="noreferrer">Aurora Theme Contributors</a> · Powered by <a href="{{ entityencode(version.disturl ?? '#', true) }}" target="_blank" rel="noreferrer">{{ version.distname }}</a> & <a href="https://github.com/openwrt/luci" target="_blank" rel="noreferrer">{{ version.luciname }}</a></p>
 		</div>
 	</div>
 </div>
