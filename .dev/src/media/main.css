@@ -1890,10 +1890,13 @@
         }
 
         .login-footer {
-          @apply text-muted-foreground fixed bottom-0 left-1/2 -translate-x-1/2 pb-4 text-center text-xs whitespace-nowrap max-md:pb-3;
+          @apply text-muted-foreground fixed bottom-0 left-1/2 w-[calc(100%-1.25rem)] -translate-x-1/2 pb-4 text-center max-md:pb-3;
+          & p {
+            @apply text-xs whitespace-normal;
 
-          & a {
-            @apply text-primary hover:text-primary;
+            & a {
+              @apply text-primary hover:text-primary;
+            }
           }
         }
       }
