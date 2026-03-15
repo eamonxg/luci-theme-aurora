@@ -18,15 +18,6 @@ body:
       required: true
 
   - type: input
-    id: browser
-    attributes:
-      label: Browser (vendor + version)
-      description: 请填写浏览器名称与版本，例如 Chrome 141.0.7390.77
-      placeholder: ex. Safari 26
-    validations:
-      required: true
-
-  - type: input
     id: openwrt-version
     attributes:
       label: OpenWrt version
@@ -35,41 +26,40 @@ body:
     validations:
       required: true
 
+  - type: textarea
+    id: plugin-source
+    attributes:
+      label: Plugin source (optional; if issue happens on a plugin page)
+      description: |
+        如果问题出现在第三方插件页面，请提供该插件的 GitHub 仓库地址，以便安装复现。
+        如果插件来自 OpenWrt 软件源，请提供完整包名，便于搜索安装复现。
+      placeholder: ex. https://github.com/owner/plugin 或 luci-app-xxx
+    validations:
+      required: false
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser (optional; vendor + version)
+      description: 请填写浏览器名称与版本，例如 Chrome 141.0.7390.77
+      placeholder: ex. Safari 26
+    validations:
+      required: false
+
   - type: input
     id: theme-version
     attributes:
-      label: Theme version
+      label: Theme version (optional)
       description: luci-theme-aurora 的版本号或commit 哈希
-      placeholder: ex. 0.5.9_beta or commit SHA(e.g. 56db83c)
+      placeholder: ex. 0.11.0 or commit SHA(e.g. 53eeabb)
     validations:
       required: false
 
   - type: input
     id: os
     attributes:
-      label: OS (name + version)
+      label: OS (optional; name + version)
       description: 操作系统名称与版本，例如 Windows 11 25H2、Android 15
       placeholder: ex. macOS Tahoe、iOS 26
-    validations:
-      required: false
-
-  - type: textarea
-    id: reproduction
-    attributes:
-      label: How to reproduce
-      description: 如果方便，请提供逐步复现步骤。
-      placeholder: |
-        1. Go to '...' page
-        2. Click '...'
-        3. Observe the issue
-    validations:
-      required: false
-
-  - type: textarea
-    id: expected-behavior
-    attributes:
-      label: Expected behavior
-      description: 如果方便，请描述您期望的正确行为是什么。
-      placeholder: Describe the expected behavior
     validations:
       required: false
