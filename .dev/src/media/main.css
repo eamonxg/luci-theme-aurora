@@ -1224,7 +1224,7 @@
         }
 
         & > div {
-          @apply flex w-full space-y-2.5 max-md:space-y-1.5;
+          @apply flex w-full flex-wrap space-y-2.5 max-md:space-y-1.5;
           td & {
             @apply max-md:w-auto max-md:flex-1 max-md:space-y-1;
           }
