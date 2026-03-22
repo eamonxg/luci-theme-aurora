@@ -27,6 +27,15 @@ body:
       required: true
 
   - type: textarea
+    id: dom-structure
+    attributes:
+      label: DOM structure of the problematic area (optional)
+      description: 请提供出现问题的页面的HTML文件（上传）或DOM结构（粘贴），这有助于调试和修复问题。在Chrome浏览器中，按下 Command + S (Mac) 或 Ctrl + S (Windows/Linux) 保存页面为HTML文件，然后上传该文件，或直接粘贴相关的DOM结构代码。
+      placeholder: Upload the HTML file or paste the DOM structure of the problematic area
+    validations:
+      required: false
+
+  - type: textarea
     id: plugin-source
     attributes:
       label: Plugin source (optional; if issue happens on a plugin page)
