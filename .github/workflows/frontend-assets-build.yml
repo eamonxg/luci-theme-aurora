@@ -1,16 +1,6 @@
-name: Build and Commit
+name: Build Frontend Assets
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - ".dev/src/**"
-      - ".dev/public/**"
-      - ".dev/scripts/**"
-      - ".dev/vite.config.ts"
-      - ".dev/package.json"
-      - ".dev/pnpm-lock.yaml"
   workflow_dispatch:
 
 concurrency:
