@@ -1452,8 +1452,8 @@
   }
 
   @layer table {
-    .table,
-    table {
+    table.table,
+    .table {
       @apply border-border max-md:bg-panel-bg/98 mb-3 w-full border-separate border-spacing-0 overflow-visible rounded-2xl border max-md:mx-0 max-md:block max-md:w-full max-md:overflow-visible max-md:border-0 max-md:shadow-none;
 
       &[width="100%"] {
