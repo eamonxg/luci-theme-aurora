@@ -1,6 +1,6 @@
 <h4 align="right"><a href="README.md">English</a> | <strong>简体中文</strong></h4>
 <p align="center">
-    <img src="https://raw.githubusercontent.com/eamonxg/assets/master/aurora/logo/logo-circular.png" width="152"/>
+    <img src="https://raw.githubusercontent.com/eamonxg/assets/master/aurora/logo/logo-rounded.png" width="152"/>
 </p>
 <h1 align="center">Aurora Theme</h1>
 <p align="center"><strong>一款基于 Vite 和 Tailwind CSS 构建的现代 OpenWrt LuCI 主题。</strong></p>

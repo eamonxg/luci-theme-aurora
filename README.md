@@ -1,6 +1,6 @@
 <h4 align="right"><strong>English</strong> | <a href="README_zh.md">简体中文</a></h4>
 <p align="center">
-    <img src="https://raw.githubusercontent.com/eamonxg/assets/master/aurora/logo/logo-circular.png" width="152"/>
+    <img src="https://raw.githubusercontent.com/eamonxg/assets/master/aurora/logo/logo-rounded.png" width="152"/>
 </p>
 <h1 align="center">Aurora Theme</h1>
 <p align="center"><strong>A modern OpenWrt LuCI theme built with Vite and Tailwind CSS.</strong></p>
