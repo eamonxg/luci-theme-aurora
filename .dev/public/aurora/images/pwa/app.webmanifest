@@ -1,0 +1,21 @@
+{
+  "name": "LuCI Aurora",
+  "short_name": "Aurora",
+  "start_url": "/cgi-bin/luci",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/luci-static/aurora/images/pwa/app-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/luci-static/aurora/images/pwa/app-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

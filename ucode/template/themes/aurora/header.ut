@@ -104,22 +104,16 @@
 		<link rel="stylesheet" href="{{ media }}/main.css">
 		<link rel="icon" href="{{ media }}/images/{{ logo_png }}?v={{ icon_cache_version }}" sizes="32x32">
 		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any">
-		<link rel="icon" type="image/png" sizes="16x16" href="{{ media }}/pwa/favicon-16x16.png">
-		<link rel="icon" type="image/png" sizes="32x32" href="{{ media }}/pwa/favicon-32x32.png">
-		<link rel="icon" type="image/png" sizes="96x96" href="{{ media }}/pwa/favicon-96x96.png">
-		<link rel="icon" type="image/png" sizes="192x192" href="{{ media }}/pwa/favicon-192x192.png">
-		<link rel="shortcut icon" href="{{ media }}/pwa/favicon.ico">
-		<link rel="apple-touch-icon" sizes="152x152" href="{{ media }}/pwa/apple-icon-152x152.png">
-		<link rel="apple-touch-icon" sizes="180x180" href="{{ media }}/pwa/apple-icon-180x180.png">
-		<link rel="manifest" href="{{ media }}/pwa/manifest.webmanifest">
+		<link rel="icon" type="image/png" sizes="16x16" href="{{ media }}/images/favicon-16x16.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="{{ media }}/images/favicon-32x32.png">
+		<link rel="shortcut icon" href="{{ media }}/images/favicon.ico">
+		<link rel="apple-touch-icon" sizes="180x180" href="{{ media }}/images/apple-touch-icon.png">
+		<link rel="manifest" href="{{ media }}/images/pwa/app.webmanifest">
 		<meta name="application-name" content="LuCI Aurora">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 		<meta name="apple-mobile-web-app-title" content="{{ striptags(boardinfo.hostname ?? 'Aurora') }}">
 		<meta name="mobile-web-app-capable" content="yes">
-		<meta name="msapplication-TileColor" content="#0f172a">
-		<meta name="msapplication-TileImage" content="{{ media }}/pwa/ms-icon-144x144.png">
-		<meta name="msapplication-config" content="{{ media }}/pwa/browserconfig.xml">
 		{% if (node?.css): %}
 		<link rel="stylesheet" href="{{ resource }}/{{ node.css }}">
 		{% endif %}
