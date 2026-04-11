@@ -1,0 +1,42 @@
+{
+  "name": "LuCI Aurora",
+  "short_name": "Aurora",
+  "description": "A modern OpenWrt LuCI theme built with Vite and TailwindCSS.",
+  "start_url": "/cgi-bin/luci",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "en",
+  "dir": "ltr",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/luci-static/aurora/pwa/favicon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/luci-static/aurora/pwa/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/luci-static/aurora/pwa/android-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/luci-static/aurora/pwa/apple-icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "/luci-static/aurora/pwa/apple-icon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
