@@ -19,6 +19,17 @@
   <img src="https://raw.githubusercontent.com/eamonxg/assets/master/aurora/preview/theme/multi-device-showcase.png" alt="Multi-Device Showcase" width="100%">
 </div>
 
+> [!NOTE]
+> **🤖 Exploring AI Workflows...**
+>
+> Hey everyone — I've been pretty busy with work lately, so my time for Aurora has been limited. But I don't want the project to stall, so I've been exploring AI-assisted workflows to help pick up the slack, especially on the debugging side.
+>
+> There's a backlog of open issues right now, and honestly, most of them are styling compatibility problems with third-party plugins. These aren't huge issues individually, but they're incredibly time-consuming to track down — you have to install the plugin, sometimes set up specific conditions on the router just to reproduce the problem.
+>
+> The root cause is that LuCI only provides a basic set of web components. When plugin authors need more complex UI, they end up rolling their own HTML/CSS/JS with no shared conventions, so compatibility headaches are inevitable. With the sheer number of LuCI plugins out there, getting them all to play nicely is a massive undertaking — especially when some plugins don't even follow LuCI's own JS conventions.
+>
+> So I'm bringing AI into the loop to handle these tedious but important tasks, and ideally automate as much of it as possible. If you have better ideas or suggestions, I'd love to hear them — come chat on [Discord](https://discord.gg/EBncRrzfTw).
+
 ## Features
 
 - **Modern**: Modern, content-first UI design with a clean layout and elegant animations.

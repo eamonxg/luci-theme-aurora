@@ -19,6 +19,17 @@
   <img src="https://raw.githubusercontent.com/eamonxg/assets/master/aurora/preview/theme/multi-device-showcase.png" alt="Multi-Device Showcase" width="100%">
 </div>
 
+> [!NOTE]
+> **🤖 AI 工作流探索中…**
+>
+> 大家好，最近工作比较忙，能投入到 Aurora 主题的时间有限，但我不希望 Aurora 因此停滞不前，所以最近一直在研究 AI 工作流，希望借助 AI 来分担一部分工作，尤其是调试方面。
+>
+> 目前主题积压了不少 issue，其实大部分都是第三方插件的样式兼容问题。这类问题说大不大，但调起来真的很耗时间——你得先装上对应的插件，有时候路由器还得满足特定条件才能复现。
+>
+> 归根结底，LuCI 本身只提供了一套基础的 Web 组件，插件作者想实现更复杂的交互，就只能用 HTML + CSS + JS 自行实现，没有统一的规范，各种兼容问题在所难免。LuCI 插件数量庞大，要逐一做好兼容，工作量可想而知——更何况有些插件本身也没有按照 LuCI JS 的规范来开发。
+>
+> 所以我希望引入 AI，把这些琐碎但繁重的任务交给它来完成，如果能实现自动化那就更理想了。如果你有更好的建议或想法，欢迎来 [Discord](https://discord.gg/EBncRrzfTw) 聊聊。
+
 ## 特性
 
 - **现代化**：内容优先的现代化 UI 设计，布局整洁，动画优雅。
