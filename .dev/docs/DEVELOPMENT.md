@@ -38,7 +38,9 @@ cp .env.example .env
 **Environment Variables:**
 
 - `VITE_OPENWRT_HOST` - Your OpenWrt LuCI web interface URL (required)
-- `VITE_DEV_HOST` - Development server host (default: `127.0.0.1`)
+- `VITE_OPENWRT_SSH_HOST` - SSH target for `.ut` template sync, e.g. `root@192.168.1.1` (optional)
+- `VITE_OPENWRT_SSH_KEY` - Path to SSH private key (optional, falls back to ssh-agent or `~/.ssh/config`)
+- `VITE_DEV_HOST` - Development server host (code default: `127.0.0.1`, `.env.example` sets `0.0.0.0` for LAN access)
 - `VITE_DEV_PORT` - Development server port (default: `5173`)
 
 ## Development Workflow
@@ -91,7 +93,46 @@ For LuCI-specific JavaScript development, refer to the official API documentatio
 
 - **CSS changes**: Trigger full page reload via custom HMR handler
 - **JS changes**: Trigger full page reload via custom HMR handler
-- **Template changes** (`.ut` files): **Require building a new package and installing it on the router**
+- **Template changes** (`.ut` files): Auto-synced to router via SCP and trigger full page reload (requires SSH setup, see below)
+
+### Template (`.ut`) Live Sync
+
+The `.ut` template files are rendered server-side on the OpenWrt device. To see template changes during development, the dev server can automatically sync modified `.ut` files to the router via SCP.
+
+**1. Set up SSH key authentication to your router:**
+
+```bash
+# Generate a key if you don't have one
+ssh-keygen -t ed25519
+
+# Copy your public key to the router (OpenWrt uses Dropbear, not OpenSSH)
+cat ~/.ssh/id_ed25519.pub | ssh root@192.168.1.1 "cat >> /etc/dropbear/authorized_keys"
+
+# Verify passwordless login works
+ssh root@192.168.1.1 "echo ok"
+```
+
+**2. Add SSH config to `.env`:**
+
+```bash
+# SSH target for .ut file sync (user@host)
+VITE_OPENWRT_SSH_HOST=root@192.168.1.1
+
+# Optional: path to SSH private key (falls back to ssh-agent or ~/.ssh/config)
+# VITE_OPENWRT_SSH_KEY=~/.ssh/id_ed25519
+```
+
+**3. Start `pnpm dev` and edit any `.ut` file** — the dev server will automatically sync it to the router and reload the browser.
+
+**Troubleshooting:**
+
+The dev server checks SSH connectivity on startup and prints actionable errors:
+
+- **Host key mismatch** (device was reflashed): Run `ssh-keygen -R <device-ip>`, then restart the dev server
+- **Authentication failed** (public key not on device): Copy your key with the command above
+- **Connection refused/timed out**: Check that the device is online and SSH is enabled
+
+If `VITE_OPENWRT_SSH_HOST` is not set, template sync is simply disabled and other dev features work normally.
 
 ## Building for Production
 
@@ -111,11 +152,9 @@ htdocs/luci-static/
 ├── aurora/
 │   ├── main.css           # Minified CSS (via lightningcss)
 │   ├── fonts/             # Web fonts (Lato)
-│   └── images/            # Logo assets
+│   └── images/            # Logo assets + PWA icons
 └── resources/
-    ├── menu-aurora.js     # Menu configuration (minified via Terser)
-    └── view/aurora/
-        └── sysauth.js     # Login page view (minified via Terser)
+    └── menu-aurora.js     # Menu configuration (minified via Terser)
 ```
 
 **Build Process:**
@@ -129,11 +168,24 @@ htdocs/luci-static/
 
 ### Via GitHub Actions
 
-1. Commit your changes to the repository
-2. Manually trigger the GitHub Actions workflow
-3. The workflow will compile the theme package (.ipk/.apk files)
+**Build frontend assets:**
 
-**Workflow File:** `.github/workflows/build-and-release-aurora.yml`
+1. Manually trigger the `frontend-assets-build` workflow
+2. It runs `pnpm build`, then auto-commits the output to `htdocs/` if anything changed
+
+**Build `.ipk`/`.apk` packages:**
+
+1. Push a version tag (`v*`) or push to `master` with `[build]` in the commit message
+2. The `build-theme-package` workflow compiles the OpenWrt package
+
+**PR checks:**
+
+Pull requests that touch `.dev/`, `htdocs/`, `ucode/`, or `root/` are automatically linted and build-verified by the `pr-check` workflow.
+
+**Workflow Files:** `.github/workflows/`
+- `frontend-assets-build.yml` — Build assets and auto-commit
+- `build-theme-package.yml` — Compile `.ipk`/`.apk` packages
+- `pr-check.yml` — Lint and build verification for PRs
 
 ## Directory Structure
 
@@ -145,7 +197,7 @@ luci-theme-aurora/
 │   │   └── DEVELOPMENT.md          # Development guide (this file)
 │   ├── public/aurora/              # Public static assets
 │   │   ├── fonts/                  # Web fonts (Lato)
-│   │   └── images/                 # Theme images
+│   │   └── images/                 # Theme images + PWA icons
 │   ├── scripts/                    # Build scripts
 │   │   └── clean.js                # Build cleanup utility
 │   ├── src/                        # Source code
@@ -153,7 +205,6 @@ luci-theme-aurora/
 │   │   ├── media/                  # CSS entry points
 │   │   │   └── main.css            # Main stylesheet (Tailwind CSS)
 │   │   └── resource/               # JavaScript resources
-│   │       ├── view/               # LuCI view components
 │   │       └── menu-aurora.js      # Menu logic
 │   ├── .env.example                # Environment variables template
 │   ├── .prettierrc                 # Prettier configuration
@@ -162,16 +213,16 @@ luci-theme-aurora/
 │   └── vite.config.ts              # Vite configuration with custom plugins
 ├── .github/                        # GitHub configuration
 │   ├── ISSUE_TEMPLATE/             # Issue templates
-│   └── workflows/                  # GitHub Actions workflows
+│   ├── workflows/                  # GitHub Actions workflows
+│   └── renovate.json               # Renovate dependency update config
 ├── .vscode/                        # VS Code workspace settings
 │   └── settings.json               # Auto-format on save settings
 ├── htdocs/luci-static/             # Build output (generated by Vite)
 │   ├── aurora/                     # Theme CSS and assets
 │   │   ├── fonts/                  # Built font files
-│   │   ├── images/                 # Built images
+│   │   ├── images/                 # Built images + PWA icons
 │   │   └── main.css                # Compiled CSS
 │   └── resources/                  # Built JavaScript modules
-│       ├── view/                   # Minified view components
 │       └── menu-aurora.js          # Minified menu logic
 ├── root/etc/uci-defaults/          # OpenWrt system integration
 │   └── 30_luci-theme-aurora        # Theme auto-setup script

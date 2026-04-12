@@ -4,10 +4,15 @@
  */
 
 import tailwindcss from "@tailwindcss/vite";
+import { exec } from "child_process";
+import { watch as fsWatch } from "fs";
 import { mkdir, readdir, readFile, writeFile } from "fs/promises";
-import { dirname, join, relative, resolve } from "path";
+import { basename, dirname, join, relative, resolve } from "path";
 import { minify as terserMinify } from "terser";
+import { promisify } from "util";
 import { defineConfig, loadEnv, Plugin, ResolvedConfig } from "vite";
+
+const execAsync = promisify(exec);
 
 const CURRENT_DIR = process.cwd();
 const PROJECT_ROOT = resolve(CURRENT_DIR, "..");
@@ -179,6 +184,109 @@ function createLocalServePlugin(): Plugin {
   };
 }
 
+const UT_TEMPLATE_DIR = resolve(PROJECT_ROOT, "ucode/template/themes/aurora");
+const UT_REMOTE_DIR = "/usr/share/ucode/luci/template/themes/aurora";
+
+interface ScpConfig {
+  host: string;
+  key?: string;
+}
+
+function buildSshArgs(cfg: ScpConfig): string {
+  const args = ["-o StrictHostKeyChecking=no", "-o UserKnownHostsFile=/dev/null"];
+  if (cfg.key) args.push(`-i "${cfg.key}"`);
+  return args.join(" ");
+}
+
+function buildScpCommand(localPath: string, remotePath: string, cfg: ScpConfig): string {
+  return `scp ${buildSshArgs(cfg)} "${localPath}" "${cfg.host}:${remotePath}"`;
+}
+
+function parseHost(sshHost: string): string {
+  const atIndex = sshHost.lastIndexOf("@");
+  return atIndex !== -1 ? sshHost.slice(atIndex + 1) : sshHost;
+}
+
+async function checkSshConnection(cfg: ScpConfig): Promise<boolean> {
+  const host = parseHost(cfg.host);
+
+  try {
+    await execAsync(`ssh ${buildSshArgs(cfg)} -o ConnectTimeout=5 "${cfg.host}" echo ok`);
+    console.log(`[UT Sync] SSH connection verified.`);
+    return true;
+  } catch (err: any) {
+    const stderr = err?.stderr || err?.message || "";
+
+    if (stderr.includes("Host key verification failed") || stderr.includes("REMOTE HOST IDENTIFICATION HAS CHANGED")) {
+      console.error(`\n[UT Sync] SSH host key mismatch for ${host}.`);
+      console.error(`[UT Sync] The device may have been reflashed. Run this to fix:\n`);
+      console.error(`  ssh-keygen -R ${host}\n`);
+      console.error(`[UT Sync] Then restart the dev server.\n`);
+    } else if (stderr.includes("Permission denied") || stderr.includes("Authentication failed")) {
+      console.error(`\n[UT Sync] SSH authentication failed for ${cfg.host}.`);
+      console.error(`[UT Sync] Copy your public key to the device:\n`);
+      console.error(`  cat ~/.ssh/id_ed25519.pub | ssh ${cfg.host} "cat >> /etc/dropbear/authorized_keys"\n`);
+    } else if (stderr.includes("Connection refused") || stderr.includes("Connection timed out") || stderr.includes("No route to host")) {
+      console.error(`\n[UT Sync] Cannot reach ${host}. Check that the device is online and SSH is enabled.\n`);
+    } else {
+      console.error(`\n[UT Sync] SSH connection failed: ${stderr}\n`);
+    }
+
+    return false;
+  }
+}
+
+function createUtSyncPlugin(cfg: ScpConfig): Plugin {
+  let syncing = false;
+  let connected = false;
+
+  return {
+    name: "ut-sync-plugin",
+    apply: "serve",
+
+    configureServer(server) {
+      if (!cfg.host) {
+        console.log("[UT Sync] Disabled: VITE_OPENWRT_SSH_HOST not set in .env");
+        return;
+      }
+
+      const authInfo = cfg.key ? `key (${cfg.key})` : "ssh-agent/config";
+      console.log(`[UT Sync] Watching ${UT_TEMPLATE_DIR}`);
+      console.log(`[UT Sync] Target: ${cfg.host}:${UT_REMOTE_DIR} (auth: ${authInfo})`);
+
+      checkSshConnection(cfg).then((ok) => {
+        if (!ok) return;
+        connected = true;
+
+        const watcher = fsWatch(UT_TEMPLATE_DIR, (eventType, filename) => {
+          if (!filename?.endsWith(".ut") || eventType !== "change") return;
+          if (syncing) return;
+
+          syncing = true;
+          const filePath = join(UT_TEMPLATE_DIR, filename);
+          const remotePath = `${UT_REMOTE_DIR}/${filename}`;
+          const cmd = buildScpCommand(filePath, remotePath, cfg);
+
+          console.log(`[UT Sync] Syncing ${filename} → ${cfg.host}:${remotePath}`);
+          execAsync(cmd)
+            .then(() => {
+              console.log(`[UT Sync] Done. Reloading browser.`);
+              server.ws.send({ type: "full-reload", path: "*" });
+            })
+            .catch((err: any) => {
+              console.error(`[UT Sync] Failed to sync ${filename}:`, err?.message);
+            })
+            .finally(() => {
+              syncing = false;
+            });
+        });
+
+        server.httpServer?.on("close", () => watcher.close());
+      });
+    },
+  };
+}
+
 function createRedirectPlugin(): Plugin {
   return {
     name: "redirect-plugin",
@@ -200,6 +308,8 @@ function createRedirectPlugin(): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, CURRENT_DIR, "");
   const OPENWRT_HOST = env.VITE_OPENWRT_HOST || "http://192.168.1.1:80";
+  const OPENWRT_SSH_HOST = env.VITE_OPENWRT_SSH_HOST || "";
+  const OPENWRT_SSH_KEY = env.VITE_OPENWRT_SSH_KEY || "";
   const DEV_HOST = env.VITE_DEV_HOST || "127.0.0.1";
   const DEV_PORT = Number(env.VITE_DEV_PORT) || 5173;
 
@@ -256,6 +366,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       createRedirectPlugin(),
       createLocalServePlugin(),
+      createUtSyncPlugin({ host: OPENWRT_SSH_HOST, key: OPENWRT_SSH_KEY }),
       createLuciJsCompressPlugin(),
     ],
 
