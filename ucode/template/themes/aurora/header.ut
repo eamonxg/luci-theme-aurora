@@ -96,10 +96,26 @@
 				if (theme === 'device') setTheme('device'), syncSwitchers();
 			});
 
+			const themeOrder = ['device', 'light', 'dark'];
+			const cycleTheme = () => {
+				const cur = localStorage.getItem('aurora.theme') || 'device';
+				const next = themeOrder[(themeOrder.indexOf(cur) + 1) % themeOrder.length];
+				setTheme(next);
+				syncSwitchers();
+			};
+
 			document.addEventListener('DOMContentLoaded', () => {
 				syncSwitchers();
 				document.querySelectorAll('.theme-switcher .theme-option').forEach(opt => {
-					opt.addEventListener('click', () => (setTheme(opt.dataset.theme), syncSwitchers()));
+					opt.addEventListener('click', () => {
+						const inSidebar = opt.closest('.sidebar-footer');
+						if (inSidebar && document.body.dataset.sidebar === 'collapsed') {
+							cycleTheme();
+						} else {
+							setTheme(opt.dataset.theme);
+							syncSwitchers();
+						}
+					});
 				});
 
 				const toolbarToggle = document.getElementById('toolbar-toggle');

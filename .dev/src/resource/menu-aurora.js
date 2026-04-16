@@ -467,7 +467,9 @@ return baseclass.extend({
       : document.body.dataset.sidebar === "expanded";
 
     toggle.innerHTML = "";
-    toggle.appendChild(injectSvg(open ? "panel-left-close" : "panel-left-open"));
+    toggle.appendChild(
+      injectSvg(open ? "panel-left-close" : "panel-left-open"),
+    );
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
   },
 

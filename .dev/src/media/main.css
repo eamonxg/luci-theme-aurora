@@ -250,7 +250,15 @@
     src: url("./fonts/lato-v24-latin-regular.woff2") format("woff2");
   }
 
-  *:not(html) {
+  .sidebar-menu,
+  .drawer-menu,
+  .topbar-overflow,
+  .aurora-drawer,
+  pre,
+  textarea,
+  #maincontent,
+  [style*="overflow"],
+  .cbi-value-field {
     @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-transparent scrollbar-thumb-foreground/70;
   }
 
@@ -522,6 +530,9 @@
 
       & .sidebar-footer {
         @apply border-sidebar-border mt-auto flex shrink-0 flex-col gap-1 border-t p-2;
+        body[data-sidebar="collapsed"] & {
+          @apply items-center px-0;
+        }
       }
 
       & .sidebar-letter-icon {
@@ -716,7 +727,7 @@
       & .layout-toggle {
         @apply text-muted-foreground hover:text-foreground hover:bg-sidebar-accent flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent transition-colors duration-120;
         & svg {
-          @apply size-4;
+          @apply size-[18px];
         }
         &:focus-visible {
           @apply ring-2 outline-none;
@@ -776,7 +787,7 @@
       @apply max-w-max-width mx-auto min-h-[calc(100vh-4rem)] w-23/24 px-4 max-md:w-full max-md:px-3;
 
       #view {
-        @apply md:border-border/30 md:bg-page-bg md:hover:border-border/50 mx-0 w-full p-0 shadow-none transition-all duration-300 empty:hidden md:rounded-4xl md:border md:p-6 md:shadow-xl md:hover:shadow-2xl;
+        @apply md:border-border/30 md:bg-page-bg md:hover:border-border/50 mx-0 w-full p-0 shadow-none transition-[border-color,box-shadow] duration-300 empty:hidden md:rounded-4xl md:border md:p-6 md:shadow-xl md:hover:shadow-2xl;
 
         .cbi-title-section {
           @apply mb-6 leading-relaxed max-md:mx-2 max-md:mb-3;
@@ -884,68 +895,63 @@
 
   @layer switcher {
     .theme-switcher {
-      @apply bg-page-bg relative inline-flex items-center gap-0 rounded-full shadow-sm backdrop-blur-sm transition-all duration-300 max-md:py-0.5;
-      @apply border-border/70 border;
-      @apply before:bg-border/50 before:ring-border/60 before:absolute before:top-1 before:left-1 before:z-0 before:h-[calc(100%-0.5rem)] before:w-[calc(33.333%-0.5rem)] before:rounded-full before:shadow-md before:ring-1 before:transition-all before:duration-300;
+      @apply relative inline-flex items-center gap-0.5 rounded-full p-[3px];
+      @apply border-border/60 bg-sidebar-bg border;
 
       footer & {
         @apply max-md:hidden;
       }
 
       & .theme-option {
-        @apply relative z-10 flex cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-300 hover:scale-105 active:scale-95;
+        @apply relative z-10 flex size-7 cursor-pointer items-center justify-center rounded-full transition-[background-color,color] duration-200;
 
         & input[type="radio"] {
           @apply sr-only;
         }
 
         & .theme-icon {
-          @apply text-muted-foreground flex items-center justify-center transition-all duration-300;
+          @apply text-muted-foreground flex items-center justify-center transition-colors duration-200;
 
           & svg {
-            @apply size-4 transition-transform duration-300;
+            @apply size-[14px];
           }
         }
 
         & .theme-label {
-          @apply text-muted-foreground hidden text-xs font-medium transition-colors duration-300;
+          @apply hidden;
         }
 
         &.active {
+          @apply bg-border/50 shadow-sm;
+
           & .theme-icon {
-            @apply text-foreground;
-
-            & svg {
-              @apply scale-110;
-            }
-          }
-
-          & .theme-label {
             @apply text-foreground;
           }
         }
 
         &:hover:not(.active) {
-          & .theme-icon {
-            @apply text-foreground;
-          }
+          @apply bg-border/30;
 
-          & .theme-label {
+          & .theme-icon {
             @apply text-foreground;
           }
         }
       }
 
-      &:has(.theme-option[data-theme="device"].active) {
-        @apply before:translate-x-0;
-      }
+      body[data-sidebar="collapsed"] .sidebar-footer & {
+        @apply justify-center gap-0 border-transparent bg-transparent p-0;
 
-      &:has(.theme-option[data-theme="light"].active) {
-        @apply before:translate-x-[calc(100%+0.5rem)];
-      }
+        & .theme-option {
+          @apply hidden;
+        }
 
-      &:has(.theme-option[data-theme="dark"].active) {
-        @apply before:translate-x-[calc(200%+1rem)];
+        & .theme-option.active {
+          @apply flex bg-transparent shadow-none;
+
+          &:hover {
+            @apply bg-sidebar-accent;
+          }
+        }
       }
     }
   }
@@ -963,7 +969,7 @@
       }
 
       .toolbar-btn {
-        @apply flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full p-2 transition-all duration-300 ease-in-out active:scale-95 max-md:h-9 max-md:w-9 max-md:p-1.5;
+        @apply flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full p-2 transition-[background-color,transform,opacity] duration-300 ease-in-out active:scale-95 max-md:h-9 max-md:w-9 max-md:p-1.5;
 
         .icon {
           @apply h-5 w-5 shrink-0 transition-all duration-300 ease-in-out max-md:h-4 max-md:w-4;
