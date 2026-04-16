@@ -34,6 +34,8 @@
 				</div>
 			</footer>
 		</div>
+		</div>
+		</div>
 		<script>L.require('menu-aurora')</script>
 		{% endif %}
 	</body>

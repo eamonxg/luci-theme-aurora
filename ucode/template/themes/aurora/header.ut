@@ -16,7 +16,7 @@
 	const boardinfo = ubus.call('system', 'board');
 	const uci = cursor();
 	const tokens = uci.get_all('aurora', 'theme') || {};
-	const nav_submenu_type = tokens.nav_submenu_type || 'mega-menu';
+	const nav_default_sidebar = tokens.nav_default_sidebar || 'expanded';
 	const toolbar_enabled = tokens.toolbar_enabled ? tokens.toolbar_enabled == '1' : true;
 	const icon_cache_version = tokens.icon_cache_version || '0';
 	const logo_svg = tokens.logo_svg || 'logo.svg';
@@ -75,6 +75,21 @@
 			};
 
 			setTheme(localStorage.getItem('aurora.theme'));
+
+			(function() {
+				const isWide = window.innerWidth >= 900;
+				const uciDefault = '{{ nav_default_sidebar }}';
+				const stored = isWide ? localStorage.getItem('aurora.sidebar') : null;
+				const state = stored || uciDefault || 'expanded';
+				document.documentElement.style.setProperty('--sidebar-w', state === 'expanded' ? '16rem' : '3.5rem');
+				document.addEventListener('DOMContentLoaded', () => {
+					document.body.dataset.sidebar = isWide ? state : 'collapsed';
+					document.body.dataset.topbar = 'false';
+					document.body.dataset.topbarPreview = 'false';
+					document.body.dataset.mobileDrawer = 'closed';
+					document.body.dataset.scrolled = 'false';
+				});
+			})();
 
 			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
 				const theme = localStorage.getItem('aurora.theme') || 'device';
@@ -142,69 +157,90 @@
 		<script src="{{ resource }}/cbi.js"></script>
 	</head>
 
-	<body class="lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}" data-nav-type="{{ nav_submenu_type }}">
+	<body class="lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}">
 		{% if (!blank_page): %}
+		<div class="aurora-shell">
+
+		<aside id="aurora-sidebar" class="aurora-sidebar" aria-label="Main navigation">
+			<div class="sidebar-header">
+				<a class="sidebar-brand" href="/" aria-label="{{ striptags(boardinfo.hostname ?? '?') }}">
+					<span class="sidebar-logo">
+						<img src="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" alt="" />
+					</span>
+					<span class="sidebar-brand-text">{{ striptags(boardinfo.hostname ?? '?') }}</span>
+				</a>
+			</div>
+			<nav class="sidebar-menu-wrap" style="position:relative;flex:1;display:flex;flex-direction:column;overflow:hidden">
+				<div class="sidebar-indicator" aria-hidden="true"></div>
+				<ul class="sidebar-menu" id="sidebar-menu"></ul>
+			</nav>
+			<div class="sidebar-footer">
+				<div class="theme-switcher">
+					<label class="theme-option active" data-theme="device">
+						<input type="radio" name="sidebar-theme" value="device" checked>
+						<span class="theme-icon">
+							<svg height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.5 3.25C0.5 1.45507 1.95507 0 3.75 0H8.25C10.0449 0 11.5 1.45507 11.5 3.25V11.25V12H10.75H1.25H0.5V11.25V3.25ZM3.75 1.5C2.7835 1.5 2 2.2835 2 3.25V10.5H10V3.25C10 2.2835 9.2165 1.5 8.25 1.5H3.75ZM3 3.5C3 2.94772 3.44772 2.5 4 2.5H8C8.55228 2.5 9 2.94772 9 3.5V7H3V3.5ZM6.5 9.5H9V8H6.5V9.5Z" fill="currentColor" transform="translate(2.5, 2)"></path></svg>
+						</span>
+					</label>
+					<label class="theme-option" data-theme="light">
+						<input type="radio" name="sidebar-theme" value="light">
+						<span class="theme-icon">
+							<svg height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.75 1V0.25H6.25V1V1.25V2H7.75V1.25V1ZM7 9C8.10457 9 9 8.10457 9 7C9 5.89543 8.10457 5 7 5C5.89543 5 5 5.89543 5 7C5 8.10457 5.89543 9 7 9ZM7 10.5C8.933 10.5 10.5 8.933 10.5 7C10.5 5.067 8.933 3.5 7 3.5C5.067 3.5 3.5 5.067 3.5 7C3.5 8.933 5.067 10.5 7 10.5ZM7.75 12V12.75V13V13.75H6.25V13V12.75V12H7.75ZM12 6.25H12.75H13H13.75V7.75H13H12.75H12V6.25ZM1 6.25H0.25V7.75H1H1.25H2V6.25H1.25H1ZM10.0052 2.93414L10.5355 2.40381L10.7123 2.22703L11.2426 1.6967L12.3033 2.75736L11.773 3.28769L11.5962 3.46447L11.0659 3.9948L10.0052 2.93414ZM2.22703 10.7123L1.6967 11.2426L2.75736 12.3033L3.28769 11.773L3.46447 11.5962L3.9948 11.0659L2.93414 10.0052L2.40381 10.5355L2.22703 10.7123ZM2.93414 3.9948L2.40381 3.46447L2.22703 3.28769L1.6967 2.75736L2.75736 1.6967L3.28769 2.22703L3.46447 2.40381L3.9948 2.93414L2.93414 3.9948ZM10.7123 11.773L11.2426 12.3033L12.3033 11.2426L11.773 10.7123L11.5962 10.5355L11.0659 10.0052L10.0052 11.0659L10.5355 11.5962L10.7123 11.773Z" fill="currentColor" transform="translate(1.25, 1.25)"></path></svg>
+						</span>
+					</label>
+					<label class="theme-option" data-theme="dark">
+						<input type="radio" name="sidebar-theme" value="dark">
+						<span class="theme-icon">
+							<svg height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 0.25V1V1.5H11L11.75 1.5V3H11H10.5V3.5V4.25H9V3.5V3H8.5H7.75V1.5H8.5H9V1V0.25H10.5ZM3.25514 2.75496C2.33413 3.53491 1.75 4.69972 1.75 6C1.75 8.34721 3.65279 10.25 6 10.25C7.30029 10.25 8.4651 9.66587 9.24505 8.74485C9.16377 8.74827 9.08207 8.74999 9 8.74999C5.82436 8.74999 3.25 6.17563 3.25 2.99999C3.25 2.91792 3.25172 2.83623 3.25514 2.75496ZM0.25 6C0.25 3.51072 1.83142 1.39271 4.042 0.592193L5.00256 1.55275C4.83933 2.00347 4.75 2.49047 4.75 2.99999C4.75 5.3472 6.65279 7.24999 9 7.24999C9.50953 7.24999 9.99653 7.16065 10.4473 6.99743L11.4078 7.95798C10.6073 10.1686 8.48929 11.75 6 11.75C2.82436 11.75 0.25 9.17564 0.25 6Z" fill="currentColor" transform="translate(2.25, 2.25)"></path></svg>
+						</span>
+					</label>
+				</div>
+			</div>
+		</aside>
+
+		<div class="aurora-main">
+
 		<header>
 			<div class="header-content">
+				<button id="sidebar-toggle" class="layout-toggle" type="button" aria-label="{{ _('Toggle sidebar') }}"></button>
 				<a class="brand" href="/">{{ striptags(boardinfo.hostname ?? '?') }}</a>
-				<ul class="nav" id="topmenu" style="display:none"></ul>
-				<div class="mobile-controls">
-					<div class="mobile-menu-toggle" id="mobile-menu-btn" title="{{ _('Menu') }}">
-						<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-							<path d="M195.75 162H767.25C771.41 161.987 775.532 162.99 779.38 164.954C783.227 166.917 786.726 169.802 789.674 173.442C792.623 177.083 794.964 181.409 796.564 186.172C798.164 190.935 798.992 196.043 799 201.204V208.667C798.992 213.333 798.164 218 796.564 222.667C794.964 227.333 792.623 231.067 789.674 234.707C786.726 238.347 783.227 241.24 779.38 243.2C775.532 245.16 771.41 246 767.25 246H195.75C191.59 246 187.468 245.16 183.62 243.2C179.773 241.24 176.275 238.347 173.326 234.707C170.378 231.067 168.036 227.333 166.436 222.667C164.836 218 164.008 213.333 164 208.667V201.204C164.008 196.043 164.836 190.935 166.436 186.172C168.036 181.409 170.378 177.083 173.326 173.442C176.275 169.802 179.773 166.917 183.62 164.954C187.468 162.99 191.59 161.987 195.75 162Z" fill="currentColor"/>
-							<path d="M354.733 458H767.267C771.424 457.987 775.544 459.001 779.39 460.987C783.235 462.972 786.732 465.888 789.679 469.57C792.626 473.25 794.966 477.624 796.565 482.441C798.164 487.256 798.992 492.421 799 497.639V504.252C798.992 508.971 798.164 513.689 796.565 518.408C794.966 523.126 792.626 526.901 789.679 530.581C786.732 534.262 783.235 537.187 779.39 539.169C775.544 541.151 771.424 542 767.267 542H354.733C350.577 542 346.459 541.151 342.615 539.169C338.771 537.187 335.276 534.262 332.328 530.581C329.382 526.901 327.041 523.126 325.441 518.408C323.841 513.689 323.011 508.971 323 504.252V497.639C323.008 492.421 323.836 487.256 325.435 482.441C327.034 477.624 329.375 473.25 332.321 469.57C335.269 465.888 338.765 462.972 342.61 460.987C346.456 459.001 350.576 457.987 354.733 458Z" fill="currentColor"/>
-							<path d="M195.75 758H767.25C771.41 758 775.534 758.933 779.381 760.941C783.229 762.907 786.727 765.793 789.675 769.436C792.624 773.079 794.964 777.407 796.564 782.171C798.164 786.936 798.992 792.045 799 797.207V804.667C798.989 809.333 798.16 814 796.558 818.667C794.957 823.333 792.615 827.067 789.667 830.707C786.718 834.347 783.221 837.24 779.375 839.2C775.529 841.067 771.409 842 767.25 842H195.75C191.59 842 187.468 841.067 183.62 839.2C179.773 837.24 176.275 834.347 173.326 830.707C170.378 827.067 168.036 823.333 166.436 818.667C164.836 814 164.008 809.333 164 804.667V797.207C164.008 792.047 164.836 786.939 166.436 782.175C168.036 777.411 170.378 773.086 173.326 769.445C176.275 765.805 179.773 762.921 183.62 760.957C187.468 758.994 191.59 758 195.75 758Z" fill="currentColor"/>
-						</svg>
-					</div>
-				</div>
+				<div id="aurora-topbar" class="aurora-topbar" role="navigation" aria-label="Sub navigation"></div>
 				<div id="indicators" class="pull-right"></div>
-		</div>
-
-		{% if (nav_submenu_type == 'mega-menu'): %}
-			<div class="desktop-menu-container"></div>
+			</div>
 		</header>
 
-		<div class="desktop-menu-overlay"></div>
-		{% else %}
-		</header>
-		{% endif %}
-
-		<div class="mobile-menu-overlay" id="mobile-menu-overlay">
-			<nav class="mobile-nav">
-				<div class="mobile-nav-header">
-					<div class="theme-switcher mobile">
-						<label class="theme-option active" data-theme="device">
-							<input type="radio" name="mobile-theme" value="device" checked>
-							<span class="theme-icon">
-								<svg height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.5 3.25C0.5 1.45507 1.95507 0 3.75 0H8.25C10.0449 0 11.5 1.45507 11.5 3.25V11.25V12H10.75H1.25H0.5V11.25V3.25ZM3.75 1.5C2.7835 1.5 2 2.2835 2 3.25V10.5H10V3.25C10 2.2835 9.2165 1.5 8.25 1.5H3.75ZM3 3.5C3 2.94772 3.44772 2.5 4 2.5H8C8.55228 2.5 9 2.94772 9 3.5V7H3V3.5ZM6.5 9.5H9V8H6.5V9.5Z" fill="currentColor" transform="translate(2.5, 2)"></path></svg>
-							</span>
-						</label>
-						<label class="theme-option" data-theme="light">
-							<input type="radio" name="mobile-theme" value="light">
-							<span class="theme-icon">
-								<svg height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.75 1V0.25H6.25V1V1.25V2H7.75V1.25V1ZM7 9C8.10457 9 9 8.10457 9 7C9 5.89543 8.10457 5 7 5C5.89543 5 5 5.89543 5 7C5 8.10457 5.89543 9 7 9ZM7 10.5C8.933 10.5 10.5 8.933 10.5 7C10.5 5.067 8.933 3.5 7 3.5C5.067 3.5 3.5 5.067 3.5 7C3.5 8.933 5.067 10.5 7 10.5ZM7.75 12V12.75V13V13.75H6.25V13V12.75V12H7.75ZM12 6.25H12.75H13H13.75V7.75H13H12.75H12V6.25ZM1 6.25H0.25V7.75H1H1.25H2V6.25H1.25H1ZM10.0052 2.93414L10.5355 2.40381L10.7123 2.22703L11.2426 1.6967L12.3033 2.75736L11.773 3.28769L11.5962 3.46447L11.0659 3.9948L10.0052 2.93414ZM2.22703 10.7123L1.6967 11.2426L2.75736 12.3033L3.28769 11.773L3.46447 11.5962L3.9948 11.0659L2.93414 10.0052L2.40381 10.5355L2.22703 10.7123ZM2.93414 3.9948L2.40381 3.46447L2.22703 3.28769L1.6967 2.75736L2.75736 1.6967L3.28769 2.22703L3.46447 2.40381L3.9948 2.93414L2.93414 3.9948ZM10.7123 11.773L11.2426 12.3033L12.3033 11.2426L11.773 10.7123L11.5962 10.5355L11.0659 10.0052L10.0052 11.0659L10.5355 11.5962L10.7123 11.773Z" fill="currentColor" transform="translate(1.25, 1.25)"></path></svg>
-							</span>
-						</label>
-						<label class="theme-option" data-theme="dark">
-							<input type="radio" name="mobile-theme" value="dark">
-							<span class="theme-icon">
-								<svg height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 0.25V1V1.5H11L11.75 1.5V3H11H10.5V3.5V4.25H9V3.5V3H8.5H7.75V1.5H8.5H9V1V0.25H10.5ZM3.25514 2.75496C2.33413 3.53491 1.75 4.69972 1.75 6C1.75 8.34721 3.65279 10.25 6 10.25C7.30029 10.25 8.4651 9.66587 9.24505 8.74485C9.16377 8.74827 9.08207 8.74999 9 8.74999C5.82436 8.74999 3.25 6.17563 3.25 2.99999C3.25 2.91792 3.25172 2.83623 3.25514 2.75496ZM0.25 6C0.25 3.51072 1.83142 1.39271 4.042 0.592193L5.00256 1.55275C4.83933 2.00347 4.75 2.49047 4.75 2.99999C4.75 5.3472 6.65279 7.24999 9 7.24999C9.50953 7.24999 9.99653 7.16065 10.4473 6.99743L11.4078 7.95798C10.6073 10.1686 8.48929 11.75 6 11.75C2.82436 11.75 0.25 9.17564 0.25 6Z" fill="currentColor" transform="translate(2.25, 2.25)"></path></svg>
-							</span>
-						</label>
-					</div>
-					<div class="mobile-nav-close" id="mobile-nav-close">
-						<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-							<path d="M788.425 758H210.575C193.137 758 179 774.691 179 795.281V804.719C179 825.309 193.137 842 210.575 842H788.425C805.863 842 820 825.309 820 804.719V795.281C820 774.691 805.863 758 788.425 758Z" fill="currentColor"/>
-							<path d="M474.439 458H210.561C193.131 458 179 474.552 179 494.969V505.031C179 525.448 193.131 542 210.561 542H474.439C491.869 542 506 525.448 506 505.031V494.969C506 474.552 491.869 458 474.439 458Z" fill="currentColor"/>
-							<path d="M474.439 162H210.561C193.131 162 179 178.529 179 198.918V209.082C179 229.471 193.131 246 210.561 246H474.439C491.869 246 506 229.471 506 209.082V198.918C506 178.529 491.869 162 474.439 162Z" fill="currentColor"/>
-							<path d="M869.193 312.212L713.513 135.652C695.095 114.783 665.231 114.783 646.813 135.652C628.396 156.521 628.396 190.413 646.813 211.282L769.096 350L646.813 488.718C628.396 509.64 628.396 543.479 646.813 564.348C665.231 585.217 695.095 585.217 713.513 564.348L869.145 387.842C887.61 366.973 887.61 333.081 869.193 312.212Z" fill="currentColor"/>
-						</svg>
-					</div>
+		<div class="aurora-drawer-mask" id="aurora-drawer-mask"></div>
+		<aside id="aurora-drawer" class="aurora-drawer" aria-label="Mobile navigation">
+			<div class="drawer-header">
+				<a class="drawer-brand" href="/">{{ striptags(boardinfo.hostname ?? '?') }}</a>
+				<button class="drawer-close" id="aurora-drawer-close" type="button" aria-label="{{ _('Close menu') }}">
+					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+				</button>
+			</div>
+			<ul class="drawer-menu" id="drawer-menu"></ul>
+			<div class="drawer-footer">
+				<div class="theme-switcher mobile">
+					<label class="theme-option active" data-theme="device">
+						<input type="radio" name="mobile-theme" value="device" checked>
+						<span class="theme-icon">
+							<svg height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.5 3.25C0.5 1.45507 1.95507 0 3.75 0H8.25C10.0449 0 11.5 1.45507 11.5 3.25V11.25V12H10.75H1.25H0.5V11.25V3.25ZM3.75 1.5C2.7835 1.5 2 2.2835 2 3.25V10.5H10V3.25C10 2.2835 9.2165 1.5 8.25 1.5H3.75ZM3 3.5C3 2.94772 3.44772 2.5 4 2.5H8C8.55228 2.5 9 2.94772 9 3.5V7H3V3.5ZM6.5 9.5H9V8H6.5V9.5Z" fill="currentColor" transform="translate(2.5, 2)"></path></svg>
+						</span>
+					</label>
+					<label class="theme-option" data-theme="light">
+						<input type="radio" name="mobile-theme" value="light">
+						<span class="theme-icon">
+							<svg height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.75 1V0.25H6.25V1V1.25V2H7.75V1.25V1ZM7 9C8.10457 9 9 8.10457 9 7C9 5.89543 8.10457 5 7 5C5.89543 5 5 5.89543 5 7C5 8.10457 5.89543 9 7 9ZM7 10.5C8.933 10.5 10.5 8.933 10.5 7C10.5 5.067 8.933 3.5 7 3.5C5.067 3.5 3.5 5.067 3.5 7C3.5 8.933 5.067 10.5 7 10.5ZM7.75 12V12.75V13V13.75H6.25V13V12.75V12H7.75ZM12 6.25H12.75H13H13.75V7.75H13H12.75H12V6.25ZM1 6.25H0.25V7.75H1H1.25H2V6.25H1.25H1ZM10.0052 2.93414L10.5355 2.40381L10.7123 2.22703L11.2426 1.6967L12.3033 2.75736L11.773 3.28769L11.5962 3.46447L11.0659 3.9948L10.0052 2.93414ZM2.22703 10.7123L1.6967 11.2426L2.75736 12.3033L3.28769 11.773L3.46447 11.5962L3.9948 11.0659L2.93414 10.0052L2.40381 10.5355L2.22703 10.7123ZM2.93414 3.9948L2.40381 3.46447L2.22703 3.28769L1.6967 2.75736L2.75736 1.6967L3.28769 2.22703L3.46447 2.40381L3.9948 2.93414L2.93414 3.9948ZM10.7123 11.773L11.2426 12.3033L12.3033 11.2426L11.773 10.7123L11.5962 10.5355L11.0659 10.0052L10.0052 11.0659L10.5355 11.5962L10.7123 11.773Z" fill="currentColor" transform="translate(1.25, 1.25)"></path></svg>
+						</span>
+					</label>
+					<label class="theme-option" data-theme="dark">
+						<input type="radio" name="mobile-theme" value="dark">
+						<span class="theme-icon">
+							<svg height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 0.25V1V1.5H11L11.75 1.5V3H11H10.5V3.5V4.25H9V3.5V3H8.5H7.75V1.5H8.5H9V1V0.25H10.5ZM3.25514 2.75496C2.33413 3.53491 1.75 4.69972 1.75 6C1.75 8.34721 3.65279 10.25 6 10.25C7.30029 10.25 8.4651 9.66587 9.24505 8.74485C9.16377 8.74827 9.08207 8.74999 9 8.74999C5.82436 8.74999 3.25 6.17563 3.25 2.99999C3.25 2.91792 3.25172 2.83623 3.25514 2.75496ZM0.25 6C0.25 3.51072 1.83142 1.39271 4.042 0.592193L5.00256 1.55275C4.83933 2.00347 4.75 2.49047 4.75 2.99999C4.75 5.3472 6.65279 7.24999 9 7.24999C9.50953 7.24999 9.99653 7.16065 10.4473 6.99743L11.4078 7.95798C10.6073 10.1686 8.48929 11.75 6 11.75C2.82436 11.75 0.25 9.17564 0.25 6Z" fill="currentColor" transform="translate(2.25, 2.25)"></path></svg>
+						</span>
+					</label>
 				</div>
-				<ul class="mobile-nav-list" id="mobile-nav-list">
-				</ul>
-			</nav>
-		</div>
+			</div>
+		</aside>
 
 		{% if (toolbar_enabled): %}
 		<div id="floating-toolbar" class="floating-toolbar">
@@ -218,7 +254,7 @@
             		{% endfor %}
         		</div>
     		</div>
-    
+
 			<button class="toolbar-btn toggle" id="toolbar-toggle" title="{{ _('Toggle floating buttons') }}" aria-label="{{ _('Toggle floating buttons') }}">
 				<span class="icon">
 					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
