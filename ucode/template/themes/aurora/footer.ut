@@ -1,3 +1,11 @@
+{%
+	import { cursor } from 'uci';
+
+	const uci = cursor();
+	const tokens = uci.get_all('aurora', 'theme') || {};
+	const nav_layout = tokens.nav_layout == 'sidebar' ? 'sidebar' : 'topbar';
+-%}
+
 		{% if (!blank_page): %}
 			<footer>
 				<span>
@@ -11,6 +19,7 @@
 						/ {{ _('Lua compatibility mode active') }}
 					{% endif %}
 				</span>
+				{% if (nav_layout == 'topbar'): %}
 				<ul class="breadcrumb pull-right" id="modemenu" style="display:none"></ul>
 				<div class="theme-switcher">
 					<label class="theme-option active" data-theme="device">
@@ -32,7 +41,11 @@
 						</span>
 					</label>
 				</div>
+				{% endif %}
 			</footer>
+			{% if (nav_layout == 'sidebar'): %}
+			</div>
+			{% endif %}
 		</div>
 		<script>L.require('menu-aurora')</script>
 		{% endif %}

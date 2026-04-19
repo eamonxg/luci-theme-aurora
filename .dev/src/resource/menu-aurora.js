@@ -5,8 +5,20 @@
 return baseclass.extend({
   __init__() {
     ui.menu.load().then((tree) => this.render(tree));
-    this.initMobileMenu();
+
+    if (this.getNavLayout() === "sidebar") {
+      this.initSidebarToggle();
+    } else {
+      this.initMobileMenu();
+    }
+
     this.initUciIndicator();
+  },
+
+  getNavLayout() {
+    return document.body?.dataset?.navLayout === "sidebar"
+      ? "sidebar"
+      : "topbar";
   },
 
   initUciIndicator() {
@@ -19,6 +31,48 @@ return baseclass.extend({
         .querySelector('[data-indicator="uci-changes"]')
         ?.setAttribute("data-count", n || 0);
     };
+  },
+
+  initSidebarToggle() {
+    const sidebar = document.querySelector("#sidebar");
+    const overlay = document.querySelector("#sidebar-overlay");
+    const toggleBtn = document.querySelector("#sidebar-toggle");
+    const closeBtn = document.querySelector("#sidebar-close");
+
+    if (!sidebar || !overlay) return;
+
+    const openSidebar = () => {
+      sidebar.classList.add("sidebar-open");
+      overlay.classList.add("active");
+      document.body.style.overflow = "hidden";
+    };
+
+    const closeSidebar = () => {
+      sidebar.classList.remove("sidebar-open");
+      overlay.classList.remove("active");
+      document.body.style.overflow = "";
+    };
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        sidebar.classList.contains("sidebar-open")
+          ? closeSidebar()
+          : openSidebar();
+      });
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeSidebar);
+    }
+
+    overlay.addEventListener("click", closeSidebar);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && sidebar.classList.contains("sidebar-open")) {
+        closeSidebar();
+      }
+    });
   },
 
   initMobileMenu() {
@@ -103,6 +157,251 @@ return baseclass.extend({
     });
   },
 
+  createSidebarIcon(name) {
+    const iconPaths = {
+      status: [
+        "M4 5h6v6H4z",
+        "M14 5h6v6h-6z",
+        "M4 15h6v4H4z",
+        "M14 15h6v4h-6z",
+      ],
+      system: [
+        "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z",
+        "M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.08a1.7 1.7 0 0 0-1.04-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.08A1.7 1.7 0 0 0 4.6 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.08A1.7 1.7 0 0 0 15.04 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.2.57.75.96 1.36.96H21a2 2 0 0 1 0 4h-.08A1.7 1.7 0 0 0 19.4 15Z",
+      ],
+      services: [
+        "M4 7h10",
+        "M18 7h2",
+        "M4 17h2",
+        "M10 17h10",
+        "M14 7a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z",
+        "M6 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z",
+      ],
+      network: [
+        "M12 4v5",
+        "M6 20v-4",
+        "M18 20v-4",
+        "M6 16h12",
+        "M12 9 6 16",
+        "M12 9l6 7",
+        "M9 4a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z",
+        "M3 20a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z",
+        "M15 20a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z",
+      ],
+      vpn: [
+        "M12 3 20 7v5c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V7z",
+        "M9.5 12.5 11 14l4-4",
+      ],
+      nas: [
+        "M5 6c0-1.66 3.13-3 7-3s7 1.34 7 3-3.13 3-7 3-7-1.34-7-3Z",
+        "M5 6v6c0 1.66 3.13 3 7 3s7-1.34 7-3V6",
+        "M5 12v6c0 1.66 3.13 3 7 3s7-1.34 7-3v-6",
+      ],
+      statistics: ["M4 19V5", "M4 19h16", "M8 16v-5", "M12 16V8", "M16 16v-8"],
+      admin: ["M7 11V8a5 5 0 0 1 10 0v3", "M6 11h12v10H6z"],
+    };
+
+    const paths = iconPaths[name] || [
+      "M12 5v14",
+      "M5 12h14",
+      "M5.64 5.64 18.36 18.36",
+      "M18.36 5.64 5.64 18.36",
+    ];
+
+    return E("span", { class: "sidebar-icon", "aria-hidden": "true" }, [
+      E(
+        "svg",
+        {
+          viewBox: "0 0 24 24",
+          fill: "none",
+          stroke: "currentColor",
+          "stroke-width": "1.7",
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          xmlns: "http://www.w3.org/2000/svg",
+        },
+        paths.map((d) => E("path", { d })),
+      ),
+    ]);
+  },
+
+  render(tree) {
+    if (this.getNavLayout() === "sidebar") {
+      this.renderSidebarModeMenu(tree);
+    } else {
+      this.renderTopbarModeMenu(tree);
+    }
+
+    if (L.env.dispatchpath.length >= 3) {
+      let node = tree;
+      let url = "";
+
+      for (let i = 0; i < 3 && node; i++) {
+        const segment = L.env.dispatchpath[i];
+        node = node.children?.[segment];
+        url += (url ? "/" : "") + segment;
+      }
+
+      if (node) this.renderTabMenu(node, url);
+    }
+  },
+
+  renderTabMenu(tree, url, level = 0) {
+    const container = document.querySelector("#tabmenu");
+    if (!container) return E([]);
+    if (level === 0) {
+      container.innerHTML = "";
+      container.style.display = "none";
+    }
+
+    const ul = E("ul", { class: "tabs" });
+    const children = ui.menu.getChildren(tree);
+    let activeNode = null;
+
+    children.forEach((child) => {
+      const isActive = L.env.dispatchpath[3 + level] === child.name;
+
+      ul.appendChild(
+        E(
+          "li",
+          {
+            class: `tabmenu-item-${child.name}${isActive ? " active" : ""}`,
+          },
+          [E("a", { href: L.url(url, child.name) }, [_(child.title)])],
+        ),
+      );
+
+      if (isActive) activeNode = child;
+    });
+
+    if (!ul.children.length) return E([]);
+
+    container.appendChild(ul);
+    container.style.display = "";
+
+    if (activeNode) {
+      this.renderTabMenu(activeNode, `${url}/${activeNode.name}`, level + 1);
+    }
+
+    return ul;
+  },
+
+  renderSidebarMenu(tree, url) {
+    const ul = document.querySelector("#topmenu");
+    if (!ul) return;
+
+    const children = ui.menu.getChildren(tree);
+    if (!children.length) return;
+
+    ul.innerHTML = "";
+
+    children.forEach((child) => {
+      const submenu = ui.menu.getChildren(child);
+      const hasChildren = submenu.length > 0;
+      const isActiveSect =
+        L.env.dispatchpath.length > 1 && L.env.dispatchpath[1] === child.name;
+
+      const li = E("li", {
+        class: `sidebar-item${hasChildren ? " has-children" : ""}${isActiveSect ? " active expanded" : ""}`,
+      });
+
+      const chevronSvg = hasChildren
+        ? E(
+            "svg",
+            {
+              class: "sidebar-chevron",
+              viewBox: "0 0 20 20",
+              fill: "currentColor",
+              xmlns: "http://www.w3.org/2000/svg",
+            },
+            [
+              E("path", {
+                "fill-rule": "evenodd",
+                d: "M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10L8.22 6.28a.75.75 0 0 1 0-1.06",
+                "clip-rule": "evenodd",
+              }),
+            ],
+          )
+        : null;
+
+      const linkContent = E("span", { class: "sidebar-link-main" }, [
+        this.createSidebarIcon(child.name),
+        E("span", { class: "sidebar-link-text" }, [_(child.title)]),
+      ]);
+
+      const link = E(
+        "a",
+        {
+          class: "sidebar-link",
+          href: hasChildren ? "#" : L.url(url, child.name),
+        },
+        [linkContent, ...(chevronSvg ? [chevronSvg] : [])],
+      );
+
+      li.appendChild(link);
+
+      if (hasChildren) {
+        const subUl = E("ul", { class: "sidebar-submenu" });
+
+        submenu.forEach((item) => {
+          const isSubActive =
+            isActiveSect &&
+            L.env.dispatchpath.length > 2 &&
+            L.env.dispatchpath[2] === item.name;
+
+          subUl.appendChild(
+            E(
+              "li",
+              {
+                class: `sidebar-subitem${isSubActive ? " active" : ""}`,
+              },
+              [
+                E(
+                  "a",
+                  {
+                    class: "sidebar-sublink",
+                    href: L.url(url, child.name, item.name),
+                  },
+                  [_(item.title)],
+                ),
+              ],
+            ),
+          );
+        });
+
+        li.appendChild(subUl);
+
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const isExpanded = li.classList.contains("expanded");
+
+          document
+            .querySelectorAll("#topmenu .sidebar-item.expanded")
+            .forEach((el) => {
+              if (el !== li) {
+                el.classList.remove("expanded");
+                const submenu = el.querySelector(".sidebar-submenu");
+                if (submenu) submenu.style.maxHeight = "0";
+              }
+            });
+
+          li.classList.toggle("expanded", !isExpanded);
+          subUl.style.maxHeight = isExpanded ? "0" : `${subUl.scrollHeight}px`;
+        });
+
+        if (isActiveSect) {
+          requestAnimationFrame(() => {
+            subUl.style.maxHeight = `${subUl.scrollHeight}px`;
+          });
+        }
+      }
+
+      ul.appendChild(li);
+    });
+
+    ul.style.display = "";
+  },
+
   renderMobileMenu(tree, url) {
     const list = document.querySelector("#mobile-nav-list");
     const children = ui.menu.getChildren(tree);
@@ -154,57 +453,6 @@ return baseclass.extend({
     });
   },
 
-  render(tree) {
-    this.renderModeMenu(tree);
-
-    if (L.env.dispatchpath.length >= 3) {
-      let node = tree;
-      let url = "";
-
-      for (let i = 0; i < 3 && node; i++) {
-        const segment = L.env.dispatchpath[i];
-        node = node.children?.[segment];
-        url += (url ? "/" : "") + segment;
-      }
-
-      if (node) this.renderTabMenu(node, url);
-    }
-  },
-
-  renderTabMenu(tree, url, level = 0) {
-    const container = document.querySelector("#tabmenu");
-    const ul = E("ul", { class: "tabs" });
-    const children = ui.menu.getChildren(tree);
-    let activeNode = null;
-
-    children.forEach((child) => {
-      const isActive = L.env.dispatchpath[3 + level] === child.name;
-
-      ul.appendChild(
-        E(
-          "li",
-          {
-            class: `tabmenu-item-${child.name}${isActive ? " active" : ""}`,
-          },
-          [E("a", { href: L.url(url, child.name) }, [_(child.title)])],
-        ),
-      );
-
-      if (isActive) activeNode = child;
-    });
-
-    if (!ul.children.length) return E([]);
-
-    container.appendChild(ul);
-    container.style.display = "";
-
-    if (activeNode) {
-      this.renderTabMenu(activeNode, `${url}/${activeNode.name}`, level + 1);
-    }
-
-    return ul;
-  },
-
   renderMainMenu(tree, url, level = 0) {
     const ul = level
       ? E("ul", { class: "desktop-nav-list" })
@@ -240,7 +488,7 @@ return baseclass.extend({
     const overlay = document.querySelector(".desktop-menu-overlay");
     const header = document.querySelector("header");
 
-    if (!header || !overlay) return;
+    if (!header || !overlay || !ul) return;
 
     let showTimer = null;
     let hideTimer = null;
@@ -357,6 +605,8 @@ return baseclass.extend({
   },
 
   initBoxedDropdown(children, url, ul) {
+    if (!ul) return;
+
     children.forEach((child) => {
       const submenu = ui.menu.getChildren(child);
       const hasSubmenu = submenu.length > 0;
@@ -452,10 +702,14 @@ return baseclass.extend({
     }
   },
 
-  renderModeMenu(tree) {
+  renderTopbarModeMenu(tree) {
     const ul = document.querySelector("#modemenu");
+    if (!ul) return;
+
     const children = ui.menu.getChildren(tree);
     let activeChild = null;
+
+    ul.innerHTML = "";
 
     children.forEach((child, index) => {
       const isActive = L.env.requestpath.length
@@ -478,6 +732,45 @@ return baseclass.extend({
     if (activeChild) {
       this.renderMainMenu(activeChild, activeChild.name);
       this.renderMobileMenu(activeChild, activeChild.name);
+    }
+
+    if (ul.children.length > 1) {
+      ul.style.display = "";
+    }
+  },
+
+  renderSidebarModeMenu(tree) {
+    const ul = document.querySelector("#modemenu");
+    if (!ul) return;
+
+    const children = ui.menu.getChildren(tree);
+    let activeChild = null;
+
+    ul.innerHTML = "";
+
+    children.forEach((child, index) => {
+      const isActive = L.env.requestpath.length
+        ? child.name === L.env.requestpath[0]
+        : index === 0;
+
+      ul.appendChild(
+        E("li", { class: isActive ? "active" : "" }, [
+          E(
+            "a",
+            {
+              href: L.url(child.name),
+              class: isActive ? "active-mode" : "",
+            },
+            [_(child.title)],
+          ),
+        ]),
+      );
+
+      if (isActive) activeChild = child;
+    });
+
+    if (activeChild) {
+      this.renderSidebarMenu(activeChild, activeChild.name);
     }
 
     if (ul.children.length > 1) {

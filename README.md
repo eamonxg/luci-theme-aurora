@@ -35,8 +35,8 @@
 - **Modern**: Modern, content-first UI design with a clean layout and elegant animations.
 - **Mobile-friendly**: Optimized for mobile interactions and display, supporting both smartphones and tablets.
 - **Theme Switcher**: Built-in theme switcher with seamless switching between Auto (system), Light, and Dark modes.
-- **Floating Toolbar**: Clickable button icons for quick access to frequently used pages
-- **Customizable**: The [luci-app-aurora-config](https://github.com/eamonxg/luci-app-aurora-config) plugin includes multiple built‑in theme presets you can switch between, and lets you customize colors, navigation submenu styles, the theme logo, and the floating toolbar (add or edit frequently used pages).
+- **Selectable Navigation**: Switch between the Aurora top navigation and an Atom-style sidebar layout.
+- **Customizable**: The [luci-app-aurora-config](https://github.com/eamonxg/luci-app-aurora-config) plugin includes multiple built‑in theme presets you can switch between, and lets you customize colors, navigation layout, submenu styles, and theme logo assets.
 
 ## Preview
 

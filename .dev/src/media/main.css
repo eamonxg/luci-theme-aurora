@@ -29,6 +29,7 @@
 
   --accent: oklch(0.62 0.22 25);
   --accent-foreground: oklch(0.97 0.02 25);
+  --accent-bright: oklch(0.7535 0.1034 198.37);
 
   --default: oklch(0.97 0 0);
   --default-foreground: oklch(0.205 0 0);
@@ -46,6 +47,7 @@
   --error-foreground: oklch(0.35 0.12 25);
 
   --border: oklch(0.92 0 0);
+  --border-subtle: oklch(0.95 0 0);
 
   --link: oklch(0.74 0.238 322.16);
 
@@ -64,9 +66,13 @@
   --header-bg: oklch(from var(--background) l c h);
   --header-interactive: oklch(from var(--header-bg) calc(l - 0.12) c h);
 
+  --sidebar-bg: oklch(from var(--background) calc(l - 0.02) c h);
+  --topbar-bg: oklch(from var(--page-bg) l c h);
   --page-bg: oklch(1 0 0);
 
   --panel-bg: oklch(1 0 0);
+  --surface-bg: oklch(from var(--panel-bg) calc(l - 0.03) c h);
+  --hover-bg: oklch(from var(--panel-bg) calc(l - 0.05) c h);
 
   --tooltip-bg: oklch(from var(--page-bg) calc(l - 0.015) c h);
 
@@ -75,6 +81,7 @@
 
   --spacing: 0.25rem;
   --container-max-width: 80rem;
+  --sidebar-width: 15rem;
 }
 
 [data-darkmode="true"] {
@@ -95,6 +102,7 @@
 
   --accent: oklch(0.35 0.12 25);
   --accent-foreground: oklch(0.88 0.14 25);
+  --accent-bright: oklch(62.1% 0.145 189.632);
 
   --default: oklch(0.274 0.006 286.033/0.5);
   --default-foreground: oklch(0.985 0.01 285.805);
@@ -112,6 +120,7 @@
   --error-foreground: oklch(0.88 0.14 25);
 
   --border: oklch(0.38 0.041 260.031);
+  --border-subtle: oklch(from var(--border) l c h / 0.55);
 
   --link: oklch(0.702 0.183 293.541);
 
@@ -130,9 +139,13 @@
   --header-bg: oklch(from var(--page-bg) l c h);
   --header-interactive: oklch(from var(--header-bg) calc(l + 0.24) c h);
 
+  --sidebar-bg: oklch(from var(--panel-bg) calc(l - 0.04) c h);
+  --topbar-bg: oklch(from var(--page-bg) l c h);
   --page-bg: oklch(0.21 0.034 264.665);
 
   --panel-bg: oklch(0.279 0.041 260.031);
+  --surface-bg: oklch(from var(--panel-bg) calc(l + 0.05) c h);
+  --hover-bg: oklch(from var(--panel-bg) calc(l + 0.1) c h);
 
   --tooltip-bg: oklch(from var(--page-bg) calc(l + 0.06) c h);
 }
@@ -145,11 +158,16 @@
   --color-page-bg: var(--page-bg);
 
   --color-panel-bg: var(--panel-bg);
+  --color-surface-bg: var(--surface-bg);
+  --color-hover-bg: var(--hover-bg);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-topbar-bg: var(--topbar-bg);
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
 
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
 
   /* Component Colors */
 
@@ -182,6 +200,7 @@
 
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-bright: var(--accent-bright);
 
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
@@ -206,6 +225,7 @@
 
   --spacing: var(--spacing);
   --container-max-width: var(--container-max-width);
+  --width-sidebar: var(--sidebar-width);
 }
 
 @layer base {
@@ -309,6 +329,212 @@
 
 @layer components {
   @layer layout {
+    .sidebar {
+      @apply bg-sidebar-bg border-border-subtle fixed top-0 left-0 z-50 flex h-dvh w-[var(--sidebar-width)] flex-col border-r transition-transform duration-300 ease-in-out max-md:-translate-x-full;
+
+      &.sidebar-open {
+        @apply max-md:translate-x-0;
+      }
+
+      & .sidebar-header {
+        @apply border-border-subtle flex h-14 shrink-0 items-center justify-between border-b px-4;
+
+        & .sidebar-brand {
+          @apply text-foreground hover:text-accent-bright inline-flex min-w-0 items-center gap-2 text-[15px] font-semibold tracking-tight no-underline transition-colors duration-200;
+
+          & img {
+            @apply size-7 shrink-0 rounded-lg;
+          }
+
+          & span {
+            @apply truncate;
+          }
+        }
+
+        & .sidebar-close {
+          @apply text-muted-foreground hover:text-foreground hover:bg-hover-bg hidden h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-all duration-200 max-md:flex;
+
+          & svg {
+            @apply size-4;
+          }
+        }
+      }
+
+      & .sidebar-body {
+        @apply flex-1 overflow-y-auto px-2 py-3;
+
+        & .sidebar-section-label {
+          @apply text-muted-foreground mb-1 px-3 py-1 text-[11px] font-semibold tracking-wider uppercase;
+        }
+
+        & ul.sidebar-menu {
+          @apply m-0 list-none space-y-0.5 p-0;
+
+          & .sidebar-item {
+            @apply relative;
+
+            & .sidebar-link {
+              @apply text-secondary-foreground flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-[13px] font-medium no-underline transition-all duration-150;
+
+              &:hover {
+                @apply bg-hover-bg text-foreground;
+              }
+
+              & .sidebar-link-main {
+                @apply flex min-w-0 items-center gap-2;
+              }
+
+              & .sidebar-link-text {
+                @apply truncate;
+              }
+
+              & .sidebar-icon {
+                @apply border-border-subtle bg-surface-bg/80 text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-md border transition-all duration-150;
+
+                & svg {
+                  @apply size-4;
+                }
+              }
+
+              & .sidebar-chevron {
+                @apply text-muted-foreground size-3.5 shrink-0 transition-transform duration-200;
+              }
+            }
+
+            & .sidebar-submenu {
+              @apply m-0 list-none overflow-hidden p-0;
+              max-height: 0;
+              opacity: 0;
+              transition:
+                max-height 0.25s ease-in-out,
+                opacity 0.2s ease;
+
+              & .sidebar-subitem {
+                & .sidebar-sublink {
+                  @apply text-muted-foreground mx-1 flex items-center rounded-md py-1.5 pr-3 pl-6 text-[13px] no-underline transition-all duration-150;
+
+                  &:hover {
+                    @apply bg-hover-bg text-secondary-foreground;
+                  }
+                }
+
+                &.active {
+                  & .sidebar-sublink {
+                    @apply text-accent-bright font-medium;
+                  }
+                }
+              }
+            }
+
+            &.expanded {
+              & .sidebar-link {
+                @apply text-foreground;
+
+                & .sidebar-chevron {
+                  @apply rotate-90;
+                }
+              }
+
+              & .sidebar-submenu {
+                opacity: 1;
+              }
+            }
+
+            &.active {
+              & > .sidebar-link {
+                @apply bg-hover-bg text-foreground relative;
+
+                & .sidebar-icon {
+                  @apply border-primary/20 bg-primary/15 text-accent-bright;
+                }
+
+                &::before {
+                  @apply bg-accent absolute top-1/2 left-0 h-5 w-0.5 -translate-y-1/2 rounded-full;
+                  content: "";
+                }
+              }
+            }
+          }
+        }
+      }
+
+      & .sidebar-footer {
+        @apply border-border-subtle flex shrink-0 flex-col gap-2 border-t p-3;
+
+        & .sidebar-mode-menu {
+          @apply m-0 flex list-none items-center gap-1 p-0;
+
+          & li {
+            @apply flex-1;
+
+            & a {
+              @apply text-muted-foreground hover:bg-hover-bg hover:text-foreground flex w-full items-center justify-center rounded-md px-2 py-1.5 text-[12px] font-medium no-underline transition-all duration-150;
+
+              &.active-mode {
+                @apply bg-surface-bg text-foreground;
+              }
+            }
+
+            &.active {
+              & a {
+                @apply bg-surface-bg text-foreground;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .layout-main {
+      @apply flex min-h-dvh flex-col md:ml-[var(--sidebar-width)];
+    }
+
+    .topbar {
+      @apply bg-topbar-bg border-border-subtle sticky top-0 z-30 flex h-12 shrink-0 items-center border-b px-4;
+
+      & .sidebar-toggle {
+        @apply text-muted-foreground hover:text-foreground hover:bg-hover-bg mr-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-all duration-200 md:hidden;
+
+        & svg {
+          @apply size-4;
+        }
+      }
+
+      & .topbar-title {
+        @apply text-foreground truncate text-[13px] font-semibold tracking-tight;
+      }
+
+      & #indicators {
+        @apply ml-auto flex flex-row-reverse items-center gap-5;
+
+        & span[data-indicator] {
+          @apply before:text-foreground size-5 cursor-pointer text-[0px] before:absolute before:size-5 before:bg-current;
+
+          &[data-indicator="media_error"] {
+            @apply before:[mask:url('@assets/icons/error.svg')_center/cover_no-repeat];
+          }
+
+          &[data-indicator="poll-status"] {
+            &[data-style="active"] {
+              @apply before:[mask:url('@assets/icons/refresh.svg')_center/cover_no-repeat];
+            }
+
+            &[data-style="inactive"] {
+              @apply before:[mask:url('@assets/icons/refresh-off.svg')_center/cover_no-repeat];
+            }
+          }
+
+          &[data-indicator="uci-changes"] {
+            @apply relative before:[mask:url('@assets/icons/setting.svg')_center/cover_no-repeat];
+
+            &[data-count]:not([data-count="0"]) {
+              @apply after:bg-accent after:text-accent-foreground after:absolute after:-top-0.5 after:-right-0.5 after:z-10 after:flex after:min-h-3 after:min-w-3 after:items-center after:justify-center after:rounded-full after:px-0.5 after:text-[8px] after:leading-none after:font-bold after:shadow-sm after:content-[attr(data-count)];
+            }
+          }
+        }
+      }
+    }
+
     header {
       @apply bg-header-bg sticky top-0 z-60 mb-2;
 
@@ -513,6 +739,24 @@
       }
     }
 
+    [data-nav-layout="sidebar"] {
+      & #maincontent {
+        @apply mx-0 min-h-0 w-full max-w-none flex-1 px-6 py-4 max-md:px-3 max-md:py-3;
+
+        #view {
+          @apply md:rounded-2xl md:shadow-lg md:hover:shadow-xl;
+        }
+      }
+    }
+
+    .sidebar-overlay {
+      @apply bg-overlay-base/70 fixed inset-0 z-40 hidden backdrop-blur-sm transition-opacity duration-300;
+
+      &.active {
+        @apply block;
+      }
+    }
+
     footer {
       @apply text-secondary-foreground mt-2 flex min-h-16 flex-wrap items-center justify-between text-xs;
 
@@ -612,57 +856,6 @@
 
       &:has(.theme-option[data-theme="dark"].active) {
         @apply before:translate-x-[calc(200%+1rem)];
-      }
-    }
-  }
-
-  @layer floatButton {
-    .floating-toolbar {
-      @apply fixed right-4 bottom-4 z-40 flex flex-col items-center max-md:right-3 max-md:bottom-3;
-
-      .toolbar-list {
-        @apply visible mb-2 grid origin-bottom grid-rows-[1fr] opacity-100 transition-all duration-400 ease-in-out max-md:mb-1.5;
-
-        .toolbar-list-inner {
-          @apply border-border/70 bg-page-bg/90 flex min-h-0 flex-col items-center gap-2 overflow-hidden rounded-full border p-1 shadow-sm max-md:gap-1.5 max-md:p-0.5;
-        }
-      }
-
-      .toolbar-btn {
-        @apply flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full p-2 transition-all duration-300 ease-in-out active:scale-95 max-md:h-9 max-md:w-9 max-md:p-1.5;
-
-        .icon {
-          @apply h-5 w-5 shrink-0 transition-all duration-300 ease-in-out max-md:h-4 max-md:w-4;
-        }
-
-        &:not(.toggle) {
-          @apply hover:bg-border/40 no-underline hover:scale-110;
-          .icon {
-            @apply object-contain dark:invert;
-          }
-        }
-
-        &.toggle {
-          @apply bg-page-bg border-0 shadow-sm;
-          .icon {
-            @apply transition-transform duration-400 ease-out;
-          }
-        }
-      }
-
-      &.collapsed {
-        .toolbar-list {
-          @apply pointer-events-none invisible mb-0 translate-y-2 scale-90 grid-rows-[0fr] opacity-0;
-        }
-
-        .toolbar-btn {
-          &:not(.toggle) {
-            @apply scale-50 opacity-0;
-          }
-          &.toggle .icon {
-            @apply rotate-45;
-          }
-        }
       }
     }
   }
