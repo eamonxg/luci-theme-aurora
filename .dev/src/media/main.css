@@ -546,6 +546,161 @@
     .cbi-section-actions > div {
       @apply flex flex-row flex-nowrap items-center gap-2 max-md:flex-wrap max-md:gap-1;
     }
+
+    [data-layout-mode="sidebar"] {
+      & #maincontent,
+      & header {
+        @apply md:ml-[220px] md:transition-[margin-left] md:duration-200;
+      }
+
+      & #maincontent {
+        @apply md:mr-0 md:w-auto;
+      }
+
+      & #topmenu,
+      & .desktop-menu-container,
+      & .desktop-menu-overlay {
+        @apply hidden;
+      }
+
+      [data-sidebar-collapsed="true"] & {
+        & #maincontent,
+        & header {
+          @apply md:ml-[52px];
+        }
+      }
+    }
+
+    .sidebar {
+      @apply fixed top-0 left-0 z-40 flex h-screen w-[220px] flex-col overflow-hidden
+             border-border bg-header-bg border-r transition-[width] duration-200 max-md:hidden;
+
+      [data-sidebar-collapsed="true"] & {
+        @apply w-[52px];
+      }
+
+      & .sidebar-nav {
+        @apply scrollbar-thin flex-1 overflow-x-hidden overflow-y-auto py-3;
+      }
+
+      & .sidebar-nav-list {
+        @apply m-0 flex list-none flex-col gap-0.5 p-0 px-2;
+      }
+
+      & .sidebar-nav-item {
+        @apply m-0 list-none;
+      }
+
+      & .sidebar-nav-link {
+        @apply hover:bg-header-interactive text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap no-underline transition-colors duration-150;
+      }
+
+      & .sidebar-nav-icon {
+        @apply relative flex size-5 shrink-0 items-center justify-center;
+
+        &::before {
+          @apply text-xs font-semibold uppercase content-[attr(data-initial)];
+        }
+      }
+
+      & .sidebar-nav-label {
+        @apply flex-1 overflow-hidden text-ellipsis transition-[opacity,max-width] duration-200;
+      }
+
+      [data-sidebar-collapsed="true"] & .sidebar-nav-label {
+        @apply max-w-0 opacity-0;
+      }
+
+      & .sidebar-nav-chevron {
+        @apply size-4 shrink-0 bg-current transition-transform duration-200 [mask:url('@assets/icons/chevron-right.svg')_center/contain_no-repeat];
+      }
+
+      & .sidebar-nav-item.expanded > .sidebar-nav-link > .sidebar-nav-chevron {
+        @apply rotate-90;
+      }
+
+      [data-sidebar-collapsed="true"] & .sidebar-nav-chevron {
+        @apply hidden;
+      }
+
+      & .sidebar-nav-sublist {
+        @apply m-0 mt-0.5 flex max-h-0 list-none flex-col gap-0.5 overflow-hidden p-0 pl-7 opacity-0 transition-[max-height,opacity] duration-200;
+      }
+
+      & .sidebar-nav-item.expanded > .sidebar-nav-sublist {
+        @apply opacity-100;
+      }
+
+      [data-sidebar-collapsed="true"] & .sidebar-nav-sublist {
+        @apply hidden;
+      }
+
+      & .sidebar-nav-subitem {
+        @apply m-0 list-none;
+      }
+
+      & .sidebar-nav-sublink {
+        @apply hover:bg-header-interactive text-muted-foreground hover:text-foreground flex items-center rounded-xl px-3 py-1.5 text-sm no-underline transition-colors duration-150;
+      }
+
+      & .sidebar-nav-link.active,
+      & .sidebar-nav-sublink.active {
+        @apply bg-header-interactive text-primary;
+      }
+
+      & .sidebar-toggle {
+        @apply hover:bg-header-interactive text-muted-foreground hover:text-foreground mx-2 mb-3 flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border-0 bg-transparent transition-colors duration-150;
+      }
+
+      & .sidebar-toggle-icon {
+        @apply size-5 bg-current transition-transform duration-200 [mask:url('@assets/icons/panel-left-close.svg')_center/contain_no-repeat];
+      }
+
+      [data-sidebar-collapsed="true"] & .sidebar-toggle-icon {
+        @apply [mask:url('@assets/icons/panel-left-open.svg')_center/contain_no-repeat];
+      }
+    }
+
+    .sidebar-nav-link[data-icon="status"] .sidebar-nav-icon::before,
+    .sidebar-nav-link[data-icon="system"] .sidebar-nav-icon::before,
+    .sidebar-nav-link[data-icon="services"] .sidebar-nav-icon::before,
+    .sidebar-nav-link[data-icon="network"] .sidebar-nav-icon::before,
+    .sidebar-nav-link[data-icon="vpn"] .sidebar-nav-icon::before,
+    .sidebar-nav-link[data-icon="nas"] .sidebar-nav-icon::before {
+      @apply block size-5 bg-current content-[''];
+    }
+
+    .sidebar-nav-link[data-icon="status"] .sidebar-nav-icon::before {
+      @apply [mask:url('@assets/icons/status.svg')_center/contain_no-repeat];
+    }
+
+    .sidebar-nav-link[data-icon="system"] .sidebar-nav-icon::before {
+      @apply [mask:url('@assets/icons/system.svg')_center/contain_no-repeat];
+    }
+
+    .sidebar-nav-link[data-icon="services"] .sidebar-nav-icon::before {
+      @apply [mask:url('@assets/icons/services.svg')_center/contain_no-repeat];
+    }
+
+    .sidebar-nav-link[data-icon="network"] .sidebar-nav-icon::before {
+      @apply [mask:url('@assets/icons/network.svg')_center/contain_no-repeat];
+    }
+
+    .sidebar-nav-link[data-icon="vpn"] .sidebar-nav-icon::before {
+      @apply [mask:url('@assets/icons/vpn.svg')_center/contain_no-repeat];
+    }
+
+    .sidebar-nav-link[data-icon="nas"] .sidebar-nav-icon::before {
+      @apply [mask:url('@assets/icons/nas.svg')_center/contain_no-repeat];
+    }
+
+    [data-sidebar-collapsed="true"] [data-layout-mode="sidebar"] .sidebar-nav-link {
+      @apply relative;
+
+      &:hover::after {
+        @apply bg-tooltip-bg text-foreground border-border pointer-events-none absolute top-1/2 left-full z-50 ml-2 -translate-y-1/2 rounded-md border px-2 py-1 text-xs whitespace-nowrap shadow-sm content-[attr(title)];
+      }
+    }
   }
 
   @layer switcher {

@@ -16,6 +16,7 @@
 	const boardinfo = ubus.call('system', 'board');
 	const uci = cursor();
 	const tokens = uci.get_all('aurora', 'theme') || {};
+	const layout_mode = tokens.layout_mode == 'sidebar' ? 'sidebar' : 'topbar';
 	const nav_submenu_type = tokens.nav_submenu_type || 'mega-menu';
 	const toolbar_enabled = tokens.toolbar_enabled ? tokens.toolbar_enabled == '1' : true;
 	const icon_cache_version = tokens.icon_cache_version || '0';
@@ -75,6 +76,10 @@
 			};
 
 			setTheme(localStorage.getItem('aurora.theme'));
+
+			if (localStorage.getItem('aurora.sidebarCollapsed') === 'true') {
+				document.documentElement.setAttribute('data-sidebar-collapsed', 'true');
+			}
 
 			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
 				const theme = localStorage.getItem('aurora.theme') || 'device';
@@ -142,7 +147,7 @@
 		<script src="{{ resource }}/cbi.js"></script>
 	</head>
 
-	<body class="lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}" data-nav-type="{{ nav_submenu_type }}">
+	<body class="lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}" data-layout-mode="{{ layout_mode }}" data-nav-type="{{ nav_submenu_type }}">
 		{% if (!blank_page): %}
 		<header>
 			<div class="header-content">
@@ -160,13 +165,25 @@
 				<div id="indicators" class="pull-right"></div>
 		</div>
 
-		{% if (nav_submenu_type == 'mega-menu'): %}
+		{% if (layout_mode == 'topbar' && nav_submenu_type == 'mega-menu'): %}
 			<div class="desktop-menu-container"></div>
 		</header>
 
 		<div class="desktop-menu-overlay"></div>
 		{% else %}
 		</header>
+		{% endif %}
+
+		{% if (layout_mode == 'sidebar'): %}
+		<aside id="sidebar" class="sidebar">
+			<nav class="sidebar-nav">
+				<ul class="sidebar-nav-list" id="sidebar-nav-list"></ul>
+			</nav>
+			<button class="sidebar-toggle" id="sidebar-toggle"
+					title="{{ _('Toggle sidebar') }}" aria-label="{{ _('Toggle sidebar') }}">
+				<span class="sidebar-toggle-icon"></span>
+			</button>
+		</aside>
 		{% endif %}
 
 		<div class="mobile-menu-overlay" id="mobile-menu-overlay">

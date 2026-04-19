@@ -7,6 +7,22 @@ return baseclass.extend({
     ui.menu.load().then((tree) => this.render(tree));
     this.initMobileMenu();
     this.initUciIndicator();
+
+    if (document.body?.dataset?.layoutMode === "sidebar") {
+      this.initSidebarToggle();
+    }
+  },
+
+  initSidebarToggle() {
+    const btn = document.getElementById("sidebar-toggle");
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+      const collapsed = document.documentElement.toggleAttribute(
+        "data-sidebar-collapsed",
+      );
+      localStorage.setItem("aurora.sidebarCollapsed", collapsed);
+    });
   },
 
   initUciIndicator() {
@@ -206,6 +222,13 @@ return baseclass.extend({
   },
 
   renderMainMenu(tree, url, level = 0) {
+    if (
+      level === 0 &&
+      document.body?.dataset?.layoutMode === "sidebar"
+    ) {
+      return this.renderSidebarMenu(tree, url);
+    }
+
     const ul = level
       ? E("ul", { class: "desktop-nav-list" })
       : document.querySelector("#topmenu");
@@ -450,6 +473,104 @@ return baseclass.extend({
         .querySelector(".desktop-menu-overlay")
         ?.classList.remove("active");
     }
+  },
+
+  renderSidebarMenu(tree, url) {
+    const list = document.getElementById("sidebar-nav-list");
+    if (!list) return E([]);
+
+    list.innerHTML = "";
+
+    const children = ui.menu.getChildren(tree);
+    const path = L.env.dispatchpath || [];
+    const activeTop = path[1];
+
+    children.forEach((child) => {
+      const submenu = ui.menu.getChildren(child);
+      const hasSubmenu = submenu.length > 0;
+      const title = _(child.title);
+      const isActive = child.name === activeTop;
+
+      const link = E(
+        "a",
+        {
+          class: "sidebar-nav-link",
+          "data-icon": child.name,
+          title: title,
+          href: hasSubmenu ? "#" : L.url(url, child.name),
+        },
+        [
+          E("span", {
+            class: "sidebar-nav-icon",
+            "data-initial": (title[0] || "").toUpperCase(),
+          }),
+          E("span", { class: "sidebar-nav-label" }, [title]),
+        ],
+      );
+
+      if (hasSubmenu) {
+        link.appendChild(E("span", { class: "sidebar-nav-chevron" }));
+      }
+
+      const li = E("li", { class: "sidebar-nav-item" }, [link]);
+
+      if (hasSubmenu) {
+        const sublist = E("ul", {
+          class: "sidebar-nav-sublist",
+          style: "max-height: 0;",
+        });
+
+        submenu.forEach((item) => {
+          const isSubActive = isActive && item.name === path[2];
+          sublist.appendChild(
+            E("li", { class: "sidebar-nav-subitem" }, [
+              E(
+                "a",
+                {
+                  class:
+                    "sidebar-nav-sublink" + (isSubActive ? " active" : ""),
+                  href: L.url(url, child.name, item.name),
+                },
+                [_(item.title)],
+              ),
+            ]),
+          );
+        });
+
+        li.appendChild(sublist);
+
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const expanded = li.classList.contains("expanded");
+
+          list
+            .querySelectorAll(".sidebar-nav-item.expanded")
+            .forEach((other) => {
+              if (other === li) return;
+              other.classList.remove("expanded");
+              const s = other.querySelector(".sidebar-nav-sublist");
+              if (s) s.style.maxHeight = "0";
+            });
+
+          li.classList.toggle("expanded", !expanded);
+          sublist.style.maxHeight = expanded ? "0" : `${sublist.scrollHeight}px`;
+        });
+
+        if (isActive) {
+          li.classList.add("expanded");
+          link.classList.add("active");
+          requestAnimationFrame(() => {
+            sublist.style.maxHeight = `${sublist.scrollHeight}px`;
+          });
+        }
+      } else if (isActive) {
+        link.classList.add("active");
+      }
+
+      list.appendChild(li);
+    });
+
+    return list;
   },
 
   renderModeMenu(tree) {
