@@ -1196,7 +1196,6 @@
 
         & > span {
           @apply text-foreground space-y-1.5 max-md:space-y-1 max-md:text-sm max-md:leading-5;
-          @apply has-[>.cbi-tooltip-container]:flex has-[>.cbi-tooltip-container]:flex-wrap has-[>.cbi-tooltip-container]:items-center has-[>.cbi-tooltip-container]:justify-center;
 
           .network-status-table & {
             @apply w-full;
