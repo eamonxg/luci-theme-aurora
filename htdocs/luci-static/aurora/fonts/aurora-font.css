@@ -1,0 +1,7 @@
+@font-face {
+  font-display: swap;
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/luci-static/aurora/fonts/lato-v24-latin-regular.woff2") format("woff2");
+}
