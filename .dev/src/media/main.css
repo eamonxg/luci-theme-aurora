@@ -209,14 +209,6 @@
 }
 
 @layer base {
-  @font-face {
-    font-display: swap;
-    font-family: "Lato";
-    font-style: normal;
-    font-weight: 400;
-    src: url("./fonts/lato-v24-latin-regular.woff2") format("woff2");
-  }
-
   *:not(html) {
     @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-transparent scrollbar-thumb-foreground/70;
   }
