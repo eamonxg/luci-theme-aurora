@@ -1,0 +1,136 @@
+.cbi-dropdown {
+  @apply inline-flex h-fit max-w-full min-w-fit shrink-0 items-center p-0 whitespace-nowrap shadow-sm transition-all duration-200;
+
+  &[disabled] {
+    @apply pointer-events-none opacity-40 dark:opacity-30;
+  }
+
+  &:not(.btn):not(.cbi-button) {
+    @apply border-border/70 bg-page-bg rounded-2xl border;
+    & > ul > li {
+      &[placeholder] {
+        @apply hidden;
+      }
+    }
+  }
+
+  & > ul {
+    @apply m-0 flex flex-1 list-none flex-nowrap items-center gap-0.5 overflow-hidden max-md:flex-wrap;
+
+    & > li {
+      @apply m-0 hidden list-none items-center gap-1 overflow-hidden px-2 py-1.5;
+
+      &[display] {
+        @apply !flex;
+      }
+
+      & .hide-open {
+        @apply block;
+      }
+
+      & .hide-close {
+        @apply hidden;
+      }
+
+      & > form {
+        @apply pointer-events-none hidden;
+      }
+
+      & > label {
+        @apply flex items-center gap-2;
+      }
+
+      & img {
+        @apply h-5 w-5 flex-none align-middle;
+      }
+
+      & span {
+        @apply truncate;
+      }
+    }
+
+    &.dropdown {
+      @apply border-border/60 bg-page-bg/95 absolute left-0 z-60 w-fit min-w-full overflow-y-auto rounded-lg border shadow-xl backdrop-blur-sm;
+
+      & > li {
+        @apply text-muted-foreground hover:bg-primary/15 min-h-9 w-full cursor-pointer px-3 py-1.5 font-medium;
+      }
+    }
+
+    &.preview {
+      @apply hidden;
+    }
+  }
+
+  &[empty] {
+    & > ul {
+      @apply max-h-px max-w-px;
+
+      & > li {
+        @apply block;
+      }
+    }
+  }
+
+  &[optional][open] > ul.dropdown > li[placeholder] {
+    @apply block;
+  }
+
+  &[open] {
+    @apply border-primary ring-primary/20 relative ring-2;
+
+    & > ul.dropdown {
+      @apply block w-auto max-w-none;
+
+      & > li {
+        @apply flex;
+
+        &[selected] {
+          @apply bg-primary/20 text-primary;
+        }
+
+        &[unselectable] {
+          @apply opacity-40 dark:opacity-30;
+        }
+
+        & .hide-open {
+          @apply hidden;
+        }
+
+        & .hide-close {
+          @apply block;
+        }
+      }
+    }
+
+    & > ul.preview {
+      @apply flex;
+    }
+  }
+
+  &[multiple] {
+    &[more],
+    &[empty] {
+      & > .more {
+        @apply flex flex-none shrink-0 px-2.5 py-1.5;
+      }
+    }
+
+    &[open] {
+      & > ul.dropdown > li > form {
+        @apply flex items-center;
+      }
+    }
+    & > ul > li > label {
+      @apply flex;
+    }
+  }
+
+  & > .open {
+    @apply border-border/70 flex flex-none shrink-0 cursor-pointer items-center justify-center border-l px-2.5 py-0.5 text-sm text-current;
+  }
+
+  & > .more {
+    @apply hidden;
+  }
+}

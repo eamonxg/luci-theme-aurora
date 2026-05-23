@@ -1,0 +1,128 @@
+#modal_overlay {
+  @apply pointer-events-none fixed top-0 bottom-0 hidden overflow-auto bg-transparent;
+
+  .modal-overlay-active & {
+    @apply bg-overlay-base/70 pointer-events-auto inset-0 right-0 left-0 z-100 grid grid-cols-1 place-items-center backdrop-blur-sm;
+  }
+
+  & > .modal {
+    @apply border-border/70 bg-page-bg flex w-5xl flex-col gap-4 rounded-3xl border p-6 wrap-break-word whitespace-normal shadow-2xl backdrop-blur-lg backdrop-saturate-150 max-md:w-full max-md:gap-3 max-md:p-4;
+
+    & h4 {
+      @apply mb-0 text-center;
+      & em {
+        @apply text-primary font-semibold;
+      }
+    }
+
+    & h5 {
+      @apply text-foreground my-3;
+    }
+
+    & p {
+      @apply text-default-foreground text-sm leading-relaxed;
+    }
+
+    & > ul {
+      @apply border-border/60 bg-page-bg/60 overflow-auto rounded-2xl border p-3;
+    }
+
+    & label.btn {
+      @apply border-border/60 bg-page-bg/60 text-foreground hover:border-border border;
+    }
+
+    & pre {
+      @apply overflow-auto;
+
+      &.errors {
+        @apply border-error/60 bg-error/20 text-error-foreground;
+      }
+    }
+
+    pre + pre {
+      @apply mt-3;
+    }
+
+    & .button-row,
+    & div.left,
+    & div.right {
+      @apply border-border/40 flex shrink-0 gap-3 border-t p-4 max-md:gap-1.5 max-md:p-2.5;
+    }
+
+    & div.left {
+      @apply justify-start;
+    }
+
+    & .button-row,
+    & div.right {
+      @apply justify-end;
+    }
+
+    &.uci-dialog {
+      & ins,
+      & del,
+      & var {
+        @apply font-mono not-italic no-underline shadow-sm;
+      }
+
+      & ins {
+        @apply border-success bg-success/80 text-success-foreground border;
+      }
+
+      & del {
+        @apply border-error bg-error/80 text-error-foreground border;
+      }
+
+      & var {
+        @apply border-info bg-info/80 text-info-foreground border;
+      }
+
+      & .uci-change-legend {
+        @apply border-border/60 bg-page-bg/60 mt-4 grid grid-cols-2 gap-3 rounded-2xl border p-4 max-md:grid-cols-1 max-md:gap-2 max-md:p-3;
+
+        & .uci-change-legend-label {
+          @apply text-foreground flex items-center gap-2 text-sm font-medium;
+
+          & ins,
+          & del,
+          & var {
+            @apply flex h-6 min-w-6 items-center justify-center rounded-lg px-2 text-xs font-semibold;
+          }
+
+          & var {
+            & ins,
+            & del {
+              @apply ml-1 h-4 min-w-4 px-1;
+            }
+          }
+        }
+      }
+
+      & .uci-change-list {
+        @apply mt-4 space-y-3;
+
+        & h5 {
+          @apply bg-default text-default-foreground mt-6 mb-2 rounded-xl px-3 py-2 text-sm font-semibold first:mt-0;
+        }
+
+        & ins,
+        & del {
+          @apply block rounded-xl px-4 py-3 text-sm;
+
+          & strong {
+            @apply text-sm;
+          }
+        }
+
+        & var {
+          @apply inline-block rounded-lg px-2 py-1 text-sm;
+
+          & ins,
+          & del {
+            @apply ml-1 inline-block px-1.5 py-0.5 text-xs;
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,62 @@
+/*
+  PATCH LAYER (temporary)
+  - Purpose: Quick fixes and app-specific overrides that may be removed at any time.
+  - Scope: Keep selectors narrow and limited to known breakages only.
+  - Migration: Promote stable rules to appropriate layers (e.g., components/plugins) or delete once fixed upstream.
+*/
+
+/* admin-network-network */
+[data-name="bridge-vlan"] > div {
+  @apply max-md:overflow-visible!;
+}
+
+/* luci-app-openclash */
+[data-page="admin-services-openclash-config"] {
+  .sub_div {
+    img {
+      @apply h-5 w-5;
+    }
+  }
+}
+[data-page="admin-services-openclash-settings"] {
+  .cbi-value-field {
+    & .cbi-input-select {
+      @apply max-md:w-full!;
+    }
+  }
+}
+
+/* luci-mod-dashboard */
+.Dashboard {
+  & > .section-content {
+    & .dashboard-bg {
+      &.tr {
+        @apply rounded-none;
+      }
+      @apply bg-panel-bg/95 not-[.tr]:border-border/40 not-[.tr]:hover:border-border/50 max-md:bg-panel-bg/98 not-[.tr]:max-md:border-border/30 not-[.tr]:border not-[.tr]:shadow-lg not-[.tr]:hover:shadow-xl not-[.tr]:max-md:border;
+    }
+
+    .title {
+      img {
+        &[src*=".svg"] {
+          @apply dark:invert;
+        }
+      }
+      h3 {
+        @apply text-foreground border-0 pb-4 max-md:mx-0 max-md:pb-2;
+      }
+    }
+
+    .router-status-wifi {
+      .wifi-info {
+        .devices-info {
+          .tr {
+            .td {
+              @apply nth-3:relative nth-3:top-0 nth-3:w-full nth-3:px-0 max-md:flex-[1_1_50%];
+            }
+          }
+        }
+      }
+    }
+  }
+}

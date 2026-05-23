@@ -1,0 +1,54 @@
+.alert-message {
+  @apply bg-default text-default-foreground border-default/30 sticky top-14 z-40 mb-4 rounded-4xl border p-6 max-md:mx-0 max-md:mb-3 max-md:rounded-3xl max-md:p-4;
+
+  &.modal {
+    @apply static top-auto;
+  }
+
+  .modal & {
+    @apply mb-0;
+  }
+
+  .login-shell & {
+    @apply mb-0 rounded-2xl px-2 py-2.5 text-center text-base max-md:px-0.5;
+  }
+
+  &.success {
+    @apply border-success/30 bg-success text-success-foreground;
+  }
+
+  &.info {
+    @apply border-info/30 bg-info text-info-foreground;
+  }
+
+  &.warning,
+  &.notice {
+    @apply border-warning/30 bg-warning text-warning-foreground;
+  }
+
+  &.error,
+  &.danger {
+    @apply border-error/30 bg-error text-error-foreground;
+  }
+
+  h4,
+  h5,
+  pre,
+  ul,
+  li,
+  p {
+    @apply border-0 bg-transparent text-inherit;
+  }
+
+  & h4 {
+    @apply mb-2 text-lg font-semibold max-md:mb-1.5 max-md:text-base;
+  }
+
+  & p {
+    @apply text-sm leading-relaxed max-md:text-sm;
+  }
+
+  & .right {
+    @apply mt-4 max-md:mt-3;
+  }
+}

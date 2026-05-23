@@ -1,0 +1,78 @@
+.cbi-input-invalid,
+.cbi-value-error {
+  @apply !border-error/70 focus:!ring-error/40;
+}
+
+.cbi-value {
+  @apply flex flex-row flex-wrap gap-6 py-1.5 max-md:flex-col max-md:gap-1.5 max-md:py-1;
+
+  &.hidden {
+    @apply hidden;
+  }
+
+  & + & {
+    @apply mt-3 max-md:mt-2;
+  }
+
+  & > .cbi-value-title {
+    @apply pt-1 text-right font-medium max-md:w-auto max-md:text-left md:flex-[0_0_12rem];
+  }
+
+  & > .cbi-value-field {
+    @apply max-w-full flex-1;
+
+    &:has(> .cbi-dropdown[disabled]) {
+      @apply cursor-not-allowed;
+    }
+    & .cbi-value-description {
+      @apply text-muted-foreground relative mt-1 pl-4 leading-none wrap-break-word;
+
+      &:not(:empty) {
+        @apply before:bg-info-foreground before:absolute before:-left-0.5 before:inline-block before:size-4 before:[mask:url('@assets/icons/info.svg')_center/cover_no-repeat];
+      }
+    }
+  }
+
+  & > .cbi-section,
+  & > .cbi-tblsection {
+    @apply w-full;
+  }
+}
+
+.cbi-dynlist {
+  @apply inline-flex w-max max-w-120 flex-col items-start gap-3 max-md:max-w-full!;
+
+  & .item {
+    @apply border-border/40 bg-panel-bg pointer-events-auto relative inline-flex cursor-move flex-col items-start gap-2 self-stretch overflow-hidden rounded-2xl border py-3 pr-10 pl-4 break-all shadow-sm transition-all duration-200 select-text max-md:w-full max-md:py-2.5 max-md:pr-8 max-md:pl-3;
+    @apply after:bg-muted after:text-muted-foreground after:absolute after:top-2.5 after:right-2 after:inline-flex after:h-6 after:w-6 after:shrink-0 after:cursor-pointer after:items-center after:justify-center after:rounded-xl after:text-sm after:font-medium after:content-['\00D7'];
+
+    &.dragging {
+      @apply scale-95 cursor-grabbing opacity-50 shadow-2xl;
+    }
+
+    &.drag-over {
+      @apply border-primary/60 bg-primary/5 ring-primary/30 scale-105 shadow-lg ring-2;
+    }
+
+    & > span,
+    & > code {
+      @apply pointer-events-none w-full rounded-lg font-mono leading-relaxed;
+    }
+  }
+
+  & .placeholder {
+    @apply break-all;
+  }
+
+  & .add-item {
+    @apply border-border/70 hover:border-border hover:bg-page-bg/50 inline-flex items-center gap-1.5 self-stretch rounded-2xl border border-dashed bg-transparent px-1 py-1 transition-all duration-200;
+
+    & > input {
+      @apply min-w-61 flex-1;
+    }
+
+    & > .cbi-button {
+      @apply inline-flex min-h-6 min-w-6 shrink-0 cursor-pointer items-center justify-center rounded-xl px-2 py-0 text-sm font-medium shadow-none active:scale-95;
+    }
+  }
+}

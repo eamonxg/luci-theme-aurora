@@ -1,0 +1,159 @@
+.cbi-section {
+  @apply mb-3 overflow-visible rounded-2xl p-5 max-md:p-3;
+
+  &[data-tab-title] {
+    @apply m-0 p-0;
+  }
+  &[data-tab-active="true"] {
+    @apply mb-3 p-5 max-md:p-3;
+  }
+
+  #maincontent & {
+    @apply border-border/30 bg-panel-bg hover:border-border/50 border shadow-lg hover:shadow-xl;
+  }
+
+  & > .cbi-title {
+    @apply flex items-start justify-between;
+
+    & > h3 {
+      @apply flex-1;
+
+      & .label[data-clickable] {
+        @apply text-foreground bg-label-surface;
+        @apply inline-flex size-7 cursor-pointer items-center justify-center p-0 before:size-4 before:bg-current before:transition-transform before:duration-300 hover:shadow-md active:scale-95 max-md:size-6;
+      }
+
+      & span[data-indicator="poll-status"] {
+        @apply relative size-5 cursor-pointer text-[0px] before:absolute before:size-5 before:bg-current before:transition-transform before:duration-300 before:ease-out hover:before:scale-110 active:before:scale-95;
+
+        &[data-style="active"] {
+          @apply before:rotate-0 before:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat];
+        }
+
+        &[data-style="inactive"] {
+          @apply before:rotate-90 before:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat];
+        }
+      }
+    }
+  }
+
+  legend {
+    @apply text-lg font-semibold;
+  }
+
+  & h3 {
+    @apply text-foreground border-border/50 border-b pb-4 max-md:mx-0 max-md:pb-2;
+  }
+
+  & div[style*="display:grid"] {
+    @apply max-md:grid-cols-2! max-md:gap-3;
+  }
+
+  & .network-status-table {
+    @apply mb-3 flex flex-wrap justify-around gap-4 max-md:flex-col;
+  }
+
+  & .cbi-section-create {
+    @apply mt-6 flex flex-wrap items-center gap-3 max-md:mx-0 max-md:mt-5 max-md:flex-col max-md:items-stretch max-md:gap-3;
+
+    & > div {
+      @apply flex-none max-md:w-full max-md:flex-1;
+    }
+  }
+}
+
+.ifacebox {
+  @apply border-border bg-panel-bg/95 hover:border-border max-md:border-border/70 max-md:bg-panel-bg/98 relative inline-flex min-w-40 flex-col items-stretch overflow-visible rounded-2xl border text-center text-base leading-5 shadow-md hover:shadow-lg max-md:min-w-30 max-md:flex-1 max-md:rounded-3xl max-md:shadow-sm;
+
+  td & {
+    @apply max-md:flex-row;
+  }
+
+  & .ifacebox-head {
+    @apply border-border bg-label-surface text-foreground max-md:border-border/80 w-full rounded-t-2xl border-b px-4 py-3 text-center font-semibold tracking-tight transition-all duration-200 max-md:rounded-t-3xl max-md:px-3 max-md:py-2.5 max-md:text-sm max-md:leading-5 max-md:font-medium;
+
+    &[style*="--zone-color-rgb"] {
+      @apply bg-[rgb(var(--zone-color-rgb),.75)]!;
+    }
+
+    td & {
+      @apply max-md:flex max-md:w-auto max-md:shrink-0 max-md:items-center max-md:justify-center max-md:rounded-l-3xl max-md:rounded-tr-none max-md:border-r max-md:border-b-0;
+    }
+
+    &.cbi-tooltip-container {
+      @apply static bg-transparent;
+      & .cbi-tooltip {
+        @apply bottom-0 left-0;
+      }
+    }
+
+    &.active {
+      @apply border-primary bg-primary text-primary-foreground;
+    }
+  }
+
+  & .ifacebox-body {
+    @apply text-default-foreground flex w-full flex-1 flex-col items-center justify-around gap-2 rounded-b-2xl p-4 text-center max-md:rounded-b-3xl;
+
+    td & {
+      @apply max-md:flex-row max-md:rounded-r-3xl max-md:rounded-bl-none max-md:py-2 max-md:pr-2 max-md:pl-4;
+    }
+
+    & > span {
+      @apply text-foreground space-y-1.5 max-md:space-y-1 max-md:text-sm max-md:leading-5;
+
+      .network-status-table & {
+        @apply w-full;
+      }
+
+      .cbi-tooltip-container + .cbi-tooltip-container {
+        @apply ml-2 max-md:ml-1.5;
+      }
+
+      .cbi-tooltip {
+        @apply delay-200;
+      }
+
+      & .nowrap {
+        @apply inline-block;
+      }
+
+      & > .nowrap {
+        @apply not-last:mb-4 not-last:max-md:mb-3;
+      }
+
+      & img {
+        @apply w-6 shrink-0 max-md:w-5;
+      }
+    }
+
+    & > div {
+      @apply flex w-full flex-wrap space-y-2.5 max-md:space-y-1.5;
+      td & {
+        @apply max-md:w-auto max-md:flex-1 max-md:space-y-1;
+      }
+      & .ifacebadge {
+        @apply flex-1;
+      }
+    }
+
+    & .cbi-tooltip-container {
+      @apply text-foreground static inline-flex cursor-help items-center justify-center;
+
+      & .cbi-tooltip {
+        @apply bottom-0 md:left-0;
+
+        & .nowrap {
+          @apply whitespace-nowrap;
+        }
+      }
+    }
+
+    & small {
+      @apply block text-xs leading-4;
+      td & {
+        @apply max-md:mt-0;
+      }
+    }
+  }
+}

@@ -1,0 +1,62 @@
+.mobile-menu-overlay {
+  @apply max-md:bg-overlay-base/60 max-md:invisible max-md:fixed max-md:inset-0 max-md:z-60 max-md:opacity-0 max-md:transition-all max-md:duration-300 md:hidden;
+
+  &.mobile-menu-open {
+    @apply max-md:visible max-md:opacity-100 max-md:backdrop-blur-md;
+
+    & .mobile-nav {
+      @apply max-md:translate-x-0;
+    }
+  }
+
+  .mobile-nav {
+    @apply max-md:bg-page-bg max-md:absolute max-md:top-0 max-md:right-0 max-md:flex max-md:h-full max-md:w-80 max-md:translate-x-full max-md:flex-col max-md:shadow-2xl max-md:backdrop-blur-xl max-md:backdrop-saturate-150 max-md:transition-transform max-md:duration-300;
+
+    & .mobile-nav-header {
+      @apply max-md:flex max-md:items-center max-md:justify-between max-md:p-6 max-md:pb-4;
+
+      & .mobile-nav-title {
+        @apply max-md:text-foreground max-md:m-0 max-md:text-lg max-md:font-semibold;
+      }
+
+      & .mobile-nav-close {
+        @apply max-md:cursor-pointer max-md:transition-all max-md:duration-200 max-md:hover:scale-105 max-md:active:scale-95;
+
+        & svg {
+          @apply max-md:text-foreground size-5 max-md:transition-transform max-md:duration-200;
+        }
+      }
+    }
+
+    & .mobile-nav-list {
+      @apply max-md:m-0 max-md:flex max-md:flex-1 max-md:list-none max-md:flex-col max-md:gap-0 max-md:overflow-y-auto max-md:p-0 max-md:px-6;
+
+      & .mobile-nav-item {
+        & .mobile-nav-link {
+          @apply max-md:text-default-foreground max-md:hover:text-foreground max-md:flex max-md:w-full max-md:items-center max-md:px-0 max-md:py-4 max-md:text-base max-md:font-medium max-md:no-underline max-md:transition-all max-md:duration-300 max-md:hover:translate-x-1;
+        }
+
+        & .mobile-nav-submenu {
+          @apply max-md:m-0 max-md:list-none max-md:overflow-hidden max-md:p-0 max-md:transition-all max-md:duration-300 max-md:ease-in-out;
+
+          & .mobile-nav-subitem {
+            @apply max-md:border-border/20 max-md:border-b max-md:last:border-b-0;
+            & .mobile-nav-sublink {
+              @apply max-md:text-default-foreground max-md:hover:text-foreground max-md:flex max-md:w-full max-md:items-center max-md:py-3 max-md:pr-0 max-md:pl-4 max-md:text-sm max-md:font-normal max-md:no-underline max-md:transition-all max-md:duration-300 max-md:hover:translate-x-1;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+[data-nav-type="mega-menu"] {
+  & .desktop-menu-overlay {
+    @apply bg-overlay-base/35 pointer-events-none fixed inset-0 z-50 opacity-0 transition-all duration-300 max-md:hidden;
+
+    &.active {
+      @apply pointer-events-auto opacity-100 backdrop-blur-sm;
+    }
+  }
+}

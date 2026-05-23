@@ -1,0 +1,22 @@
+#tabmenu {
+  @apply mb-8 w-full;
+}
+
+.tabs {
+  @apply border-border relative flex items-center gap-0 overflow-x-auto border-b;
+
+  & a {
+    @apply text-muted-foreground hover:text-foreground block px-8 py-4 text-center text-sm font-medium whitespace-nowrap transition-colors duration-200 hover:no-underline;
+  }
+
+  & > li.active {
+    @apply border-foreground border-b-2;
+    & > a {
+      @apply text-foreground font-semibold;
+    }
+  }
+}
+
+.cbi-section-node-tabbed {
+  @apply mt-6;
+}

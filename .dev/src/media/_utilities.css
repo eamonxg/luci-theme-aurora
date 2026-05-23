@@ -1,0 +1,56 @@
+.left {
+  @apply md:text-left!;
+  &:not(td) {
+    @apply text-left!;
+  }
+}
+
+.right {
+  @apply md:text-right!;
+  &:not(td) {
+    @apply text-right!;
+  }
+}
+
+.top {
+  @apply md:align-top!;
+  &:not(td) {
+    @apply align-top!;
+  }
+}
+
+.bottom {
+  @apply md:align-bottom!;
+  &:not(td) {
+    @apply align-bottom!;
+  }
+}
+
+.center {
+  @apply md:text-center!;
+  &:not(td) {
+    @apply text-center!;
+  }
+}
+
+.middle {
+  @apply md:align-middle!;
+  &:not(td) {
+    @apply align-middle!;
+  }
+}
+
+.nowrap:not(span) {
+  @apply md:whitespace-nowrap;
+  &:not(td) {
+    @apply whitespace-nowrap;
+  }
+}
+
+.spinning {
+  @apply relative inline-block pl-8!;
+  @apply before:absolute before:top-1/2 before:left-[6px] before:size-5 before:-translate-y-1/2 before:animate-spin before:bg-current before:[mask:url('@assets/icons/spinning.svg')_center/cover_no-repeat];
+  #view > & {
+    @apply first:mx-auto first:grid first:min-h-48 first:w-fit first:place-items-center first:max-md:min-h-[calc(100dvh-4rem)];
+  }
+}
