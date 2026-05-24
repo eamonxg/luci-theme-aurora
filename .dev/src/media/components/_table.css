@@ -35,7 +35,7 @@ table.table,
 
   & tr,
   & .tr {
-    @apply hover:bg-label-surface max-md:border-border transition-colors duration-200 max-md:flex max-md:flex-wrap max-md:border-b max-md:px-2 max-md:py-2;
+    @apply hover:bg-label-surface max-md:border-border max-md:flex max-md:flex-wrap max-md:border-b max-md:px-2 max-md:py-2;
     @apply has-[.cbi-progressbar]:max-md:flex has-[.cbi-progressbar]:max-md:items-center has-[.cbi-progressbar]:max-md:justify-center;
 
     &:first-child {
@@ -130,7 +130,7 @@ table.table,
 
   & th,
   & .th {
-    @apply border-border bg-label-surface border-b px-3 py-3 text-left text-base font-medium backdrop-blur-sm max-md:flex-[1_1_50%] max-md:border-0 max-md:text-sm;
+    @apply border-border bg-label-surface border-b px-3 py-3 text-left text-base font-medium max-md:flex-[1_1_50%] max-md:border-0 max-md:text-sm;
 
     #cbi-samba4 & {
       @apply px-0.5 py-1.5;

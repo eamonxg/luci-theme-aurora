@@ -1,5 +1,5 @@
 .cbi-dropdown {
-  @apply inline-flex h-fit max-w-full min-w-fit shrink-0 items-center p-0 whitespace-nowrap shadow-sm transition-all duration-200;
+  @apply inline-flex h-fit max-w-full min-w-fit shrink-0 items-center p-0 whitespace-nowrap shadow-sm;
 
   &[disabled] {
     @apply pointer-events-none opacity-40 dark:opacity-30;

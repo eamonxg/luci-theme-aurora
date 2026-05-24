@@ -7,18 +7,25 @@
  Licensed to the public under the Apache License 2.0.
 -#}
 
-{%const boardinfo = ubus.call('system', 'board');-%}
+{%
+import { cursor } from 'uci';
+const boardinfo = ubus.call('system', 'board');
+const themeTokens = cursor().get_all('aurora', 'theme') || {};
+const loginLogoSvg = themeTokens.logo_svg || 'logo.svg';
+const loginIconVer = themeTokens.icon_cache_version || '0';
+-%}
 {% include('header', { blank_page: true }) %}
 
-<div class="login-screen">
-	<div class="login-aurora" aria-hidden="true">
-		<div class="login-aurora-inner"></div>
-	</div>
+{% if (themeTokens.struct_login_bg): %}
+<div class="login-bg" aria-hidden="true"></div>
+{% endif %}
+
+<main class="login-screen">
 	<div class="login-shell">
 		<form method="post" class="login-card">
 			<div class="login-brand">
 				<div class="login-logo">
-					<img src="{{ media }}/images/logo.svg" alt="">
+					<img src="{{ media }}/images/{{ loginLogoSvg }}?v={{ loginIconVer }}" alt="">
 				</div>
 				<div class="login-title">
 					<span class="login-hostname">{{ striptags(boardinfo?.hostname ?? '?') }}</span>
@@ -56,10 +63,10 @@
 		</form>
 	</div>
 
-	<div class="login-footer">
+	<footer class="login-footer">
 		<p>© <a href="https://github.com/eamonxg/luci-theme-aurora/graphs/contributors" target="_blank" rel="noreferrer">Aurora Theme Contributors</a> · Powered by <a href="{{ entityencode(version.disturl ?? '#', true) }}" target="_blank" rel="noreferrer">{{ version.distname }}</a> & <a href="https://github.com/openwrt/luci" target="_blank" rel="noreferrer">{{ version.luciname }}</a></p>
-	</div>
-</div>
+	</footer>
+</main>
 
 <script>
 document.getElementById('luci_username').value ? document.getElementById('luci_password').focus() : document.getElementById('luci_username').focus();

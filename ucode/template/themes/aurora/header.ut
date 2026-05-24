@@ -20,7 +20,6 @@
 	const toolbar_enabled = tokens.toolbar_enabled ? tokens.toolbar_enabled == '1' : true;
 	const icon_cache_version = tokens.icon_cache_version || '0';
 	const logo_svg = tokens.logo_svg || 'logo.svg';
-	const logo_png = tokens.logo_png || 'logo_32.png';
 
 	let toolbar_items = [
 		{ url: '/cgi-bin/luci/admin/status/overview', icon: 'overview.svg', title: 'Overview' },
@@ -28,7 +27,7 @@
 		{ url: '/cgi-bin/luci/admin/network/network', icon: 'network.svg', title: 'Network' }
 	];
 
-	if (toolbar_enabled) {
+	if (!blank_page && toolbar_enabled) {
 		let has_config = false;
 		const custom_items = [];
 
@@ -56,6 +55,15 @@
 	<head>
 		<meta charset="utf-8">
 		<title>{{ striptags(`${dispatched?.title ?  `${_(dispatched.title)} - ` : ''}${boardinfo.hostname ?? '?'}`) }}</title>
+		{% if (blank_page): %}
+		<script>
+			(function () {
+				const theme = localStorage.getItem('aurora.theme') || 'device';
+				const isDark = theme === 'dark' || (theme === 'device' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+				document.documentElement.setAttribute('data-darkmode', isDark);
+			})();
+		</script>
+		{% else %}
 		<script>
 			const setTheme = (theme) => {
 				const current = ['light', 'dark', 'device'].includes(theme) ? theme : 'device';
@@ -97,6 +105,7 @@
 				}
 			});
 		</script>
+		{% endif %}
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 		<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
 		<meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
@@ -107,12 +116,9 @@
 		<link rel="stylesheet" href="{{ media }}/main.css">
 		<link rel="stylesheet" href="{{ media }}/fonts/aurora-font.css?v={{ icon_cache_version }}">
 		{% endif %}
-		<link rel="icon" href="{{ media }}/images/{{ logo_png }}?v={{ icon_cache_version }}" sizes="32x32">
-		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any">
-		<link rel="icon" type="image/png" sizes="16x16" href="{{ media }}/images/favicon-16x16.png">
-		<link rel="icon" type="image/png" sizes="32x32" href="{{ media }}/images/favicon-32x32.png">
-		<link rel="shortcut icon" href="{{ media }}/images/favicon.ico">
-		<link rel="apple-touch-icon" sizes="180x180" href="{{ media }}/images/pwa/apple-touch-icon.png">
+		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any" type="image/svg+xml">
+		<link rel="icon" href="{{ media }}/images/favicon.ico" sizes="32x32">
+		<link rel="apple-touch-icon" href="{{ media }}/images/pwa/apple-touch-icon.png?v={{ icon_cache_version }}">
 		<link rel="manifest" href="{{ media }}/images/pwa/app.webmanifest">
 		<meta name="application-name" content="LuCI Aurora">
 		<meta name="apple-mobile-web-app-capable" content="yes">
@@ -143,8 +149,10 @@
 			}
 		</style>
 		{% endif %}
+		{% if (!blank_page): %}
 		<script src="{{ dispatcher.build_url('admin/translations', dispatcher.lang) }}"></script>
 		<script src="{{ resource }}/cbi.js"></script>
+		{% endif %}
 	</head>
 
 	<body class="lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}" data-nav-type="{{ nav_submenu_type }}">

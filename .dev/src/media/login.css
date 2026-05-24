@@ -2,13 +2,6 @@
  * luci-theme-aurora: login page stylesheet
  * Copyright 2025 eamonxg <eamonxiong@gmail.com>
  * Licensed to the public under the Apache License 2.0.
- *
- * Separate Tailwind entry — only generates utilities used by the login
- * page, resulting in ~8 KB vs the 200 KB of main.css.
- *
- * aurora-config compatibility: all styles reference the same CSS custom
- * properties (--primary, --panel-bg, etc.) defined in _tokens.css and
- * overridden at runtime by the UCI token <style> block in header.ut.
  */
 
 @import "tailwindcss";
@@ -16,26 +9,12 @@
 
 @custom-variant dark (&:where([data-darkmode=true], [data-darkmode=true] *));
 
-@keyframes aurora {
-  from {
-    background-position:
-      50% 50%,
-      50% 50%;
-  }
-  to {
-    background-position:
-      350% 50%,
-      350% 50%;
-  }
-}
-
 @layer base {
   html {
     @apply bg-background h-full font-sans;
   }
 
   body {
-    /* Intentionally no transition-all: causes full-page repaint on any property change */
     @apply text-foreground bg-background min-h-full;
   }
 }
@@ -46,68 +25,25 @@
   }
 
   .login-shell {
-    @apply relative z-10 flex w-full max-w-md flex-col items-stretch gap-5;
+    @apply w-full max-w-md;
   }
 
-  /* No backdrop-blur or overflow:hidden — both force an expensive compositing layer */
+  /* Fixed sibling layer (not form ancestor) on its own GPU surface so input
+     paints don't re-sample the bg image. DOM order keeps the form on top. */
+  .login-bg {
+    @apply pointer-events-none fixed inset-0 bg-cover bg-center bg-no-repeat bg-(image:--login-bg) transform-[translateZ(0)];
+  }
+
   .login-card {
-    @apply bg-panel-bg border-border relative flex flex-col gap-7 rounded-4xl border p-14 shadow-lg max-md:rounded-3xl max-md:p-9;
-  }
-
-  /* Aurora animated background ─────────────────────────────────── */
-  .login-aurora {
-    /* contain:paint isolates repaint to this element — input events don't invalidate it */
-    @apply pointer-events-none absolute inset-0 overflow-hidden [contain:paint];
-  }
-
-  .login-aurora-inner {
-    /* Custom-property gradients: acceptable raw CSS (not styling utilities) */
-    --aurora-gradient: repeating-linear-gradient(
-      100deg,
-      var(--login-aurora-1) 10%,
-      var(--login-aurora-2) 15%,
-      var(--login-aurora-3) 20%,
-      var(--login-aurora-4) 25%,
-      var(--login-aurora-1) 30%
-    );
-    --light-stripe: repeating-linear-gradient(
-      100deg,
-      oklch(1 0 0) 0%,
-      oklch(1 0 0) 7%,
-      transparent 10%,
-      transparent 12%,
-      oklch(1 0 0) 16%
-    );
-    --dark-stripe: repeating-linear-gradient(
-      100deg,
-      oklch(0 0 0) 0%,
-      oklch(0 0 0) 7%,
-      transparent 10%,
-      transparent 12%,
-      oklch(0 0 0) 16%
-    );
-
-    /* will-change:transform promotes to its own compositor layer — blur filter stays cached */
-    @apply absolute -inset-[10px] opacity-50 blur-[10px] will-change-transform;
-    @apply [background-image:var(--light-stripe),var(--aurora-gradient)];
-    @apply dark:[background-image:var(--dark-stripe),var(--aurora-gradient)];
-    @apply [background-size:300%,_200%] [background-position:50%_50%,50%_50%];
-    @apply [mask-image:radial-gradient(ellipse_at_100%_0%,black_10%,transparent_70%)];
-
-    &::after {
-      @apply absolute inset-0 content-[''] [animation:aurora_60s_linear_infinite];
-      @apply [background-image:var(--light-stripe),var(--aurora-gradient)] [background-size:200%,_100%];
-      @apply dark:[background-image:var(--dark-stripe),var(--aurora-gradient)] dark:mix-blend-difference;
-    }
+    @apply bg-panel-bg border-border flex flex-col gap-7 rounded-4xl border p-14 max-md:rounded-3xl max-md:p-9;
   }
 
   .login-brand {
     @apply flex items-center gap-3.5;
   }
 
-  /* Lens-shaped divider: full-width at center, tapers to 0 at both ends */
   .login-divider {
-    @apply bg-border h-0.5 border-0 [clip-path:ellipse(44%_50%_at_50%_50%)];
+    @apply bg-border h-px border-0;
   }
 
   .login-logo {
@@ -147,22 +83,15 @@
   }
 
   .input-wrap {
-    @apply relative [contain:layout_style];
+    @apply border-border bg-panel-bg rounded-2xl border;
+
+    &:focus-within {
+      @apply border-primary;
+    }
   }
 
-  /* Focus ring on ::after whose only changing property is opacity — runs entirely on the
-     compositor thread, eliminating the ~400 ms INP Presentation delay on pointer events */
-  .input-wrap::after {
-    @apply border-primary pointer-events-none absolute -inset-0.5 rounded-[calc(var(--radius-2xl)+var(--spacing)*0.5)] border-2 opacity-0 [will-change:opacity] content-[''] [transition:opacity_120ms_ease];
-  }
-
-  .input-wrap:focus-within::after {
-    @apply opacity-100;
-  }
-
-  /* No focus styles here — handled by .input-wrap::after */
   .login-input {
-    @apply bg-panel-bg border-border text-foreground placeholder:text-muted-foreground/60 w-full appearance-none rounded-2xl border px-3 py-2.5 text-base outline-none;
+    @apply text-foreground placeholder:text-muted-foreground/60 w-full appearance-none rounded-2xl border-0 bg-transparent px-3 py-2.5 text-base outline-none;
   }
 
   .login-error {
@@ -173,12 +102,10 @@
     @apply pt-4;
   }
 
-  /* opacity hover/active run on the compositor — no repaint */
   .login-submit {
-    @apply bg-primary text-primary-foreground w-full cursor-pointer rounded-2xl border-0 py-2.5 text-base font-medium [will-change:opacity] [transition:opacity_120ms_ease] hover:opacity-90 active:opacity-80;
+    @apply bg-primary text-primary-foreground w-full cursor-pointer rounded-2xl border-0 py-2.5 text-base font-medium hover:opacity-90 active:opacity-80;
   }
 
-  /* Absolute at viewport bottom; outside .login-shell so it positions relative to .login-screen */
   .login-footer {
     @apply text-muted-foreground absolute right-0 bottom-5 left-0 px-5 text-center text-xs;
 
