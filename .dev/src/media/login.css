@@ -19,6 +19,13 @@
   }
 }
 
+@keyframes divider-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0.15);
+  }
+}
+
 @layer login {
   .login-screen {
     @apply relative flex min-h-dvh flex-col items-center justify-center px-5 pb-14;
@@ -55,7 +62,7 @@
   }
 
   .login-divider {
-    @apply bg-border h-px border-0;
+    @apply via-border h-px w-full border-0 bg-linear-to-r from-transparent to-transparent animate-[divider-in_0.7s_cubic-bezier(0.16,1,0.3,1)_0.1s_both];
   }
 
   .login-logo {
