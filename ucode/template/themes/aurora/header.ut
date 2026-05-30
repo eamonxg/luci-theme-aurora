@@ -111,6 +111,16 @@
 		<meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
 		<meta name="color-scheme" content="light dark">
 		{% if (blank_page): %}
+		{% if (tokens.struct_login_bg): %}
+		{%
+			const _bgRaw = tokens.struct_login_bg;
+			const _bgMatch = match(_bgRaw, /^url\(\s*['"]?([^'")\s]+)['"]?\s*\)$/);
+			const _bgUrl = _bgMatch ? _bgMatch[1] : null;
+		-%}
+		{% if (_bgUrl && index(_bgUrl, 'data:') !== 0): %}
+		<link rel="preload" as="image" href="{{ entityencode(_bgUrl, true) }}">
+		{% endif %}
+		{% endif %}
 		<link rel="stylesheet" href="{{ media }}/login.css">
 		{% else %}
 		<link rel="stylesheet" href="{{ media }}/main.css">

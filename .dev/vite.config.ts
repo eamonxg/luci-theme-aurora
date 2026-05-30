@@ -239,7 +239,35 @@ async function checkSshConnection(cfg: ScpConfig): Promise<boolean> {
 
 function createUtSyncPlugin(cfg: ScpConfig): Plugin {
   let syncing = false;
-  let connected = false;
+  let pendingFile: string | null = null;
+
+  function syncFile(filename: string, server: any) {
+    if (syncing) {
+      pendingFile = filename;
+      return;
+    }
+
+    syncing = true;
+    pendingFile = null;
+
+    const filePath = join(UT_TEMPLATE_DIR, filename);
+    const remotePath = `${UT_REMOTE_DIR}/${filename}`;
+    const cmd = buildScpCommand(filePath, remotePath, cfg);
+
+    console.log(`[UT Sync] Syncing ${filename} → ${cfg.host}:${remotePath}`);
+    execAsync(cmd)
+      .then(() => {
+        console.log(`[UT Sync] Done. Reloading browser.`);
+        server.ws.send({ type: "full-reload", path: "*" });
+      })
+      .catch((err: any) => {
+        console.error(`[UT Sync] Failed to sync ${filename}:`, err?.message);
+      })
+      .finally(() => {
+        syncing = false;
+        if (pendingFile) syncFile(pendingFile, server);
+      });
+  }
 
   return {
     name: "ut-sync-plugin",
@@ -257,29 +285,11 @@ function createUtSyncPlugin(cfg: ScpConfig): Plugin {
 
       checkSshConnection(cfg).then((ok) => {
         if (!ok) return;
-        connected = true;
 
+        // Accept both "change" and "rename" — VS Code atomic saves emit "rename" on macOS
         const watcher = fsWatch(UT_TEMPLATE_DIR, (eventType, filename) => {
-          if (!filename?.endsWith(".ut") || eventType !== "change") return;
-          if (syncing) return;
-
-          syncing = true;
-          const filePath = join(UT_TEMPLATE_DIR, filename);
-          const remotePath = `${UT_REMOTE_DIR}/${filename}`;
-          const cmd = buildScpCommand(filePath, remotePath, cfg);
-
-          console.log(`[UT Sync] Syncing ${filename} → ${cfg.host}:${remotePath}`);
-          execAsync(cmd)
-            .then(() => {
-              console.log(`[UT Sync] Done. Reloading browser.`);
-              server.ws.send({ type: "full-reload", path: "*" });
-            })
-            .catch((err: any) => {
-              console.error(`[UT Sync] Failed to sync ${filename}:`, err?.message);
-            })
-            .finally(() => {
-              syncing = false;
-            });
+          if (!filename?.endsWith(".ut")) return;
+          syncFile(filename, server);
         });
 
         server.httpServer?.on("close", () => watcher.close());

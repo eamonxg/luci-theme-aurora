@@ -70,6 +70,17 @@ const loginIconVer = themeTokens.icon_cache_version || '0';
 
 <script>
 document.getElementById('luci_username').value ? document.getElementById('luci_password').focus() : document.getElementById('luci_username').focus();
+
+(function () {
+	var bg = document.querySelector('.login-bg');
+	if (!bg) return;
+	var val = getComputedStyle(document.documentElement).getPropertyValue('--login-bg').trim();
+	var m = val.match(/url\(["']?(.+?)["']?\)/);
+	if (!m) return;
+	var img = new Image();
+	img.onload = function () { bg.classList.add('full-loaded'); };
+	img.src = m[1];
+}());
 </script>
 
 {% include('footer', { blank_page: true }) %}
