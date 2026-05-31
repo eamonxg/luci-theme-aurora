@@ -124,8 +124,8 @@
 		<link rel="stylesheet" href="{{ media }}/login.css">
 		{% else %}
 		<link rel="stylesheet" href="{{ media }}/main.css">
-		<link rel="stylesheet" href="{{ media }}/fonts/aurora-font.css?v={{ icon_cache_version }}">
 		{% endif %}
+		<link rel="stylesheet" href="{{ media }}/fonts/aurora-font.css?v={{ icon_cache_version }}">
 		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any" type="image/svg+xml">
 		<link rel="icon" href="{{ media }}/images/favicon.ico" sizes="32x32">
 		<link rel="apple-touch-icon" href="{{ media }}/images/pwa/apple-touch-icon.png?v={{ icon_cache_version }}">

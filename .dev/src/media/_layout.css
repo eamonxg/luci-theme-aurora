@@ -194,7 +194,7 @@ header {
 
   #syslog,
   #log_textarea {
-    @apply w-full text-xs leading-snug;
+    @apply w-full font-mono text-xs leading-snug;
   }
 
   #syslog {
