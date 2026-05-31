@@ -129,9 +129,7 @@
 		<link rel="stylesheet" href="{{ media }}/main.css">
 		{% endif %}
 		<link rel="stylesheet" href="{{ media }}/fonts/aurora-font.css?v={{ icon_cache_version }}">
-		{% if (logo_svg =~ /\.svg$/i): %}
 		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any" type="image/svg+xml">
-		{% endif %}
 		{% if (favicon_png): %}
 		<link rel="icon" href="{{ media }}/images/{{ favicon_png }}?v={{ icon_cache_version }}" type="image/png">
 		{% endif %}
