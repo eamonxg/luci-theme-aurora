@@ -20,6 +20,9 @@
 	const toolbar_enabled = tokens.toolbar_enabled ? tokens.toolbar_enabled == '1' : true;
 	const icon_cache_version = tokens.icon_cache_version || '0';
 	const logo_svg = tokens.logo_svg || 'logo.svg';
+	const favicon_png = tokens.favicon_png || '';
+	const favicon_ico = tokens.favicon_ico || 'favicon.ico';
+	const pwa_apple_touch = tokens.pwa_apple_touch || 'apple-touch-icon.png';
 
 	let toolbar_items = [
 		{ url: '/cgi-bin/luci/admin/status/overview', icon: 'overview.svg', title: 'Overview' },
@@ -126,10 +129,15 @@
 		<link rel="stylesheet" href="{{ media }}/main.css">
 		{% endif %}
 		<link rel="stylesheet" href="{{ media }}/fonts/aurora-font.css?v={{ icon_cache_version }}">
+		{% if (logo_svg =~ /\.svg$/i): %}
 		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any" type="image/svg+xml">
-		<link rel="icon" href="{{ media }}/images/favicon.ico" sizes="32x32">
-		<link rel="apple-touch-icon" href="{{ media }}/images/pwa/apple-touch-icon.png?v={{ icon_cache_version }}">
-		<link rel="manifest" href="{{ media }}/images/pwa/app.webmanifest">
+		{% endif %}
+		{% if (favicon_png): %}
+		<link rel="icon" href="{{ media }}/images/{{ favicon_png }}?v={{ icon_cache_version }}" type="image/png">
+		{% endif %}
+		<link rel="icon" href="{{ media }}/images/{{ favicon_ico }}" sizes="32x32">
+		<link rel="apple-touch-icon" href="{{ media }}/images/{{ pwa_apple_touch }}?v={{ icon_cache_version }}">
+		<link rel="manifest" href="{{ media }}/images/app.webmanifest">
 		<meta name="application-name" content="LuCI Aurora">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
