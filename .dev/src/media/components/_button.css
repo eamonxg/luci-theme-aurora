@@ -1,4 +1,7 @@
 button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
 .btn,
 .cbi-button {
   @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl border px-3 py-1.5 text-sm font-medium antialiased shadow-sm max-md:text-base max-md:font-medium;
