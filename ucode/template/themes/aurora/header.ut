@@ -198,6 +198,28 @@
 		</header>
 		{% endif %}
 
+		{% if (nav_submenu_type == 'left-panel'): %}
+		<aside class="left-menu-panel" id="left-menu-panel" aria-label="{{ _('Main menu') }}">
+			<div class="left-menu-panel-header">
+				<a class="left-menu-heading" href="/">{{ striptags(boardinfo.hostname ?? '?') }}</a>
+				<button class="left-menu-toggle" id="left-menu-toggle" type="button" aria-label="{{ _('Toggle menu') }}" aria-expanded="true">
+					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M15 18l-6-6 6-6"/>
+					</svg>
+				</button>
+			</div>
+			<ul class="left-menu-list" id="left-menu-list"></ul>
+			<div class="left-menu-footer" id="left-menu-footer"></div>
+		</aside>
+		<script>
+			(function() {
+				if (localStorage.getItem('aurora.leftMenuCollapsed') === 'true') {
+					document.body.classList.add('left-panel-collapsed');
+				}
+			})();
+		</script>
+		{% endif %}
+
 		<div class="mobile-menu-overlay" id="mobile-menu-overlay">
 			<nav class="mobile-nav">
 				<div class="mobile-nav-header">

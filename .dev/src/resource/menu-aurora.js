@@ -6,6 +6,7 @@ return baseclass.extend({
   __init__() {
     ui.menu.load().then((tree) => this.render(tree));
     this.initMobileMenu();
+    this.initLeftPanel();
     this.initUciIndicator();
   },
 
@@ -100,6 +101,23 @@ return baseclass.extend({
           : `${submenu.scrollHeight}px`;
         submenu.style.opacity = isExpanded ? "0" : "1";
       }
+    });
+  },
+
+  initLeftPanel() {
+    if (document.body?.dataset?.navType !== "left-panel") return;
+
+    const toggle = document.querySelector("#left-menu-toggle");
+    const applyState = (collapsed) => {
+      document.body.classList.toggle("left-panel-collapsed", collapsed);
+      toggle?.setAttribute("aria-expanded", String(!collapsed));
+      localStorage.setItem("aurora.leftMenuCollapsed", String(collapsed));
+    };
+
+    applyState(localStorage.getItem("aurora.leftMenuCollapsed") === "true");
+
+    toggle?.addEventListener("click", () => {
+      applyState(!document.body.classList.contains("left-panel-collapsed"));
     });
   },
 
@@ -218,6 +236,10 @@ return baseclass.extend({
 
       if (navType === "mega-menu") {
         this.initMegaMenu(children, url, ul);
+      } else if (navType === "left-panel") {
+        this.renderLeftPanelMenu(children, url);
+        ul.style.display = "none";
+        return ul;
       } else {
         this.initBoxedDropdown(children, url, ul);
       }
@@ -233,6 +255,103 @@ return baseclass.extend({
 
     ul.style.display = "";
     return ul;
+  },
+
+  renderLeftPanelMenu(children, url) {
+    const list = document.querySelector("#left-menu-list");
+    const footer = document.querySelector("#left-menu-footer");
+
+    if (!list || !children.length) return;
+
+    list.innerHTML = "";
+    if (footer) footer.innerHTML = "";
+
+    children.forEach((child) => {
+      const isLogout = child.name === "logout" || child.title === "Logout";
+      const submenu = ui.menu.getChildren(child);
+      const hasSubmenu = submenu.length > 0;
+      const isActive = L.env.dispatchpath[1] === child.name;
+
+      if (isLogout) {
+        const logout = E(
+          "a",
+          {
+            class: "left-menu-logout",
+            href: L.url(url, child.name),
+            title: _(child.title),
+          },
+          [_(child.title)],
+        );
+
+        (footer || list).appendChild(logout);
+        return;
+      }
+
+      const li = E(
+        "li",
+        {
+          class: [
+            "left-menu-item",
+            hasSubmenu ? "has-left-submenu" : "",
+            !hasSubmenu && isActive ? "active" : "",
+          ]
+            .filter(Boolean)
+            .join(" "),
+        },
+        [
+          hasSubmenu
+            ? E(
+                "span",
+                {
+                  class: "left-menu-category",
+                  title: _(child.title),
+                },
+                [_(child.title)],
+              )
+            : E(
+                "a",
+                {
+                  class: "left-menu-link",
+                  href: L.url(url, child.name),
+                  title: _(child.title),
+                },
+                [E("span", { class: "left-menu-title" }, [_(child.title)])],
+              ),
+        ],
+      );
+
+      if (hasSubmenu) {
+        const ul = E("ul", { class: "left-menu-sublist" });
+
+        submenu.forEach((item) => {
+          const subActive = isActive && L.env.dispatchpath[2] === item.name;
+
+          ul.appendChild(
+            E(
+              "li",
+              {
+                class: `left-menu-subitem${subActive ? " active" : ""}`,
+              },
+              [
+                E(
+                  "a",
+                  {
+                    class: "left-menu-sublink",
+                    href: L.url(url, child.name, item.name),
+                    title: _(item.title),
+                  },
+                  [_(item.title)],
+                ),
+              ],
+            ),
+          );
+        });
+
+        li.appendChild(ul);
+      }
+
+      list.appendChild(li);
+    });
   },
 
   initMegaMenu(children, url, ul) {
