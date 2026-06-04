@@ -149,11 +149,11 @@ header {
     }
 
     header #indicators {
-      transition: transform 300ms ease;
+      @apply transition-transform duration-300;
     }
 
     &:not(.left-panel-collapsed) header #indicators {
-      transform: translateX(3.75rem);
+      @apply translate-x-15;
     }
 
     &.left-panel-collapsed {
@@ -161,11 +161,10 @@ header {
     }
 
     .left-menu-panel {
-      @apply bg-header-bg/90 border-border/60 fixed flex flex-col rounded-[2rem] border shadow-2xl backdrop-blur-xl backdrop-saturate-150;
+      @apply bg-header-bg/90 border-border/60 fixed z-70 flex flex-col rounded-[2rem] border shadow-2xl backdrop-blur-xl backdrop-saturate-150;
       top: var(--left-menu-offset);
       bottom: var(--left-menu-offset);
       left: var(--left-menu-offset);
-      z-index: 70;
       width: var(--left-menu-width);
       transition:
         transform 300ms ease,
@@ -196,8 +195,7 @@ header {
     }
 
     .left-menu-toggle {
-      @apply text-foreground bg-page-bg/95 border-border/60 hover:bg-header-interactive absolute top-2 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-2xl border p-0 shadow-xl backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95;
-      right: -3.25rem;
+      @apply text-foreground bg-page-bg/95 border-border/60 hover:bg-header-interactive absolute top-2 -right-[3.25rem] flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-2xl border p-0 shadow-xl backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95;
 
       & svg {
         @apply size-5 transition-transform duration-300;
@@ -261,8 +259,7 @@ header {
       .left-menu-category,
       .left-menu-title,
       .left-menu-sublist {
-        @apply pointer-events-none opacity-0;
-        transform: translateX(-0.5rem);
+        @apply pointer-events-none -translate-x-2 opacity-0;
       }
 
       .left-menu-list {
@@ -270,12 +267,11 @@ header {
       }
 
       .left-menu-footer {
-        @apply pointer-events-none opacity-0;
-        transform: translateY(0.5rem);
+        @apply pointer-events-none translate-y-2 opacity-0;
       }
 
       .left-menu-toggle {
-        top: 4rem;
+        @apply top-16;
       }
 
       .left-menu-toggle svg {

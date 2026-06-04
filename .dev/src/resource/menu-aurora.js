@@ -267,7 +267,7 @@ return baseclass.extend({
     if (footer) footer.innerHTML = "";
 
     children.forEach((child) => {
-      const isLogout = child.name === "logout" || child.title === "Logout";
+      const isLogout = child.name === "logout";
       const submenu = ui.menu.getChildren(child);
       const hasSubmenu = submenu.length > 0;
       const isActive = L.env.dispatchpath[1] === child.name;
