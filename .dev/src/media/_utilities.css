@@ -47,6 +47,14 @@
   }
 }
 
+.fade-in {
+  @apply animate-in fade-in-0 fill-mode-backwards duration-400;
+}
+
+.fade-out {
+  @apply pointer-events-none opacity-0 transition-opacity duration-400;
+}
+
 .spinning {
   @apply relative inline-block pl-8!;
   @apply before:absolute before:top-1/2 before:left-[6px] before:size-5 before:-translate-y-1/2 before:animate-spin before:bg-current before:[mask:url('@assets/icons/spinning.svg')_center/cover_no-repeat];
