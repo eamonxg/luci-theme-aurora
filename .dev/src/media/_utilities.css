@@ -1,3 +1,7 @@
+.hidden {
+  @apply hidden!;
+}
+
 .left {
   @apply md:text-left!;
   &:not(td) {
