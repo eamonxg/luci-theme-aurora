@@ -1,5 +1,5 @@
 .mobile-menu-overlay {
-  @apply max-md:bg-overlay-base/60 max-md:invisible max-md:fixed max-md:inset-0 max-md:z-60 max-md:opacity-0 max-md:transition-opacity max-md:duration-300 md:hidden;
+  @apply max-md:bg-overlay-base/60 max-md:invisible max-md:fixed max-md:inset-0 max-md:z-60 max-md:opacity-0 max-md:transition-[visibility,opacity] max-md:duration-300 md:hidden;
 
   &.mobile-menu-open {
     @apply max-md:visible max-md:opacity-100 max-md:backdrop-blur-md;
@@ -10,7 +10,7 @@
   }
 
   .mobile-nav {
-    @apply max-md:bg-page-bg max-md:absolute max-md:top-0 max-md:right-0 max-md:flex max-md:h-full max-md:w-80 max-md:translate-x-full max-md:flex-col max-md:shadow-2xl max-md:backdrop-blur-xl max-md:backdrop-saturate-150 max-md:transition-transform max-md:duration-300;
+    @apply max-md:bg-page-bg max-md:absolute max-md:top-0 max-md:right-0 max-md:flex max-md:h-full max-md:w-80 max-md:translate-x-full max-md:flex-col max-md:shadow-2xl max-md:transition-transform max-md:duration-300 max-md:[will-change:transform];
 
     & .mobile-nav-header {
       @apply max-md:flex max-md:items-center max-md:justify-between max-md:p-6 max-md:pb-4;

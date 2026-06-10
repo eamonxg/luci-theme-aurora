@@ -214,7 +214,7 @@ footer {
   }
 
   & .breadcrumb {
-    @apply bg-page-bg/60 hover:bg-page-bg/80 flex items-center gap-1 rounded-full px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-md;
+    @apply bg-page-bg/60 hover:bg-page-bg/80 flex items-center gap-1 rounded-full px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm transition-colors duration-200;
 
     & li {
       @apply list-none;
