@@ -43,7 +43,7 @@
   @apply inline-flex w-max max-w-120 flex-col items-start gap-3 max-md:max-w-full!;
 
   & .item {
-    @apply border-border/40 bg-panel-bg pointer-events-auto relative inline-flex cursor-move flex-col items-start gap-2 self-stretch overflow-hidden rounded-2xl border py-3 pr-10 pl-4 break-all shadow-sm select-text max-md:w-full max-md:py-2.5 max-md:pr-8 max-md:pl-3;
+    @apply border-border/40 bg-panel-bg pointer-events-auto relative inline-flex cursor-move flex-col items-start gap-2 self-stretch overflow-hidden rounded-2xl border py-3 pr-10 pl-4 break-all shadow-sm transition-[transform,box-shadow,opacity,border-color,background-color] duration-200 select-text max-md:w-full max-md:py-2.5 max-md:pr-8 max-md:pl-3;
     @apply after:bg-muted after:text-muted-foreground after:absolute after:top-2.5 after:right-2 after:inline-flex after:h-6 after:w-6 after:shrink-0 after:cursor-pointer after:items-center after:justify-center after:rounded-xl after:text-sm after:font-medium after:content-['\00D7'];
 
     &.dragging {
@@ -65,7 +65,7 @@
   }
 
   & .add-item {
-    @apply border-border/70 hover:border-border hover:bg-page-bg/50 inline-flex items-center gap-1.5 self-stretch rounded-2xl border border-dashed bg-transparent px-1 py-1;
+    @apply border-border/70 hover:border-border hover:bg-page-bg/50 inline-flex items-center gap-1.5 self-stretch rounded-2xl border border-dashed bg-transparent px-1 py-1 transition-[border-color,background-color] duration-200;
 
     & > input {
       @apply min-w-61 flex-1;

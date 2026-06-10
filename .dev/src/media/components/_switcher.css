@@ -15,7 +15,7 @@
     }
 
     & .theme-icon {
-      @apply text-muted-foreground flex items-center justify-center transition-transform duration-300;
+      @apply text-muted-foreground flex items-center justify-center transition-colors duration-300;
 
       & svg {
         @apply size-4 transition-transform duration-300;

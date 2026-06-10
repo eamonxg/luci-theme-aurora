@@ -1,5 +1,5 @@
 select {
-  @apply text-foreground border-border/70 bg-page-bg focus:border-primary focus:ring-primary/20 appearance-none rounded-2xl border px-3 py-1.5 pr-10 text-sm font-normal shadow-sm focus:ring-2 focus:outline-none;
+  @apply text-foreground border-border/70 bg-page-bg focus:border-primary focus:ring-primary/20 appearance-none rounded-2xl border px-3 py-1.5 pr-10 text-sm font-normal shadow-sm transition-[border-color,box-shadow] duration-200 focus:ring-2 focus:outline-none;
   @apply bg-[url('@assets/icons/arrow-down.svg')] bg-size-[16px] bg-position-[right_0.75rem_center] bg-no-repeat dark:bg-[url('@assets/icons/arrow-down-dark.svg')];
   &[disabled] {
     @apply cursor-not-allowed opacity-40 dark:opacity-30;
