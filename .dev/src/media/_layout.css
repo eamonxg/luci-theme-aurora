@@ -131,7 +131,7 @@ header {
   @apply max-w-max-width mx-auto min-h-[calc(100vh-4rem)] w-23/24 px-4 max-md:w-full max-md:px-3;
 
   #view {
-    @apply animate-in fade-in-0 slide-in-from-top-2 fill-mode-both md:border-border/30 md:bg-page-bg md:hover:border-border/50 mx-0 w-full p-0 shadow-none transition-all duration-300 empty:hidden md:rounded-4xl md:border md:p-6 md:shadow-xl md:hover:shadow-2xl;
+    @apply animate-in fade-in-0 slide-in-from-top-2 fill-mode-both md:border-border/30 md:bg-page-bg mx-0 w-full p-0 shadow-none empty:hidden md:rounded-4xl md:border md:p-6 md:shadow-xl;
 
     .cbi-title-section {
       @apply mb-6 leading-relaxed max-md:mx-2 max-md:mb-3;
