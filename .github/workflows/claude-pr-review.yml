@@ -13,6 +13,12 @@ on:
       - 'root/**'
   issue_comment:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -20,13 +26,19 @@ permissions:
 
 jobs:
   auto-review:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     concurrency:
-      group: pr-review-${{ github.event.pull_request.number }}
+      group: pr-review-${{ github.event.pull_request.number || inputs.pr_number }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
+
+      # Resolve the PR number once — from the pull_request payload on auto
+      # runs, or the manual workflow_dispatch input.
+      - name: Resolve PR number
+        id: pr
+        run: echo "number=${{ github.event.pull_request.number || inputs.pr_number }}" >> "$GITHUB_OUTPUT"
 
       # Step 1 — analysis + inline comments only. Its own turn budget, so a
       # large diff can't starve the summary step below.
@@ -43,14 +55,12 @@ jobs:
             TASK: Post inline review comments only. Do NOT post a summary comment — a separate step handles that.
 
             REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
-            TITLE: ${{ github.event.pull_request.title }}
-            AUTHOR: ${{ github.event.pull_request.user.login }}
+            PR NUMBER: ${{ steps.pr.outputs.number }}
 
             Execute these steps in order:
 
             1. GET DIFF
-               gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }}
+               gh pr diff ${{ steps.pr.outputs.number }} --repo ${{ github.repository }}
 
             2. READ CONTEXT
                For changed files that need deeper analysis, use Read/Glob/Grep to inspect surrounding code.
@@ -66,7 +76,7 @@ jobs:
 
             4. POST INLINE COMMENTS
                Get commit SHA:
-               COMMIT_SHA=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json headRefOid --jq .headRefOid)
+               COMMIT_SHA=$(gh pr view ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --json headRefOid --jq .headRefOid)
 
                Write /tmp/review.json:
                {
@@ -86,7 +96,7 @@ jobs:
                If there are no inline issues, skip this step entirely (do not submit an empty review) and stop.
 
                Submit:
-               gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+               gh api repos/${{ github.repository }}/pulls/${{ steps.pr.outputs.number }}/reviews \
                  --method POST --input /tmp/review.json
 
       # Step 2 — standalone summary. Runs even if step 1 ran long or failed,
@@ -105,18 +115,16 @@ jobs:
             TASK: Post exactly ONE standalone summary comment for this PR. Inline comments are handled by a separate step — do not post inline comments here.
 
             REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
-            TITLE: ${{ github.event.pull_request.title }}
-            AUTHOR: ${{ github.event.pull_request.user.login }}
+            PR NUMBER: ${{ steps.pr.outputs.number }}
 
             Steps:
 
             1. GET DIFF
-               gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }}
+               gh pr diff ${{ steps.pr.outputs.number }} --repo ${{ github.repository }}
                Use Read/Glob/Grep only if a file needs deeper context.
 
             2. POST SUMMARY COMMENT
-               gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body "..."
+               gh pr comment ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --body "..."
 
                Use this structure:
 
