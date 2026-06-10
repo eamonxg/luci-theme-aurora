@@ -71,8 +71,17 @@
 			const setTheme = (theme) => {
 				const current = ['light', 'dark', 'device'].includes(theme) ? theme : 'device';
 				const isDark = current === 'dark' || (current === 'device' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+				const next = String(isDark);
+				const prev = document.documentElement.getAttribute('data-darkmode');
+				const apply = () => document.documentElement.setAttribute('data-darkmode', next);
 
-				document.documentElement.setAttribute('data-darkmode', isDark);
+				if (prev !== null && prev !== next && document.startViewTransition &&
+					!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+					document.startViewTransition(apply);
+				} else {
+					apply();
+				}
+
 				localStorage.setItem('aurora.theme', current);
 			};
 

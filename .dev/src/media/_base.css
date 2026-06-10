@@ -7,7 +7,7 @@ html {
   @apply bg-background relative h-full font-sans;
 
   body {
-    @apply text-foreground relative flex flex-col bg-transparent text-sm leading-relaxed font-normal transition-all duration-300;
+    @apply text-foreground relative flex flex-col bg-transparent text-sm leading-relaxed font-normal;
     &.modal-overlay-active {
       @apply h-screen overflow-hidden;
     }
