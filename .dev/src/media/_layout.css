@@ -7,10 +7,10 @@ header {
 
   [data-nav-type="mega-menu"] & {
     & .desktop-menu-container {
-      @apply bg-header-bg/40 dark:bg-header-bg/90 pointer-events-none absolute inset-x-0 top-0 z-30 h-0 w-full overflow-hidden opacity-0 backdrop-blur-xl transition-all duration-150 ease-in-out max-md:hidden;
+      @apply bg-header-bg/40 dark:bg-header-bg/90 pointer-events-none absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden opacity-0 backdrop-blur-xl transition-[clip-path,opacity] duration-200 ease-out [clip-path:inset(0_0_100%_0)] [will-change:clip-path,opacity] max-md:hidden;
 
       &.active {
-        @apply pointer-events-auto h-(--mega-menu-height,0) opacity-100;
+        @apply pointer-events-auto opacity-100 [clip-path:inset(0)];
       }
     }
   }
@@ -40,7 +40,7 @@ header {
       }
 
       & .desktop-nav {
-        @apply pointer-events-none left-0 z-40 px-0 pt-0 opacity-0 transition-all duration-150;
+        @apply pointer-events-none left-0 z-40 px-0 pt-0 opacity-0 transition-opacity duration-150;
         [data-nav-type="mega-menu"] & {
           @apply fixed top-14 left-1/2 -translate-x-1/2 pb-6;
         }
@@ -57,7 +57,7 @@ header {
           }
 
           [data-nav-type="boxed-dropdown"] & {
-            @apply border-border bg-header-bg/90 flex flex-col gap-y-1 rounded-3xl border py-2 shadow-lg backdrop-blur-md backdrop-saturate-150 transition-all duration-200;
+            @apply border-border bg-header-bg/90 flex flex-col gap-y-1 rounded-3xl border py-2 shadow-lg backdrop-blur-md backdrop-saturate-150;
           }
           & > li {
             @apply m-0 list-none;
