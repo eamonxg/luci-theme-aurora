@@ -40,14 +40,7 @@ return baseclass.extend({
       if (isOpen) {
         document
           .querySelectorAll(".mobile-nav-item.submenu-expanded")
-          .forEach((item) => {
-            item.classList.remove("submenu-expanded");
-            const submenu = item.querySelector(".mobile-nav-submenu");
-            if (submenu) {
-              submenu.style.maxHeight = "0";
-              submenu.style.opacity = "0";
-            }
-          });
+          .forEach((item) => item.classList.remove("submenu-expanded"));
       }
     });
 
@@ -84,21 +77,10 @@ return baseclass.extend({
         document
           .querySelectorAll(".mobile-nav-item.submenu-expanded")
           .forEach((i) => {
-            if (i !== item) {
-              i.classList.remove("submenu-expanded");
-              const s = i.querySelector(".mobile-nav-submenu");
-              if (s) {
-                s.style.maxHeight = "0";
-                s.style.opacity = "0";
-              }
-            }
+            if (i !== item) i.classList.remove("submenu-expanded");
           });
 
         item.classList.toggle("submenu-expanded", !isExpanded);
-        submenu.style.maxHeight = isExpanded
-          ? "0"
-          : `${submenu.scrollHeight}px`;
-        submenu.style.opacity = isExpanded ? "0" : "1";
       }
     });
   },
@@ -127,10 +109,8 @@ return baseclass.extend({
       ]);
 
       if (hasSubmenu) {
-        const ul = E("ul", {
-          class: "mobile-nav-submenu",
-          style: "max-height: 0; opacity: 0;",
-        });
+        const wrap = E("div", { class: "mobile-nav-submenu" });
+        const ul = E("ul", { class: "mobile-nav-submenu-list" });
 
         submenu.forEach((item) => {
           ul.appendChild(
@@ -147,7 +127,8 @@ return baseclass.extend({
           );
         });
 
-        li.appendChild(ul);
+        wrap.appendChild(ul);
+        li.appendChild(wrap);
       }
 
       list.appendChild(li);
