@@ -143,3 +143,11 @@
     }
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    @apply transition-none! animate-none!;
+  }
+}

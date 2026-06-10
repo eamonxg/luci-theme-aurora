@@ -66,3 +66,11 @@
     @apply first:mx-auto first:grid first:min-h-48 first:w-fit first:place-items-center first:max-md:min-h-[calc(100dvh-4rem)];
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    @apply transition-none! animate-none!;
+  }
+}
