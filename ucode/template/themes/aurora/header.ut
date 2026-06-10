@@ -175,17 +175,20 @@
 		{% if (!blank_page): %}
 		<header>
 			<div class="header-content">
-				<a class="brand" href="/">{{ striptags(boardinfo.hostname ?? '?') }}</a>
-				<ul class="nav" id="topmenu" style="display:none"></ul>
-				<div class="mobile-controls">
-					<div class="mobile-menu-toggle" id="mobile-menu-btn" title="{{ _('Menu') }}">
-						<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-							<path d="M195.75 162H767.25C771.41 161.987 775.532 162.99 779.38 164.954C783.227 166.917 786.726 169.802 789.674 173.442C792.623 177.083 794.964 181.409 796.564 186.172C798.164 190.935 798.992 196.043 799 201.204V208.667C798.992 213.333 798.164 218 796.564 222.667C794.964 227.333 792.623 231.067 789.674 234.707C786.726 238.347 783.227 241.24 779.38 243.2C775.532 245.16 771.41 246 767.25 246H195.75C191.59 246 187.468 245.16 183.62 243.2C179.773 241.24 176.275 238.347 173.326 234.707C170.378 231.067 168.036 227.333 166.436 222.667C164.836 218 164.008 213.333 164 208.667V201.204C164.008 196.043 164.836 190.935 166.436 186.172C168.036 181.409 170.378 177.083 173.326 173.442C176.275 169.802 179.773 166.917 183.62 164.954C187.468 162.99 191.59 161.987 195.75 162Z" fill="currentColor"/>
-							<path d="M354.733 458H767.267C771.424 457.987 775.544 459.001 779.39 460.987C783.235 462.972 786.732 465.888 789.679 469.57C792.626 473.25 794.966 477.624 796.565 482.441C798.164 487.256 798.992 492.421 799 497.639V504.252C798.992 508.971 798.164 513.689 796.565 518.408C794.966 523.126 792.626 526.901 789.679 530.581C786.732 534.262 783.235 537.187 779.39 539.169C775.544 541.151 771.424 542 767.267 542H354.733C350.577 542 346.459 541.151 342.615 539.169C338.771 537.187 335.276 534.262 332.328 530.581C329.382 526.901 327.041 523.126 325.441 518.408C323.841 513.689 323.011 508.971 323 504.252V497.639C323.008 492.421 323.836 487.256 325.435 482.441C327.034 477.624 329.375 473.25 332.321 469.57C335.269 465.888 338.765 462.972 342.61 460.987C346.456 459.001 350.576 457.987 354.733 458Z" fill="currentColor"/>
-							<path d="M195.75 758H767.25C771.41 758 775.534 758.933 779.381 760.941C783.229 762.907 786.727 765.793 789.675 769.436C792.624 773.079 794.964 777.407 796.564 782.171C798.164 786.936 798.992 792.045 799 797.207V804.667C798.989 809.333 798.16 814 796.558 818.667C794.957 823.333 792.615 827.067 789.667 830.707C786.718 834.347 783.221 837.24 779.375 839.2C775.529 841.067 771.409 842 767.25 842H195.75C191.59 842 187.468 841.067 183.62 839.2C179.773 837.24 176.275 834.347 173.326 830.707C170.378 827.067 168.036 823.333 166.436 818.667C164.836 814 164.008 809.333 164 804.667V797.207C164.008 792.047 164.836 786.939 166.436 782.175C168.036 777.411 170.378 773.086 173.326 769.445C176.275 765.805 179.773 762.921 183.62 760.957C187.468 758.994 191.59 758 195.75 758Z" fill="currentColor"/>
+				<div class="navigation-controls">
+					<div class="navigation-toggle" id="navigation-toggle" title="{{ _('Menu') }}" role="button" aria-expanded="false">
+						<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<line class="navigation-toggle-line navigation-toggle-line-top" x1="2.5" y1="5" x2="17.5" y2="5"/>
+							<line class="navigation-toggle-line navigation-toggle-line-middle" x1="2.5" y1="10" x2="17.5" y2="10"/>
+							<line class="navigation-toggle-line navigation-toggle-line-bottom" x1="2.5" y1="15" x2="10" y2="15"/>
 						</svg>
 					</div>
 				</div>
+				<a class="brand" href="/">{{ striptags(boardinfo.hostname ?? '?') }}</a>
+				<ul class="nav" id="topmenu" style="display:none"></ul>
+				{% if (nav_submenu_type == 'sidebar'): %}
+				<ol class="header-crumb" id="header-crumb"></ol>
+				{% endif %}
 				<div id="indicators" class="pull-right"></div>
 		</div>
 
@@ -198,9 +201,29 @@
 		</header>
 		{% endif %}
 
+		{% if (nav_submenu_type == 'sidebar'): %}
+		<aside class="sidebar-panel" aria-label="{{ _('Navigation') }}">
+			<nav class="sidebar-panel-inner">
+				<ul class="sidebar-list" id="sidebar-list"></ul>
+				<div class="sidebar-footer" id="sidebar-footer"></div>
+			</nav>
+		</aside>
+		<script>
+			if (localStorage.getItem('aurora.sidebarCollapsed') === 'true') {
+				document.body.classList.add('sidebar-collapsed');
+			}
+		</script>
+		{% endif %}
+
 		<div class="mobile-menu-overlay" id="mobile-menu-overlay">
 			<nav class="mobile-nav">
-				<div class="mobile-nav-header">
+				<div class="mobile-nav-body">
+					<div class="mobile-nav-label">{{ _('Navigation') }}</div>
+					<ul class="mobile-nav-list" id="mobile-nav-list">
+					</ul>
+				</div>
+				<div class="mobile-nav-footer">
+					<div class="mobile-nav-footer-action" id="mobile-nav-footer-action"></div>
 					<div class="theme-switcher mobile">
 						<label class="theme-option active" data-theme="device">
 							<input type="radio" name="mobile-theme" value="device" checked>
@@ -221,17 +244,7 @@
 							</span>
 						</label>
 					</div>
-					<div class="mobile-nav-close" id="mobile-nav-close">
-						<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-							<path d="M788.425 758H210.575C193.137 758 179 774.691 179 795.281V804.719C179 825.309 193.137 842 210.575 842H788.425C805.863 842 820 825.309 820 804.719V795.281C820 774.691 805.863 758 788.425 758Z" fill="currentColor"/>
-							<path d="M474.439 458H210.561C193.131 458 179 474.552 179 494.969V505.031C179 525.448 193.131 542 210.561 542H474.439C491.869 542 506 525.448 506 505.031V494.969C506 474.552 491.869 458 474.439 458Z" fill="currentColor"/>
-							<path d="M474.439 162H210.561C193.131 162 179 178.529 179 198.918V209.082C179 229.471 193.131 246 210.561 246H474.439C491.869 246 506 229.471 506 209.082V198.918C506 178.529 491.869 162 474.439 162Z" fill="currentColor"/>
-							<path d="M869.193 312.212L713.513 135.652C695.095 114.783 665.231 114.783 646.813 135.652C628.396 156.521 628.396 190.413 646.813 211.282L769.096 350L646.813 488.718C628.396 509.64 628.396 543.479 646.813 564.348C665.231 585.217 695.095 585.217 713.513 564.348L869.145 387.842C887.61 366.973 887.61 333.081 869.193 312.212Z" fill="currentColor"/>
-						</svg>
-					</div>
 				</div>
-				<ul class="mobile-nav-list" id="mobile-nav-list">
-				</ul>
 			</nav>
 		</div>
 

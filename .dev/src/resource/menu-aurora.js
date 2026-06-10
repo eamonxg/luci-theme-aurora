@@ -5,7 +5,7 @@
 return baseclass.extend({
   __init__() {
     ui.menu.load().then((tree) => this.render(tree));
-    this.initMobileMenu();
+    this.initNavigationControls();
     this.initUciIndicator();
   },
 
@@ -21,42 +21,99 @@ return baseclass.extend({
     };
   },
 
-  initMobileMenu() {
+  initNavigationControls() {
     const overlay = document.querySelector("#mobile-menu-overlay");
-    const menuToggle = document.querySelector("#mobile-menu-btn");
-    const closeBtn = document.querySelector("#mobile-nav-close");
+    const navigationToggle = document.querySelector("#navigation-toggle");
 
-    if (!menuToggle || !overlay) return;
+    if (!navigationToggle || !overlay) return;
 
-    menuToggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isOpen = overlay.classList.contains("mobile-menu-open");
+    const desktop = window.matchMedia("(min-width: 768px)");
+    const SIDEBAR_COLLAPSED_KEY = "aurora.sidebarCollapsed";
 
-      overlay.classList.toggle("mobile-menu-open", !isOpen);
-      menuToggle.classList.toggle("active", !isOpen);
-      menuToggle.setAttribute("aria-expanded", !isOpen);
-      document.body.style.overflow = isOpen ? "" : "hidden";
+    const isDesktopSidebar = () =>
+      desktop.matches && document.body.dataset.navType === "sidebar";
 
-      if (isOpen) {
-        document
-          .querySelectorAll(".mobile-nav-item.submenu-expanded")
-          .forEach((item) => {
-            item.classList.remove("submenu-expanded");
-            const submenu = item.querySelector(".mobile-nav-submenu");
-            if (submenu) {
-              submenu.style.maxHeight = "0";
-              submenu.style.opacity = "0";
-            }
-          });
+    const resetMobileSubmenus = () => {
+      document
+        .querySelectorAll(".mobile-nav-item.submenu-expanded")
+        .forEach((item) => {
+          item.classList.remove("submenu-expanded");
+          const submenu = item.querySelector(".mobile-nav-submenu");
+          if (submenu) {
+            submenu.style.maxHeight = "0";
+            submenu.style.opacity = "0";
+          }
+        });
+    };
+
+    const updateToggleState = (expanded) => {
+      navigationToggle.classList.toggle("is-expanded", expanded);
+      navigationToggle.setAttribute("aria-expanded", expanded);
+    };
+
+    const closeMobileNavigation = () => {
+      overlay.classList.remove("mobile-menu-open");
+      document.body.style.overflow = "";
+      resetMobileSubmenus();
+    };
+
+    const getNavigationExpanded = () => {
+      if (isDesktopSidebar()) {
+        return !document.body.classList.contains("sidebar-collapsed");
       }
+
+      return !desktop.matches && overlay.classList.contains("mobile-menu-open");
+    };
+
+    const setNavigationExpanded = (expanded) => {
+      if (isDesktopSidebar()) {
+        closeMobileNavigation();
+
+        const collapsed = !expanded;
+        document.body.classList.toggle("sidebar-collapsed", collapsed);
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed);
+        updateToggleState(expanded);
+        return;
+      }
+
+      if (desktop.matches) {
+        closeMobileNavigation();
+        updateToggleState(false);
+        return;
+      }
+
+      overlay.classList.toggle("mobile-menu-open", expanded);
+      document.body.style.overflow = expanded ? "hidden" : "";
+
+      if (!expanded) resetMobileSubmenus();
+
+      updateToggleState(expanded);
+    };
+
+    const toggleNavigation = () =>
+      setNavigationExpanded(!getNavigationExpanded());
+
+    const syncNavigationState = () => {
+      closeMobileNavigation();
+
+      if (isDesktopSidebar()) {
+        const collapsed =
+          localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true";
+        document.body.classList.toggle("sidebar-collapsed", collapsed);
+        updateToggleState(!collapsed);
+        return;
+      }
+
+      updateToggleState(false);
+    };
+
+    navigationToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleNavigation();
     });
 
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => menuToggle.click());
-    }
-
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) menuToggle.click();
+      if (e.target === overlay) setNavigationExpanded(false);
     });
 
     document.addEventListener("keydown", (e) => {
@@ -64,9 +121,12 @@ return baseclass.extend({
         e.key === "Escape" &&
         overlay.classList.contains("mobile-menu-open")
       ) {
-        menuToggle.click();
+        setNavigationExpanded(false);
       }
     });
+
+    desktop.addEventListener("change", syncNavigationState);
+    syncNavigationState();
 
     document.addEventListener("click", (e) => {
       const link = e.target.closest(".mobile-nav-link");
@@ -105,24 +165,74 @@ return baseclass.extend({
 
   renderMobileMenu(tree, url) {
     const list = document.querySelector("#mobile-nav-list");
+    const footerAction = document.querySelector("#mobile-nav-footer-action");
     const children = ui.menu.getChildren(tree);
 
-    if (!list || !children.length) return;
+    if (!list || !footerAction || !children.length) return;
 
     list.innerHTML = "";
+    footerAction.innerHTML = "";
 
     children.forEach((child) => {
       const submenu = ui.menu.getChildren(child);
       const hasSubmenu = submenu.length > 0;
+      const isActive = L.env.dispatchpath[1] === child.name;
 
-      const li = E("li", { class: "mobile-nav-item" }, [
+      if (child.name === "logout") {
+        footerAction.appendChild(
+          E(
+            "a",
+            {
+              class: "mobile-nav-logout",
+              href: L.url(url, child.name),
+            },
+            [_(child.title)],
+          ),
+        );
+        return;
+      }
+
+      const itemClasses = [
+        "mobile-nav-item",
+        hasSubmenu ? "has-submenu" : "",
+        isActive ? "active" : "",
+      ].filter(Boolean);
+      const linkChildren = [_(child.title)];
+
+      if (hasSubmenu) {
+        linkChildren.push(
+          E(
+            "span",
+            {
+              class: "mobile-nav-chevron",
+              "aria-hidden": "true",
+            },
+            [
+              E(
+                "svg",
+                {
+                  viewBox: "0 0 20 20",
+                  fill: "none",
+                  stroke: "currentColor",
+                  "stroke-width": "1.8",
+                  "stroke-linecap": "round",
+                  "stroke-linejoin": "round",
+                },
+                [E("path", { d: "m7.5 5 5 5-5 5" })],
+              ),
+            ],
+          ),
+        );
+      }
+
+      const li = E("li", { class: itemClasses.join(" ") }, [
         E(
           "a",
           {
             class: "mobile-nav-link",
             href: hasSubmenu ? "#" : L.url(url, child.name),
           },
-          [_(child.title)],
+          linkChildren,
         ),
       ]);
 
@@ -216,7 +326,10 @@ return baseclass.extend({
     if (level === 0) {
       const navType = document.body?.dataset?.navType || "mega-menu";
 
-      if (navType === "mega-menu") {
+      if (navType === "sidebar") {
+        this.renderSidebar(children, url);
+        return ul;
+      } else if (navType === "mega-menu") {
         this.initMegaMenu(children, url, ul);
       } else {
         this.initBoxedDropdown(children, url, ul);
@@ -233,6 +346,112 @@ return baseclass.extend({
 
     ul.style.display = "";
     return ul;
+  },
+
+  renderSidebar(children, url) {
+    const list = document.querySelector("#sidebar-list");
+    const footer = document.querySelector("#sidebar-footer");
+
+    if (!list) return;
+
+    const KEY = "aurora.sidebarSections";
+    const collapsed = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
+    const crumb = [];
+
+    const link = (href, title) =>
+      E("a", { class: "sidebar-link", href }, [_(title)]);
+
+    children.forEach((child) => {
+      const submenu = ui.menu.getChildren(child);
+
+      if (L.env.dispatchpath[1] === child.name) {
+        crumb.push(_(child.title));
+
+        const page = submenu.find(
+          (item) => L.env.dispatchpath[2] === item.name,
+        );
+        if (page) crumb.push(_(page.title));
+      }
+
+      if (child.name === "logout") {
+        (footer || list).appendChild(link(L.url(url, child.name), child.title));
+        return;
+      }
+
+      if (!submenu.length) {
+        const active = L.env.dispatchpath[1] === child.name;
+
+        list.appendChild(
+          E("li", { class: active ? "active" : "" }, [
+            link(L.url(url, child.name), child.title),
+          ]),
+        );
+        return;
+      }
+
+      const ul = E("ul", { class: "sidebar-submenu" });
+
+      submenu.forEach((item) => {
+        const active =
+          L.env.dispatchpath[1] === child.name &&
+          L.env.dispatchpath[2] === item.name;
+
+        ul.appendChild(
+          E("li", { class: active ? "active" : "" }, [
+            link(L.url(url, child.name, item.name), item.title),
+          ]),
+        );
+      });
+
+      list.appendChild(
+        E(
+          "li",
+          {
+            class: collapsed.has(child.name) ? "section-collapsed" : "",
+            "data-section": child.name,
+          },
+          [
+            E(
+              "span",
+              {
+                class: "sidebar-category",
+                role: "button",
+                "aria-expanded": !collapsed.has(child.name),
+              },
+              [
+                _(child.title),
+                E(
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+                ),
+              ],
+            ),
+            E("div", { class: "sidebar-section" }, [ul]),
+          ],
+        ),
+      );
+    });
+
+    list.addEventListener("click", (e) => {
+      const category = e.target.closest(".sidebar-category");
+      const item = category?.parentNode;
+
+      if (!item?.dataset.section) return;
+
+      const isCollapsed = item.classList.toggle("section-collapsed");
+      category.setAttribute("aria-expanded", !isCollapsed);
+
+      collapsed[isCollapsed ? "add" : "delete"](item.dataset.section);
+      localStorage.setItem(KEY, JSON.stringify([...collapsed]));
+    });
+
+    const crumbEl = document.querySelector("#header-crumb");
+
+    crumb.forEach((title, i) => {
+      if (i) crumbEl?.appendChild(E("li", { class: "crumb-sep" }, ["/"]));
+      crumbEl?.appendChild(
+        E("li", { class: i === crumb.length - 1 ? "current" : "" }, [title]),
+      );
+    });
   },
 
   initMegaMenu(children, url, ul) {
