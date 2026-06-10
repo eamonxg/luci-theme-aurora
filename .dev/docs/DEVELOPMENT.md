@@ -62,7 +62,7 @@ The Vite development server uses middleware to rewrite local requests to serve C
 
 1. Proxies `/cgi-bin` and `/luci-static` requests to OpenWrt device
 2. Uses middleware (`createLocalServePlugin`) to rewrite request paths for CSS and JS files
-3. CSS requests to `/luci-static/aurora/main.css` are rewritten to serve from `.dev/src/media/main.css`
+3. CSS requests to `/luci-static/aurora/main.css` and `/luci-static/aurora/login.css` are rewritten to serve from `.dev/src/media/main.css` and `.dev/src/media/login.css` respectively
 4. JS file requests are served directly from `.dev/src/resource/` with middleware reading and returning file content
 5. Injects Vite HMR client into proxied HTML responses for live reload support
 6. Redirects `/` to `/cgi-bin/luci` for proper routing
@@ -82,6 +82,20 @@ This project uses **Prettier** for code formatting with automatic formatting on 
 Thanks to **lightningcss**, you can freely use [CSS Nesting syntax](https://drafts.csswg.org/css-nesting/) in your stylesheets. The build process automatically compiles nested CSS into flat, browser-compatible format.
 
 This will be compiled to standard CSS that works in all browsers.
+
+### CSS Architecture
+
+The theme has two independent Tailwind CSS v4 entry points, both sourced from `.dev/src/media/`:
+
+- **`main.css`** — the LuCI admin UI. It contains no rules of its own; it's a pure import manifest that pulls in (in order) `_tokens.css` (OKLCH theme tokens, mapped via `@theme inline`), `_base.css`, `_layout.css`, every file in `components/` (one partial per UI component — buttons, cards, modals, tables, etc.), `_utilities.css`, and `_patches.css`.
+- **`login.css`** — the standalone login page (`sysauth.ut`). Self-contained: imports Tailwind and `_tokens.css` directly.
+
+**Adding new styles:**
+
+- New UI component → create `components/_<name>.css` and add an `@import` line to `main.css`. Each file is its own organizational unit — no `@layer` wrappers needed (any that remain are stripped by PostCSS).
+- Compatibility fix for a third-party LuCI app/page → add a narrow, selector-scoped rule to `_patches.css` under a comment naming the app (e.g. `/* luci-app-openclash */`).
+
+All rules use `@apply` with Tailwind utilities and CSS Nesting — no raw CSS properties.
 
 ### LuCI JavaScript API
 
@@ -150,7 +164,8 @@ This compiles all assets to the production directory `htdocs/luci-static/`, whic
 ```
 htdocs/luci-static/
 ├── aurora/
-│   ├── main.css           # Minified CSS (via lightningcss)
+│   ├── main.css           # Minified admin UI CSS (via lightningcss)
+│   ├── login.css          # Minified login page CSS (via lightningcss)
 │   ├── fonts/             # Web fonts (Lato)
 │   └── images/            # Logo assets + PWA icons
 └── resources/
@@ -159,7 +174,7 @@ htdocs/luci-static/
 
 **Build Process:**
 
-1. Vite builds CSS entry point (`src/media/main.css`)
+1. Vite builds the CSS entry points (`src/media/main.css` and `src/media/login.css`)
 2. Custom PostCSS plugin removes `@layer` at-rules for OpenWrt compatibility
 3. Custom Vite plugin (`luci-js-compress`) minifies JS files via Terser
 4. Static assets copied from `.dev/public/aurora/`
@@ -175,17 +190,22 @@ htdocs/luci-static/
 
 **Build `.ipk`/`.apk` packages:**
 
-1. Push a version tag (`v*`) or push to `master` with `[build]` in the commit message
-2. The `build-theme-package` workflow compiles the OpenWrt package
+1. Push a version tag (`v*`), push to `master`/`feat/**` with `[build]` in the commit message, or manually trigger the workflow
+2. The `build-theme-package` workflow compiles both `.ipk` and `.apk` OpenWrt packages
 
-**PR checks:**
+**PR review:**
 
-Pull requests that touch `.dev/`, `htdocs/`, `ucode/`, or `root/` are automatically linted and build-verified by the `pr-check` workflow.
+Pull requests that touch `.dev/`, `htdocs/`, `ucode/`, or `root/` are automatically reviewed by the `claude-pr-review` workflow — it posts inline comments on the source diff (generated `htdocs/` output is excluded) plus a summary comment. Mention `@claude` in a PR comment to request a follow-up review or ask a question.
+
+**Issue triage:**
+
+New issues are handled by the `claude-issue-bot` workflow — it checks for spam/duplicates, applies labels, and posts a deep technical analysis comment. Mention `@claude` in an issue comment to get a response.
 
 **Workflow Files:** `.github/workflows/`
-- `frontend-assets-build.yml` — Build assets and auto-commit
+- `frontend-assets-build.yml` — Build assets and auto-commit (manual trigger)
 - `build-theme-package.yml` — Compile `.ipk`/`.apk` packages
-- `pr-check.yml` — Lint and build verification for PRs
+- `claude-pr-review.yml` — AI code review for PRs (inline + summary comments)
+- `claude-issue-bot.yml` — AI issue triage and analysis
 
 ## Directory Structure
 
@@ -202,8 +222,15 @@ luci-theme-aurora/
 │   │   └── clean.js                # Build cleanup utility
 │   ├── src/                        # Source code
 │   │   ├── assets/icons/           # SVG icons
-│   │   ├── media/                  # CSS entry points
-│   │   │   └── main.css            # Main stylesheet (Tailwind CSS)
+│   │   ├── media/                  # CSS source (Tailwind CSS v4)
+│   │   │   ├── main.css            # Admin UI entry point (import manifest)
+│   │   │   ├── login.css           # Login page entry point
+│   │   │   ├── _tokens.css         # OKLCH theme tokens (@theme inline)
+│   │   │   ├── _base.css           # Base element styles
+│   │   │   ├── _layout.css         # Page layout/structure
+│   │   │   ├── _utilities.css      # Custom utility classes
+│   │   │   ├── _patches.css        # Third-party LuCI app/page overrides
+│   │   │   └── components/         # One partial per UI component
 │   │   └── resource/               # JavaScript resources
 │   │       └── menu-aurora.js      # Menu logic
 │   ├── .env.example                # Environment variables template
@@ -221,7 +248,8 @@ luci-theme-aurora/
 │   ├── aurora/                     # Theme CSS and assets
 │   │   ├── fonts/                  # Built font files
 │   │   ├── images/                 # Built images + PWA icons
-│   │   └── main.css                # Compiled CSS
+│   │   ├── main.css                # Compiled admin UI CSS
+│   │   └── login.css               # Compiled login page CSS
 │   └── resources/                  # Built JavaScript modules
 │       └── menu-aurora.js          # Minified menu logic
 ├── root/etc/uci-defaults/          # OpenWrt system integration
@@ -240,8 +268,10 @@ luci-theme-aurora/
 
 - **[Tailwind CSS v4](https://tailwindcss.com/)** - Utility-first CSS framework
 - **[Vite](https://vitejs.dev/)** - Build tool and development server
-  **[pnpm](https://pnpm.io/)** - Fast, disk space efficient package manager
+- **[pnpm](https://pnpm.io/)** - Fast, disk space efficient package manager
 - **[lightningcss](https://lightningcss.dev/)** - CSS minifier
 - **[Terser](https://terser.org/)** - JavaScript minifier
 - **[Prettier](https://prettier.io/)** - Code formatter
 - **[prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss)** - Tailwind class sorting
+- **[tw-animate-css](https://github.com/Wombosvideo/tw-animate-css)** - Animation utilities for Tailwind CSS
+- **[tailwind-scrollbar](https://github.com/adoxography/tailwind-scrollbar)** - Custom scrollbar styling plugin
