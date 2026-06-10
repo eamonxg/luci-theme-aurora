@@ -33,7 +33,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
-            --max-turns 30
+            --max-turns 50
             --allowedTools "Bash(gh:*),Read,Glob,Grep"
           prompt: |
             Rules:
@@ -136,7 +136,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
-            --max-turns 30
+            --max-turns 50
             --allowedTools "Bash(gh:*),Read,Glob,Grep"
             --append-system-prompt "You are a code reviewer for the luci-theme-aurora repository (OpenWrt theme: Vite + TailwindCSS v4, ucode templates, LuCI E() DOM API). Source in .dev/src/, output in htdocs/luci-static/aurora/. CSS must use @apply with Tailwind utilities — no raw CSS. Dark mode via [data-darkmode=true]. Theme colors are OKLCH custom properties. Target: embedded OpenWrt hardware. Never edit code or push commits. Reply in the SAME LANGUAGE as the triggering comment."
           prompt: |
