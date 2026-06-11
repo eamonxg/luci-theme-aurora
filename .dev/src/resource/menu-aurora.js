@@ -665,6 +665,7 @@ return baseclass.extend({
 
     if (!container) return;
 
+    const wasActive = container.classList.contains("active");
     container.classList.remove("active");
 
     // --mega-menu-height is set per-submenu in initMegaMenu and otherwise
@@ -677,7 +678,13 @@ return baseclass.extend({
       }
     };
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // If the menu was never open, removing "active" is a no-op: clip-path
+    // never changes, so transitionend/transitioncancel would never fire and
+    // these listeners would pile up on every header mouseleave.
+    if (
+      !wasActive ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       resetHeight();
       return;
     }

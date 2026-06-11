@@ -94,7 +94,7 @@ header {
 
       & .navigation-toggle-line {
         transform-box: fill-box;
-        @apply origin-center transition-[transform,opacity] duration-300 ease-in-out motion-reduce:transition-none;
+        @apply origin-center transition-[transform,opacity] duration-300 ease-in-out;
       }
 
       &.is-expanded {
@@ -152,7 +152,7 @@ body[data-nav-type="sidebar"] {
      so collapsing the sidebar never stretches it — lets the sidebar column
      animate to zero, and lets #maincontent fluidly reclaim the freed space.
      overflow-x-clip keeps the sliding sidebar out of horizontal overflow. */
-  @apply motion-reduce:transition-none md:grid md:grid-cols-[17rem_minmax(0,1fr)] md:grid-rows-[auto_minmax(0,1fr)] md:overflow-x-clip md:transition-[grid-template-columns] md:duration-300 md:ease-out;
+  @apply md:grid md:grid-cols-[17rem_minmax(0,1fr)] md:grid-rows-[auto_minmax(0,1fr)] md:overflow-x-clip md:transition-[grid-template-columns] md:duration-300 md:ease-out;
 
   &.sidebar-collapsed {
     @apply md:grid-cols-[0_minmax(0,1fr)];
@@ -187,7 +187,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-panel {
-    @apply border-border/60 sticky top-14 hidden h-[calc(100vh-3.5rem)] w-full overflow-hidden rounded-none border-r transition-[visibility] duration-300 motion-reduce:transition-none md:block;
+    @apply border-border/60 sticky top-14 hidden h-[calc(100vh-3.5rem)] w-full overflow-hidden rounded-none border-r transition-[visibility] duration-300 md:block;
   }
 
   /* Visibility flips at the end of the slide so collapsed controls leave the
@@ -197,7 +197,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-panel-inner {
-    @apply bg-header-bg flex h-full w-68 flex-col overflow-hidden transition-[translate,opacity] duration-300 motion-reduce:transition-none;
+    @apply bg-header-bg flex h-full w-68 flex-col overflow-hidden transition-[translate,opacity] duration-300;
   }
 
   &.sidebar-collapsed .sidebar-panel-inner {
@@ -217,7 +217,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-section {
-    @apply grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none;
+    @apply grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-200 ease-out;
   }
 
   & .sidebar-group-open > .sidebar-section {
