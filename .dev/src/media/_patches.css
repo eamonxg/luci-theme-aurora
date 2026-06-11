@@ -1,8 +1,8 @@
 /*
-  PATCH LAYER (temporary)
-  - Purpose: Quick fixes and app-specific overrides that may be removed at any time.
-  - Scope: Keep selectors narrow and limited to known breakages only.
-  - Migration: Promote stable rules to appropriate layers (e.g., components/plugins) or delete once fixed upstream.
+  PLUGIN/PAGE PATCHES
+  - Purpose: Compatibility overrides for third-party LuCI apps/pages that don't adapt to the theme.
+  - Scope: Keep selectors narrow and limited to the specific app/page being patched.
+  - Note: May need to be revisited when the corresponding plugin updates its markup/styles.
 */
 
 /* admin-network-network */
@@ -10,7 +10,21 @@
   @apply max-md:overflow-visible!;
 }
 
+/* luci-app-filemanager */
+#file-manager-container {
+  @apply overflow-auto;
+  #status-bar {
+    @apply bg-page-bg border-0;
+  }
+}
+
 /* luci-app-openclash */
+.diag-style {
+  @apply max-md:grid max-md:grid-cols-1 max-md:gap-4;
+  & > div {
+    @apply flex flex-col items-center gap-2 max-md:w-full! max-md:gap-1;
+  }
+}
 [data-page="admin-services-openclash-config"] {
   .sub_div {
     img {
@@ -24,6 +38,11 @@
       @apply max-md:w-full!;
     }
   }
+}
+
+/* luci-app-statistics */
+[data-page="admin-statistics-graphs"] [data-plugin] img {
+  @apply dark:hue-rotate-150 dark:invert;
 }
 
 /* luci-mod-dashboard */
