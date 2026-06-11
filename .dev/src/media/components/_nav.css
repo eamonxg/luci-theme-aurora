@@ -21,7 +21,7 @@
    appearance-none + border-0 + shadow-none strip the theme's global
    <button> chrome (_button.css), which would otherwise box every row. */
 .nav-category {
-  @apply text-muted-foreground hover:text-foreground focus-visible:ring-primary/40 flex w-full cursor-pointer appearance-none items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2 text-left text-xs font-semibold tracking-wide shadow-none transition-colors duration-150 select-none focus-visible:ring-2 focus-visible:outline-none;
+  @apply text-muted-foreground hover:text-foreground focus-visible:ring-primary/40 flex w-full cursor-pointer appearance-none items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2 text-left text-lg font-semibold tracking-wide shadow-none transition-colors duration-150 select-none focus-visible:ring-2 focus-visible:outline-none;
 
   /* Trailing chevron shares arrow-right.svg with the collapsible cards:
      points right when closed, rotates to point down when open. */
@@ -38,10 +38,11 @@
   @apply text-foreground after:rotate-90;
 }
 
-/* The desktop sidebar no longer uses previews. The mobile drawer still
-   renders this shared summary for collapsed groups. */
+/* The desktop sidebar no longer uses previews; the mobile drawer is the
+   sole consumer and sets its own px/text-size (_overlay.css), so the base
+   only carries the mode-agnostic bits. */
 .nav-category-preview {
-  @apply text-muted-foreground/60 truncate px-3 pb-1 text-xs;
+  @apply text-muted-foreground/60 truncate pb-1;
 
   & .nav-preview-current {
     @apply text-primary;

@@ -213,7 +213,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-list .nav-link {
-    @apply truncate;
+    @apply truncate text-lg;
   }
 
   & .sidebar-section {
@@ -235,7 +235,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-submenu .nav-link-active {
-    @apply bg-primary/10 text-primary;
+    @apply bg-primary/10 text-primary hover:text-primary;
   }
 
   & .sidebar-footer {
