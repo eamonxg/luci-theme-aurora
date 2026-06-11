@@ -6,6 +6,7 @@
 
 @import "tailwindcss";
 @import "./_tokens.css";
+@import "./_reduced-motion.css";
 
 @custom-variant dark (&:where([data-darkmode=true], [data-darkmode=true] *));
 
@@ -141,13 +142,5 @@
     & a {
       @apply text-primary hover:underline;
     }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    @apply transition-none! animate-none!;
   }
 }

@@ -660,10 +660,39 @@ return baseclass.extend({
   hideDesktopNav() {
     this.deactivateDesktopNavExcept(null, null);
 
-    document
-      .querySelector(".desktop-menu-container")
-      ?.classList.remove("active");
+    const container = document.querySelector(".desktop-menu-container");
     document.querySelector(".desktop-menu-overlay")?.classList.remove("active");
+
+    if (!container) return;
+
+    container.classList.remove("active");
+
+    // --mega-menu-height is set per-submenu in initMegaMenu and otherwise
+    // never cleared. Drop it back to the h-0 fallback once the container is
+    // fully hidden, so a closed menu doesn't leave invisible scrollable
+    // space below the header on pages shorter than the last submenu.
+    const resetHeight = () => {
+      if (!container.classList.contains("active")) {
+        container.style.removeProperty("--mega-menu-height");
+      }
+    };
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      resetHeight();
+      return;
+    }
+
+    const onClipPathSettled = (event) => {
+      if (event.target !== container || event.propertyName !== "clip-path") {
+        return;
+      }
+      container.removeEventListener("transitionend", onClipPathSettled);
+      container.removeEventListener("transitioncancel", onClipPathSettled);
+      resetHeight();
+    };
+
+    container.addEventListener("transitionend", onClipPathSettled);
+    container.addEventListener("transitioncancel", onClipPathSettled);
   },
 
   renderModeMenu(tree) {

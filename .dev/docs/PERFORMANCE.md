@@ -167,6 +167,11 @@ Verifying once isn't enough — keep it from drifting back:
 - **Rule of thumb for new CSS**: animate only `transform` / `opacity` / `clip-path` / `scale`.
   Never animate `height` / `width` / `top` / `box-shadow` / `background-color` (they reflow or
   repaint). Avoid blanket `transition-all` — list explicit properties.
+- **Accepted exception — `.cbi-progressbar`**: the inner bar's `width` is set via inline style
+  by LuCI core's `Progressbar` widget, so a `transform: scaleX()` swap would need a JS observer
+  to mirror that value into a custom property (plus RTL-aware `transform-origin`). Given the bar
+  updates infrequently (firmware/package install progress, not a 60fps animation), the single
+  explicit `transition-[width]` is left as-is rather than adding that infrastructure.
 
 ---
 
