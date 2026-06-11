@@ -1,0 +1,49 @@
+/**
+ * Shared navigation vocabulary.
+ *
+ * One visual definition consumed by the desktop sidebar, the mobile
+ * drawer and (incrementally) the other navigation modes. Mode files
+ * (_layout.css, _overlay.css) keep positioning, sizing overrides and
+ * show/hide state only — never duplicate these recipes there.
+ */
+
+.nav-link {
+  @apply text-foreground hover:bg-header-interactive block rounded-xl px-3 py-1.5 no-underline transition-all duration-150;
+}
+
+/* Modifier applied on top of a base link class; repeats its own colors on hover so the base class's hover styles never bleed through. */
+.nav-link-active {
+  @apply bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary rounded-xl font-medium;
+}
+
+/* Category rows are group labels, not buttons: no hover surface, just a
+   text-color shift. Block highlights belong to child links exclusively.
+   appearance-none + border-0 + shadow-none strip the theme's global
+   <button> chrome (_button.css), which would otherwise box every row. */
+.nav-category {
+  @apply text-muted-foreground hover:text-foreground focus-visible:ring-primary/40 flex w-full cursor-pointer appearance-none items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2 text-left text-xs font-semibold tracking-wide shadow-none transition-colors duration-150 select-none focus-visible:ring-2 focus-visible:outline-none;
+
+  /* Trailing chevron shares arrow-right.svg with the collapsible cards:
+     points right when closed, rotates to point down when open. */
+  @apply after:size-3.5 after:shrink-0 after:bg-current after:opacity-55 after:transition-[transform,opacity] after:duration-200 after:content-[''] after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat] hover:after:opacity-100 motion-reduce:after:transition-none;
+}
+
+.nav-category-label {
+  @apply min-w-0 flex-1 truncate;
+}
+
+/* Open group: label darkens to foreground; the active child's pill is the
+   sole location anchor, so no primary tint on the label itself. */
+.sidebar-group-open > .nav-category {
+  @apply text-foreground after:rotate-90;
+}
+
+/* The desktop sidebar no longer uses previews. The mobile drawer still
+   renders this shared summary for collapsed groups. */
+.nav-category-preview {
+  @apply text-muted-foreground/60 truncate px-3 pb-1 text-xs;
+
+  & .nav-preview-current {
+    @apply text-primary;
+  }
+}

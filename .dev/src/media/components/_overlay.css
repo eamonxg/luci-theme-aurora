@@ -26,22 +26,33 @@
           @apply max-md:text-foreground max-md:hover:text-primary max-md:flex max-md:min-h-12 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-4 max-md:px-0 max-md:py-2 max-md:text-lg max-md:leading-tight max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200;
         }
 
-        & .mobile-nav-chevron {
-          @apply max-md:text-muted-foreground max-md:flex max-md:size-4 max-md:shrink-0 max-md:items-center max-md:justify-center max-md:transition-transform max-md:duration-300 max-md:ease-in-out;
-
-          & svg {
-            @apply max-md:size-4;
-          }
+        & .mobile-nav-link.nav-link-active {
+          @apply max-md:px-3;
         }
 
-        &.active > .mobile-nav-link {
-          @apply max-md:text-primary;
+        /* Keep the sub-link's pl-4 indent aligned with its siblings; only
+           the right side gains padding to balance the pill. */
+        & .mobile-nav-sublink.nav-link-active {
+          @apply max-md:pr-3;
         }
 
-        &.submenu-expanded {
-          & .mobile-nav-chevron {
-            @apply max-md:rotate-90;
-          }
+        /* Category rows reuse the sidebar chevron recipe: arrow-right.svg
+           via mask, pointing right when collapsed, down when expanded.
+           justify-between on the link pushes it to the row's end. */
+        &.has-submenu > .mobile-nav-link {
+          @apply max-md:after:size-4 max-md:after:shrink-0 max-md:after:bg-current max-md:after:opacity-55 max-md:after:transition-transform max-md:after:duration-200 max-md:after:content-[''] max-md:after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat] max-md:motion-reduce:after:transition-none;
+        }
+
+        &.submenu-expanded > .mobile-nav-link {
+          @apply max-md:after:rotate-90;
+        }
+
+        & .nav-category-preview {
+          @apply max-md:px-0 max-md:text-sm;
+        }
+
+        &.submenu-expanded .nav-category-preview {
+          @apply max-md:hidden;
         }
 
         & .mobile-nav-submenu {
@@ -76,7 +87,6 @@
 
     @media (prefers-reduced-motion: reduce) {
       & .mobile-nav-link,
-      & .mobile-nav-chevron,
       & .mobile-nav-submenu,
       & .mobile-nav-sublink,
       & .mobile-nav-logout {
