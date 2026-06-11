@@ -18,6 +18,7 @@
 @import "./_base.css";
 @import "./_layout.css";
 
+@import "./components/_nav.css";
 @import "./components/_switcher.css";
 @import "./components/_float-button.css";
 @import "./components/_button.css";

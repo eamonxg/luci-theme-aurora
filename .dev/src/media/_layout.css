@@ -17,10 +17,6 @@ header {
 
   .brand {
     @apply hover:text-primary text-foreground inline-block shrink-0 text-xl font-semibold tracking-tight no-underline transition-all duration-200 hover:-translate-y-0.5 max-md:flex-1 max-md:text-lg;
-
-    [data-nav-type="sidebar"] & {
-      @apply mr-auto;
-    }
   }
 
   .nav {
@@ -98,7 +94,7 @@ header {
 
       & .navigation-toggle-line {
         transform-box: fill-box;
-        @apply origin-center transition-[transform,opacity] duration-300 ease-in-out;
+        @apply origin-center transition-[transform,opacity] duration-300 ease-in-out motion-reduce:transition-none;
       }
 
       &.is-expanded {
@@ -113,12 +109,6 @@ header {
 
         & .navigation-toggle-line-bottom {
           transform: translate(3.75px, -5px) rotate(-45deg) scaleX(2);
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        & .navigation-toggle-line {
-          @apply transition-none;
         }
       }
     }
@@ -156,22 +146,35 @@ header {
 }
 
 body[data-nav-type="sidebar"] {
-  /* body is flex-col in _base.css; sidebar layout needs a wrapping row */
-  @apply md:flex-row md:flex-wrap;
+  /* Desktop header + sidebar form one flush, L-shaped application frame: a
+     full-width header on top, a sidebar pinned to the left edge below it.
+     A CSS grid (not flex-wrap) keeps the header row at its natural height —
+     so collapsing the sidebar never stretches it — lets the sidebar column
+     animate to zero, and lets #maincontent fluidly reclaim the freed space.
+     overflow-x-clip keeps the sliding sidebar out of horizontal overflow. */
+  @apply motion-reduce:transition-none md:grid md:grid-cols-[17rem_minmax(0,1fr)] md:grid-rows-[auto_minmax(0,1fr)] md:overflow-x-clip md:transition-[grid-template-columns] md:duration-300 md:ease-out;
 
-  & header {
-    @apply md:basis-full;
+  &.sidebar-collapsed {
+    @apply md:grid-cols-[0_minmax(0,1fr)];
   }
 
-  & #maincontent {
-    @apply md:min-w-0 md:flex-1;
+  & > header {
+    @apply md:border-border/60 md:col-span-full md:row-start-1 md:mb-0 md:border-b;
+  }
+
+  & > .sidebar-panel {
+    @apply md:col-start-1 md:row-start-2;
+  }
+
+  & > #maincontent {
+    @apply md:col-start-2 md:row-start-2 md:min-w-0 md:pt-2;
   }
 
   & .header-crumb {
-    @apply text-muted-foreground absolute left-1/2 m-0 hidden -translate-x-1/2 list-none items-center gap-2 p-0 text-sm md:flex;
+    @apply text-muted-foreground my-0 mr-auto ml-6 hidden min-w-0 list-none items-center gap-2 overflow-hidden p-0 text-sm md:flex;
 
     & li {
-      @apply m-0 list-none;
+      @apply m-0 list-none whitespace-nowrap;
     }
 
     & .crumb-sep {
@@ -179,74 +182,68 @@ body[data-nav-type="sidebar"] {
     }
 
     & .current {
-      @apply text-foreground font-medium;
+      @apply text-foreground min-w-0 truncate font-medium;
     }
   }
 
   & .sidebar-panel {
-    @apply bg-header-bg border-border/60 sticky top-14 hidden h-[calc(100vh-3.5rem)] w-68 shrink-0 overflow-hidden border-r transition-[width,visibility] duration-300 md:block;
+    @apply border-border/60 sticky top-14 hidden h-[calc(100vh-3.5rem)] w-full overflow-hidden rounded-none border-r transition-[visibility] duration-300 motion-reduce:transition-none md:block;
   }
 
+  /* Visibility flips at the end of the slide so collapsed controls leave the
+     tab order without clipping the animation. */
   &.sidebar-collapsed .sidebar-panel {
-    @apply invisible w-0;
+    @apply invisible;
   }
 
   & .sidebar-panel-inner {
-    @apply flex h-full w-68 flex-col;
+    @apply bg-header-bg flex h-full w-68 flex-col overflow-hidden transition-[translate,opacity] duration-300 motion-reduce:transition-none;
+  }
+
+  &.sidebar-collapsed .sidebar-panel-inner {
+    @apply -translate-x-full opacity-0;
   }
 
   & .sidebar-list {
-    @apply m-0 flex-1 list-none overflow-y-auto p-3;
+    @apply m-0 flex-1 list-none space-y-0.5 overflow-y-auto p-3;
 
     & li {
       @apply m-0 list-none;
-
-      &:first-child > .sidebar-category {
-        @apply pt-1;
-      }
-
-      &.active > .sidebar-link {
-        @apply bg-header-interactive;
-      }
     }
   }
 
-  & .sidebar-category {
-    @apply text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1 px-3 pt-4 pb-1 text-sm font-semibold transition-colors duration-150 select-none;
-
-    & svg {
-      @apply size-3 shrink-0 transition-transform duration-200;
-    }
-  }
-
-  & li.section-collapsed > .sidebar-category svg {
-    @apply -rotate-90;
+  & .sidebar-list .nav-link {
+    @apply truncate text-lg;
   }
 
   & .sidebar-section {
-    @apply grid grid-rows-[1fr] transition-[grid-template-rows] duration-200 ease-out;
+    @apply grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none;
   }
 
-  & li.section-collapsed .sidebar-section {
-    @apply grid-rows-[0fr];
+  & .sidebar-group-open > .sidebar-section {
+    @apply grid-rows-[1fr] opacity-100;
   }
 
+  /* Child links sit indented under their category — hierarchy comes from
+     spacing alone, no guide line, for a calmer look. */
   & .sidebar-submenu {
-    @apply m-0 min-h-0 list-none overflow-hidden p-0;
-
-    & li.active > .sidebar-link {
-      @apply bg-header-interactive;
-    }
+    @apply m-0 min-h-0 list-none space-y-0.5 overflow-hidden p-0 pl-3;
   }
 
-  & .sidebar-link {
-    @apply text-foreground hover:bg-header-interactive block rounded-xl px-3 py-1.5 no-underline transition-all duration-150;
+  & .sidebar-submenu .nav-link {
+    @apply text-muted-foreground hover:text-foreground rounded-lg px-3 py-1.5 text-sm;
+  }
+
+  & .sidebar-submenu .nav-link-active {
+    @apply bg-primary/10 text-primary hover:text-primary;
   }
 
   & .sidebar-footer {
     @apply border-border/60 shrink-0 border-t p-3;
 
-    & .sidebar-link {
+    /* Logout: muted at rest; on hover the base .nav-link pill background
+       plus error-colored text is the intended compound state (matches v1). */
+    & .nav-link {
       @apply text-muted-foreground hover:text-error-foreground;
     }
   }
