@@ -1,5 +1,5 @@
 .mobile-menu-overlay {
-  @apply max-md:bg-header-bg max-md:invisible max-md:fixed max-md:top-14 max-md:right-0 max-md:bottom-0 max-md:left-0 max-md:z-60 max-md:opacity-0 max-md:transition-opacity max-md:duration-300 md:hidden;
+  @apply max-md:bg-header-bg max-md:invisible max-md:fixed max-md:top-14 max-md:right-0 max-md:bottom-0 max-md:left-0 max-md:z-60 max-md:opacity-0 max-md:transition-[visibility,opacity] max-md:duration-300 md:hidden;
 
   &.mobile-menu-open {
     @apply max-md:visible max-md:opacity-100;
@@ -23,7 +23,7 @@
         @apply max-md:shrink-0;
 
         & .mobile-nav-link {
-          @apply max-md:text-foreground max-md:hover:text-primary max-md:flex max-md:min-h-12 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-4 max-md:px-0 max-md:py-2 max-md:text-lg max-md:leading-tight max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200 max-md:motion-reduce:transition-none;
+          @apply max-md:text-foreground max-md:hover:text-primary max-md:flex max-md:min-h-12 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-4 max-md:px-0 max-md:py-2 max-md:text-lg max-md:leading-tight max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200;
         }
 
         & .mobile-nav-link.nav-link-active {
@@ -40,7 +40,7 @@
            via mask, pointing right when collapsed, down when expanded.
            justify-between on the link pushes it to the row's end. */
         &.has-submenu > .mobile-nav-link {
-          @apply max-md:after:size-4 max-md:after:shrink-0 max-md:after:bg-current max-md:after:opacity-55 max-md:after:transition-transform max-md:after:duration-200 max-md:after:content-[''] max-md:after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat] max-md:motion-reduce:after:transition-none;
+          @apply max-md:after:size-4 max-md:after:shrink-0 max-md:after:bg-current max-md:after:opacity-55 max-md:after:transition-transform max-md:after:duration-200 max-md:after:content-[''] max-md:after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat];
         }
 
         &.submenu-expanded > .mobile-nav-link {
@@ -56,13 +56,21 @@
         }
 
         & .mobile-nav-submenu {
-          @apply max-md:m-0 max-md:list-none max-md:overflow-hidden max-md:p-0 max-md:transition-[max-height,opacity] max-md:duration-300 max-md:ease-in-out max-md:motion-reduce:transition-none;
+          @apply max-md:grid max-md:grid-rows-[0fr] max-md:opacity-0 max-md:transition-[grid-template-rows,opacity] max-md:duration-300 max-md:ease-in-out;
+
+          & .mobile-nav-submenu-list {
+            @apply max-md:m-0 max-md:min-h-0 max-md:list-none max-md:overflow-hidden max-md:p-0;
+          }
 
           & .mobile-nav-subitem {
             & .mobile-nav-sublink {
-              @apply max-md:text-default-foreground max-md:hover:text-primary max-md:flex max-md:min-h-10 max-md:w-full max-md:items-center max-md:py-2 max-md:pr-0 max-md:pl-4 max-md:text-[0.9375rem] max-md:font-normal max-md:no-underline max-md:transition-colors max-md:duration-200 max-md:motion-reduce:transition-none;
+              @apply max-md:text-default-foreground max-md:hover:text-primary max-md:flex max-md:min-h-10 max-md:w-full max-md:items-center max-md:py-2 max-md:pr-0 max-md:pl-4 max-md:text-[0.9375rem] max-md:font-normal max-md:no-underline max-md:transition-colors max-md:duration-200;
             }
           }
+        }
+
+        &.submenu-expanded .mobile-nav-submenu {
+          @apply max-md:grid-rows-[1fr] max-md:opacity-100;
         }
       }
     }
@@ -75,7 +83,7 @@
       }
 
       & .mobile-nav-logout {
-        @apply max-md:text-foreground max-md:hover:text-primary max-md:text-sm max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200 max-md:motion-reduce:transition-none;
+        @apply max-md:text-foreground max-md:hover:text-primary max-md:text-sm max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200;
       }
 
       & .theme-switcher {

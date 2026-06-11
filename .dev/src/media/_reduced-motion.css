@@ -1,0 +1,13 @@
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    @apply transition-none! animate-none!;
+  }
+
+  /* Loading indicators communicate in-progress state, not decoration —
+     keep them spinning so the page doesn't read as frozen. */
+  .spinning::before {
+    @apply animate-spin!;
+  }
+}

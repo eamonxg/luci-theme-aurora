@@ -6,7 +6,7 @@
   }
 
   & > .modal {
-    @apply border-border/70 bg-page-bg flex w-5xl flex-col gap-4 rounded-3xl border p-6 wrap-break-word whitespace-normal shadow-2xl backdrop-blur-lg backdrop-saturate-150 max-md:w-full max-md:gap-3 max-md:p-4;
+    @apply border-border/70 bg-page-bg relative flex w-5xl flex-col gap-4 rounded-3xl border p-6 wrap-break-word whitespace-normal shadow-2xl max-md:w-full max-md:gap-3 max-md:p-4;
 
     & h4 {
       @apply mb-0 text-center;

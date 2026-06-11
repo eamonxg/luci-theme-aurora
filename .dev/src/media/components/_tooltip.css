@@ -1,5 +1,5 @@
 .cbi-tooltip {
-  @apply bg-tooltip-bg text-foreground border-border/60 absolute z-110 max-w-xs scale-95 transform rounded-xl border px-3 py-2 text-xs break-normal whitespace-normal opacity-0 shadow-lg backdrop-blur-xl transition-all duration-300 ease-out;
+  @apply bg-tooltip-bg text-foreground border-border/60 absolute z-110 max-w-xs scale-95 rounded-xl border px-3 py-2 text-xs break-normal whitespace-normal opacity-0 shadow-lg transition-[visibility,opacity,scale] duration-150 ease-out;
   &.error {
     @apply border-error/40 bg-error text-error-foreground;
   }
@@ -16,10 +16,10 @@
 
 .cbi-tooltip-container,
 [data-tooltip] {
-  @apply relative inline-block cursor-help whitespace-nowrap underline decoration-current decoration-dotted underline-offset-2 transition-all duration-200;
+  @apply relative inline-block cursor-help whitespace-nowrap underline decoration-current decoration-dotted underline-offset-2;
 
   & .cbi-tooltip {
-    @apply invisible scale-95 transform opacity-0 transition-all duration-300 ease-out;
+    @apply invisible scale-95 opacity-0 transition-[visibility,opacity,scale] duration-150 ease-out;
   }
 
   &:hover .cbi-tooltip {

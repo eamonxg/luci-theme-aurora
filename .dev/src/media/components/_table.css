@@ -35,7 +35,7 @@ table.table,
 
   & tr,
   & .tr {
-    @apply hover:bg-label-surface max-md:border-border max-md:flex max-md:flex-wrap max-md:border-b max-md:px-2 max-md:py-2;
+    @apply hover:bg-label-surface transition-colors duration-200 max-md:border-border max-md:flex max-md:flex-wrap max-md:border-b max-md:px-2 max-md:py-2;
     @apply has-[.cbi-progressbar]:max-md:flex has-[.cbi-progressbar]:max-md:items-center has-[.cbi-progressbar]:max-md:justify-center;
 
     &:first-child {

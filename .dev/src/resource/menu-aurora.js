@@ -36,28 +36,13 @@ return baseclass.extend({
     const resetMobileSubmenus = () => {
       document
         .querySelectorAll(".mobile-nav-item.submenu-expanded")
-        .forEach((item) => {
-          item.classList.remove("submenu-expanded");
-          const submenu = item.querySelector(".mobile-nav-submenu");
-          if (submenu) {
-            submenu.style.maxHeight = "0";
-            submenu.style.opacity = "0";
-          }
-        });
+        .forEach((item) => item.classList.remove("submenu-expanded"));
     };
 
-    // Relies on the drawer being hidden via visibility/opacity (not
-    // display:none): the submenu stays laid out, so scrollHeight is
-    // measurable in the same tick the drawer opens.
     const expandActiveMobileGroup = () => {
-      const item = document.querySelector(".mobile-nav-item.has-active");
-      const submenu = item?.querySelector(".mobile-nav-submenu");
-
-      if (!item || !submenu) return;
-
-      item.classList.add("submenu-expanded");
-      submenu.style.maxHeight = `${submenu.scrollHeight}px`;
-      submenu.style.opacity = "1";
+      document
+        .querySelector(".mobile-nav-item.has-active")
+        ?.classList.add("submenu-expanded");
     };
 
     const updateToggleState = (expanded) => {
@@ -165,21 +150,10 @@ return baseclass.extend({
         document
           .querySelectorAll(".mobile-nav-item.submenu-expanded")
           .forEach((i) => {
-            if (i !== item) {
-              i.classList.remove("submenu-expanded");
-              const s = i.querySelector(".mobile-nav-submenu");
-              if (s) {
-                s.style.maxHeight = "0";
-                s.style.opacity = "0";
-              }
-            }
+            if (i !== item) i.classList.remove("submenu-expanded");
           });
 
         item.classList.toggle("submenu-expanded", !isExpanded);
-        submenu.style.maxHeight = isExpanded
-          ? "0"
-          : `${submenu.scrollHeight}px`;
-        submenu.style.opacity = isExpanded ? "0" : "1";
       }
     });
   },
@@ -237,10 +211,8 @@ return baseclass.extend({
       if (hasSubmenu) {
         li.appendChild(this.buildCategoryPreview(child.name, submenu));
 
-        const ul = E("ul", {
-          class: "mobile-nav-submenu",
-          style: "max-height: 0; opacity: 0;",
-        });
+        const wrap = E("div", { class: "mobile-nav-submenu" });
+        const ul = E("ul", { class: "mobile-nav-submenu-list" });
 
         submenu.forEach((item) => {
           const subActive = this.isActivePath(child.name, item.name);
@@ -261,7 +233,8 @@ return baseclass.extend({
           );
         });
 
-        li.appendChild(ul);
+        wrap.appendChild(ul);
+        li.appendChild(wrap);
       }
 
       list.appendChild(li);
@@ -687,10 +660,46 @@ return baseclass.extend({
   hideDesktopNav() {
     this.deactivateDesktopNavExcept(null, null);
 
-    document
-      .querySelector(".desktop-menu-container")
-      ?.classList.remove("active");
+    const container = document.querySelector(".desktop-menu-container");
     document.querySelector(".desktop-menu-overlay")?.classList.remove("active");
+
+    if (!container) return;
+
+    const wasActive = container.classList.contains("active");
+    container.classList.remove("active");
+
+    // --mega-menu-height is set per-submenu in initMegaMenu and otherwise
+    // never cleared. Drop it back to the h-0 fallback once the container is
+    // fully hidden, so a closed menu doesn't leave invisible scrollable
+    // space below the header on pages shorter than the last submenu.
+    const resetHeight = () => {
+      if (!container.classList.contains("active")) {
+        container.style.removeProperty("--mega-menu-height");
+      }
+    };
+
+    // If the menu was never open, removing "active" is a no-op: clip-path
+    // never changes, so transitionend/transitioncancel would never fire and
+    // these listeners would pile up on every header mouseleave.
+    if (
+      !wasActive ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      resetHeight();
+      return;
+    }
+
+    const onClipPathSettled = (event) => {
+      if (event.target !== container || event.propertyName !== "clip-path") {
+        return;
+      }
+      container.removeEventListener("transitionend", onClipPathSettled);
+      container.removeEventListener("transitioncancel", onClipPathSettled);
+      resetHeight();
+    };
+
+    container.addEventListener("transitionend", onClipPathSettled);
+    container.addEventListener("transitioncancel", onClipPathSettled);
   },
 
   renderModeMenu(tree) {

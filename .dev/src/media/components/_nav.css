@@ -25,7 +25,7 @@
 
   /* Trailing chevron shares arrow-right.svg with the collapsible cards:
      points right when closed, rotates to point down when open. */
-  @apply after:size-3.5 after:shrink-0 after:bg-current after:opacity-55 after:transition-[transform,opacity] after:duration-200 after:content-[''] after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat] hover:after:opacity-100 motion-reduce:after:transition-none;
+  @apply after:size-3.5 after:shrink-0 after:bg-current after:opacity-55 after:transition-[transform,opacity] after:duration-200 after:content-[''] after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat] hover:after:opacity-100;
 }
 
 .nav-category-label {

@@ -70,7 +70,7 @@
   }
 
   & .ifacebox-head {
-    @apply border-border bg-label-surface text-foreground max-md:border-border/80 w-full rounded-t-2xl border-b px-4 py-3 text-center font-semibold tracking-tight transition-transform duration-200 max-md:rounded-t-3xl max-md:px-3 max-md:py-2.5 max-md:text-sm max-md:leading-5 max-md:font-medium;
+    @apply border-border bg-label-surface text-foreground max-md:border-border/80 w-full rounded-t-2xl border-b px-4 py-3 text-center font-semibold tracking-tight transition-[background-color,border-color,color] duration-200 max-md:rounded-t-3xl max-md:px-3 max-md:py-2.5 max-md:text-sm max-md:leading-5 max-md:font-medium;
 
     &[style*="--zone-color-rgb"] {
       @apply bg-[rgb(var(--zone-color-rgb),.75)]!;

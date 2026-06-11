@@ -5,6 +5,6 @@
   }
 
   & > div {
-    @apply from-progress-bar-start to-progress-bar-end h-full bg-linear-to-r transition-all duration-300;
+    @apply from-progress-bar-start to-progress-bar-end h-full bg-linear-to-r transition-[width] duration-300;
   }
 }

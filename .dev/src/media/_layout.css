@@ -7,16 +7,16 @@ header {
 
   [data-nav-type="mega-menu"] & {
     & .desktop-menu-container {
-      @apply bg-header-bg/40 dark:bg-header-bg/90 pointer-events-none absolute inset-x-0 top-0 z-30 h-0 w-full overflow-hidden opacity-0 backdrop-blur-xl transition-all duration-150 ease-in-out max-md:hidden;
+      @apply bg-header-bg/40 dark:bg-header-bg/90 pointer-events-none absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden opacity-0 backdrop-blur-xl transition-[clip-path,opacity] duration-200 ease-out [clip-path:inset(0_0_100%_0)] [will-change:clip-path,opacity] max-md:hidden;
 
       &.active {
-        @apply pointer-events-auto h-(--mega-menu-height,0) opacity-100;
+        @apply pointer-events-auto opacity-100 [clip-path:inset(0)];
       }
     }
   }
 
   .brand {
-    @apply hover:text-primary text-foreground inline-block shrink-0 text-xl font-semibold tracking-tight no-underline transition-all duration-200 hover:-translate-y-0.5 max-md:flex-1 max-md:text-lg;
+    @apply hover:text-primary text-foreground inline-block shrink-0 text-xl font-semibold tracking-tight no-underline transition-[color,transform] duration-200 hover:-translate-y-0.5 max-md:flex-1 max-md:text-lg;
   }
 
   .nav {
@@ -26,7 +26,7 @@ header {
       @apply relative;
 
       .menu {
-        @apply text-foreground block rounded-xl px-3.5 py-1.5 font-medium no-underline transition-all duration-150;
+        @apply text-foreground block rounded-xl px-3.5 py-1.5 font-medium no-underline transition-colors duration-150;
 
         &.menu-active {
           @apply text-foreground;
@@ -40,7 +40,7 @@ header {
       }
 
       & .desktop-nav {
-        @apply pointer-events-none left-0 z-40 px-0 pt-0 opacity-0 transition-all duration-150;
+        @apply pointer-events-none left-0 z-40 px-0 pt-0 opacity-0 transition-opacity duration-150;
         [data-nav-type="mega-menu"] & {
           @apply fixed top-14 left-1/2 -translate-x-1/2 pb-6;
         }
@@ -57,7 +57,7 @@ header {
           }
 
           [data-nav-type="boxed-dropdown"] & {
-            @apply border-border bg-header-bg/90 flex flex-col gap-y-1 rounded-3xl border py-2 shadow-lg backdrop-blur-md backdrop-saturate-150 transition-all duration-200;
+            @apply border-border bg-header-bg/90 flex flex-col gap-y-1 rounded-3xl border py-2 shadow-lg backdrop-blur-md backdrop-saturate-150;
           }
           & > li {
             @apply m-0 list-none;
@@ -86,7 +86,7 @@ header {
     }
 
     & .navigation-toggle {
-      @apply cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95;
+      @apply cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95;
 
       & svg {
         @apply text-foreground size-5;
@@ -94,7 +94,7 @@ header {
 
       & .navigation-toggle-line {
         transform-box: fill-box;
-        @apply origin-center transition-[transform,opacity] duration-300 ease-in-out motion-reduce:transition-none;
+        @apply origin-center transition-[transform,opacity] duration-300 ease-in-out;
       }
 
       &.is-expanded {
@@ -152,7 +152,7 @@ body[data-nav-type="sidebar"] {
      so collapsing the sidebar never stretches it — lets the sidebar column
      animate to zero, and lets #maincontent fluidly reclaim the freed space.
      overflow-x-clip keeps the sliding sidebar out of horizontal overflow. */
-  @apply motion-reduce:transition-none md:grid md:grid-cols-[17rem_minmax(0,1fr)] md:grid-rows-[auto_minmax(0,1fr)] md:overflow-x-clip md:transition-[grid-template-columns] md:duration-300 md:ease-out;
+  @apply md:grid md:grid-cols-[17rem_minmax(0,1fr)] md:grid-rows-[auto_minmax(0,1fr)] md:overflow-x-clip md:transition-[grid-template-columns] md:duration-300 md:ease-out;
 
   &.sidebar-collapsed {
     @apply md:grid-cols-[0_minmax(0,1fr)];
@@ -187,7 +187,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-panel {
-    @apply border-border/60 sticky top-14 hidden h-[calc(100vh-3.5rem)] w-full overflow-hidden rounded-none border-r transition-[visibility] duration-300 motion-reduce:transition-none md:block;
+    @apply border-border/60 sticky top-14 hidden h-[calc(100vh-3.5rem)] w-full overflow-hidden rounded-none border-r transition-[visibility] duration-300 md:block;
   }
 
   /* Visibility flips at the end of the slide so collapsed controls leave the
@@ -197,7 +197,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-panel-inner {
-    @apply bg-header-bg flex h-full w-68 flex-col overflow-hidden transition-[translate,opacity] duration-300 motion-reduce:transition-none;
+    @apply bg-header-bg flex h-full w-68 flex-col overflow-hidden transition-[translate,opacity] duration-300;
   }
 
   &.sidebar-collapsed .sidebar-panel-inner {
@@ -217,7 +217,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-section {
-    @apply grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none;
+    @apply grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-200 ease-out;
   }
 
   & .sidebar-group-open > .sidebar-section {
@@ -253,7 +253,7 @@ body[data-nav-type="sidebar"] {
   @apply max-w-max-width mx-auto min-h-[calc(100vh-4rem)] w-23/24 px-4 max-md:w-full max-md:px-3;
 
   #view {
-    @apply animate-in fade-in-0 slide-in-from-top-2 fill-mode-both md:border-border/30 md:bg-page-bg md:hover:border-border/50 mx-0 w-full p-0 shadow-none transition-all duration-300 empty:hidden md:rounded-4xl md:border md:p-6 md:shadow-xl md:hover:shadow-2xl;
+    @apply animate-in fade-in-0 slide-in-from-top-2 fill-mode-both md:border-border/30 md:bg-page-bg mx-0 w-full p-0 shadow-none empty:hidden md:rounded-4xl md:border md:p-6 md:shadow-xl;
 
     .cbi-title-section {
       @apply mb-6 leading-relaxed max-md:mx-2 max-md:mb-3;
@@ -336,7 +336,7 @@ footer {
   }
 
   & .breadcrumb {
-    @apply bg-page-bg/60 hover:bg-page-bg/80 flex items-center gap-1 rounded-full px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-md;
+    @apply bg-page-bg/60 hover:bg-page-bg/80 flex items-center gap-1 rounded-full px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm transition-colors duration-200;
 
     & li {
       @apply list-none;
