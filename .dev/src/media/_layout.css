@@ -7,10 +7,89 @@ header {
 
   [data-nav-type="mega-menu"] & {
     & .desktop-menu-container {
-      @apply bg-header-bg/40 dark:bg-header-bg/90 pointer-events-none absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden opacity-0 backdrop-blur-xl transition-[clip-path,opacity] duration-200 ease-out [clip-path:inset(0_0_100%_0)] [will-change:clip-path,opacity] max-md:hidden;
+      @apply bg-header-bg/40 dark:bg-header-bg/90 pointer-events-none absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden opacity-0 backdrop-blur-xl transition-[clip-path,opacity] duration-200 ease-out [will-change:clip-path,opacity] [clip-path:inset(0_0_100%_0)] max-md:hidden;
 
       &.active {
         @apply pointer-events-auto opacity-100 [clip-path:inset(0)];
+      }
+
+      /* Category panels live inside the container, not the nav items: the
+         transformed #topmenu would otherwise become the containing block of
+         a position:fixed panel and shrink the canvas to the menu's width.
+         Fixed coordinates shared by every category, so switching panels
+         never shifts anything: link columns start at 50% - 13rem (just
+         under the centered nav triggers), the anchor column sits at a
+         fixed slot left of them. The entering panel floats up 6px —
+         transform + opacity only. */
+      & .desktop-nav {
+        @apply pointer-events-none absolute inset-x-0 top-14 min-h-60 translate-y-1.5 pt-7 pb-8 pl-[calc(50%-13rem)] opacity-0 transition-[opacity,transform] duration-200 ease-out;
+
+        &.active {
+          @apply pointer-events-auto translate-y-0 opacity-100;
+        }
+
+        & .desktop-nav-anchor {
+          @apply absolute top-7 left-[calc(50%-30rem)] w-56 max-lg:hidden;
+
+          & .desktop-nav-title {
+            @apply text-foreground text-2xl font-semibold tracking-tight;
+          }
+        }
+
+        & .desktop-nav-list {
+          /* Vertical fill: columns of equal height, no orphan rows. Row
+             count is set per submenu via --menu-rows in menu-aurora.js.
+             w-max is load-bearing: without it the block-level list fills
+             the viewport and justify-content:normal stretches the auto
+             column tracks across all of it. */
+          @apply grid w-max grid-flow-col grid-rows-[repeat(var(--menu-rows,6),auto)] content-start gap-x-8 gap-y-1;
+
+          & > li {
+            @apply m-0 list-none;
+
+            & > a {
+              @apply text-foreground block w-fit py-2.5 text-sm whitespace-nowrap no-underline hover:underline hover:decoration-2 hover:underline-offset-4;
+            }
+          }
+        }
+      }
+
+      /* Constant part of the canvas, Apple-flyout style: the device
+         summary lives once at container level, pinned just below the
+         fixed category-title slot (header 3.5rem + panel pt 1.75rem +
+         title line 2rem + 1.25rem gap = top-34). Its position never
+         depends on an individual panel's height, and switching categories
+         never re-fades it. */
+      & .desktop-menu-board {
+        @apply absolute top-34 left-[calc(50%-30rem)] flex w-56 flex-col gap-2 max-lg:hidden;
+
+        & .board-line {
+          @apply text-muted-foreground/80 flex max-w-full items-center gap-2.5 text-xs;
+
+          &::before {
+            @apply size-4 shrink-0 bg-current content-[''];
+          }
+
+          & .board-text {
+            @apply min-w-0 truncate;
+          }
+        }
+
+        & .board-line-host::before {
+          @apply [mask:url('@assets/icons/server.svg')_center/contain_no-repeat];
+        }
+
+        & .board-line-model::before {
+          @apply [mask:url('@assets/icons/cpu-chip.svg')_center/contain_no-repeat];
+        }
+
+        & .board-line-firmware::before {
+          @apply [mask:url('@assets/icons/cube.svg')_center/contain_no-repeat];
+        }
+
+        & .board-line-kernel::before {
+          @apply [mask:url('@assets/icons/cog.svg')_center/contain_no-repeat];
+        }
       }
     }
   }
@@ -39,11 +118,10 @@ header {
         }
       }
 
+      /* Boxed-dropdown panels only — mega-menu panels are reparented into
+         .desktop-menu-container (see above). */
       & .desktop-nav {
         @apply pointer-events-none left-0 z-40 px-0 pt-0 opacity-0 transition-opacity duration-150;
-        [data-nav-type="mega-menu"] & {
-          @apply fixed top-14 left-1/2 -translate-x-1/2 pb-6;
-        }
         [data-nav-type="boxed-dropdown"] & {
           @apply absolute top-full mt-2 min-w-48;
         }
@@ -52,10 +130,6 @@ header {
         }
 
         & .desktop-nav-list {
-          [data-nav-type="mega-menu"] & {
-            @apply grid w-max grid-cols-4 gap-x-4 gap-y-2;
-          }
-
           [data-nav-type="boxed-dropdown"] & {
             @apply border-border bg-header-bg/90 flex flex-col gap-y-1 rounded-3xl border py-2 shadow-lg backdrop-blur-md backdrop-saturate-150;
           }
@@ -63,13 +137,10 @@ header {
             @apply m-0 list-none;
 
             & > a {
-              @apply text-foreground block px-4 whitespace-nowrap no-underline;
+              @apply text-foreground block whitespace-nowrap no-underline;
 
-              [data-nav-type="mega-menu"] & {
-                @apply py-3 hover:underline hover:decoration-2 hover:underline-offset-4;
-              }
               [data-nav-type="boxed-dropdown"] & {
-                @apply hover:bg-header-interactive mx-2 rounded-xl py-2;
+                @apply hover:bg-header-interactive mx-2 rounded-xl px-4 py-2;
               }
             }
           }

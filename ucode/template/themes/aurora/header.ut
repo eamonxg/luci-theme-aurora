@@ -202,7 +202,28 @@
 		</div>
 
 		{% if (nav_submenu_type == 'mega-menu'): %}
-			<div class="desktop-menu-container"></div>
+			{%
+				/* boardinfo fields are not guaranteed on every platform; the
+				   summary tolerates a missing model/firmware line (hostname is
+				   always set by the kernel). */
+				const board_model = boardinfo.model ?? boardinfo.system ?? boardinfo.board_name;
+				const board_firmware = boardinfo.release?.description ??
+					trim(`${boardinfo.release?.distribution ?? ''} ${boardinfo.release?.version ?? ''}`);
+			-%}
+			<div class="desktop-menu-container">
+				<div class="desktop-menu-board" aria-hidden="true">
+					<span class="board-line board-line-host" title="{{ entityencode(striptags(boardinfo.hostname ?? '?'), true) }}"><span class="board-text">{{ striptags(boardinfo.hostname ?? '?') }}</span></span>
+					{% if (board_model): %}
+					<span class="board-line board-line-model" title="{{ entityencode(striptags(board_model), true) }}"><span class="board-text">{{ striptags(board_model) }}</span></span>
+					{% endif %}
+					{% if (board_firmware): %}
+					<span class="board-line board-line-firmware" title="{{ entityencode(striptags(board_firmware), true) }}"><span class="board-text">{{ striptags(board_firmware) }}</span></span>
+					{% endif %}
+					{% if (boardinfo.kernel): %}
+					<span class="board-line board-line-kernel" title="{{ entityencode(striptags(boardinfo.kernel), true) }}"><span class="board-text">{{ striptags(boardinfo.kernel) }}</span></span>
+					{% endif %}
+				</div>
+			</div>
 		</header>
 
 		<div class="desktop-menu-overlay"></div>

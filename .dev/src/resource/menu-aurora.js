@@ -514,9 +514,24 @@ return baseclass.extend({
     let nav = null;
 
     if (hasSubmenu) {
-      nav = E("div", { class: "desktop-nav" }, [
-        this.renderMainMenu(child, `${url}/${child.name}`, 1),
-      ]);
+      const list = this.renderMainMenu(child, `${url}/${child.name}`, 1);
+      const children = [list];
+
+      if (document.body?.dataset?.navType === "mega-menu") {
+        // Constant canvas: links fill top-to-bottom; capping at 4 columns
+        // keeps the canvas height stable until a submenu exceeds 24 items.
+        list.style.setProperty(
+          "--menu-rows",
+          Math.max(6, Math.ceil(submenu.length / 4)),
+        );
+        children.unshift(
+          E("div", { class: "desktop-nav-anchor" }, [
+            E("span", { class: "desktop-nav-title" }, [_(child.title)]),
+          ]),
+        );
+      }
+
+      nav = E("div", { class: "desktop-nav" }, children);
       li.appendChild(nav);
       menuLink.addEventListener("click", (e) => e.preventDefault());
     }
@@ -545,6 +560,33 @@ return baseclass.extend({
     let showTimer = null;
     let hideTimer = null;
 
+    // Constant canvas: every category opens at the same height — the
+    // tallest submenu wins. Measured lazily on first open (after fonts
+    // settle) and cached, so switching categories is a pure cross-fade
+    // with zero layout work. A resize invalidates the cache.
+    let canvasHeight = 0;
+
+    const applyCanvasHeight = () => {
+      if (!canvasHeight) {
+        const headerHeight =
+          header.querySelector(".header-content")?.offsetHeight || 56;
+        let maxPanel = 0;
+        header
+          .querySelectorAll(".desktop-nav")
+          .forEach((nav) => (maxPanel = Math.max(maxPanel, nav.scrollHeight)));
+        canvasHeight = headerHeight + maxPanel;
+      }
+      container?.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
+    };
+
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      canvasHeight = 0;
+      if (!container?.classList.contains("active")) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(applyCanvasHeight, 150);
+    });
+
     children.forEach((child) => {
       const { li, nav, menuLink, hasSubmenu } = this.buildDropdownItem(
         child,
@@ -552,6 +594,13 @@ return baseclass.extend({
         ul,
       );
       if (!hasSubmenu) return;
+
+      // Reparent the panel into the canvas container: the transformed
+      // #topmenu would otherwise become the containing block of the
+      // absolutely-positioned panel and shrink the canvas to the menu's
+      // width. Inside the container the panel is also clipped by the same
+      // clip-path reveal as the rest of the canvas.
+      if (container) container.appendChild(nav);
 
       li.addEventListener("mouseenter", () => {
         if (hideTimer) {
@@ -567,16 +616,9 @@ return baseclass.extend({
           if (wasActive) return;
 
           menuLink.classList.add("menu-active");
-          const navHeight = nav.scrollHeight;
-          const headerHeight =
-            header.querySelector(".header-content")?.offsetHeight || 56;
-          const totalHeight = headerHeight + navHeight;
 
           if (container) {
-            container.style.setProperty(
-              "--mega-menu-height",
-              `${totalHeight}px`,
-            );
+            applyCanvasHeight();
             container.classList.add("active");
             overlay.classList.add("active");
           }
@@ -668,10 +710,10 @@ return baseclass.extend({
     const wasActive = container.classList.contains("active");
     container.classList.remove("active");
 
-    // --mega-menu-height is set per-submenu in initMegaMenu and otherwise
-    // never cleared. Drop it back to the h-0 fallback once the container is
-    // fully hidden, so a closed menu doesn't leave invisible scrollable
-    // space below the header on pages shorter than the last submenu.
+    // --mega-menu-height is set on open in initMegaMenu and otherwise never
+    // cleared. Drop it back to the h-0 fallback once the container is fully
+    // hidden, so a closed menu doesn't leave invisible scrollable space
+    // below the header on pages shorter than the canvas.
     const resetHeight = () => {
       if (!container.classList.contains("active")) {
         container.style.removeProperty("--mega-menu-height");
