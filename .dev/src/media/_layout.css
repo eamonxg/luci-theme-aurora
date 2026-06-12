@@ -16,9 +16,12 @@ header {
       /* Category panels live inside the container, not the nav items: the
          transformed #topmenu would otherwise become the containing block of
          a position:fixed panel and shrink the canvas to the menu's width.
-         The entering panel floats up 6px — transform + opacity only. */
+         The content cluster is capped at max-w-5xl and centered so it sits
+         under the centered nav triggers instead of hugging the left edge of
+         wide viewports. The entering panel floats up 6px — transform +
+         opacity only. */
       & .desktop-nav {
-        @apply max-w-max-width pointer-events-none absolute top-14 left-1/2 flex min-h-60 w-23/24 -translate-x-1/2 translate-y-1.5 gap-12 px-4 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-200 ease-out;
+        @apply pointer-events-none absolute top-14 left-1/2 flex min-h-60 w-23/24 max-w-5xl -translate-x-1/2 translate-y-1.5 gap-12 px-4 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-200 ease-out;
 
         &.active {
           @apply pointer-events-auto translate-y-0 opacity-100;
@@ -51,7 +54,7 @@ header {
       /* Constant part of the canvas: lives once in the container (not per
          panel) so switching categories never re-fades the device summary. */
       & .desktop-menu-board {
-        @apply max-w-max-width absolute bottom-8 left-1/2 flex w-23/24 -translate-x-1/2 flex-col gap-2 px-4 max-lg:hidden;
+        @apply absolute bottom-8 left-1/2 flex w-23/24 max-w-5xl -translate-x-1/2 flex-col gap-2 px-4 max-lg:hidden;
 
         & .board-line {
           @apply text-muted-foreground/80 flex max-w-44 items-center gap-2.5 text-xs;
