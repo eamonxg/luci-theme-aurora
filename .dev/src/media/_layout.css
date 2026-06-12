@@ -46,7 +46,7 @@ header {
             @apply m-0 list-none;
 
             & > a {
-              @apply text-foreground block py-2.5 text-sm whitespace-nowrap no-underline hover:underline hover:decoration-2 hover:underline-offset-4;
+              @apply text-foreground block w-fit py-2.5 text-sm whitespace-nowrap no-underline hover:underline hover:decoration-2 hover:underline-offset-4;
             }
           }
         }
