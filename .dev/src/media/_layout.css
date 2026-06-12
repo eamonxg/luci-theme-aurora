@@ -16,18 +16,20 @@ header {
       /* Category panels live inside the container, not the nav items: the
          transformed #topmenu would otherwise become the containing block of
          a position:fixed panel and shrink the canvas to the menu's width.
-         The panel is content-sized (w-max) and centered, so the cluster of
-         anchor + link columns truly sits under the centered nav triggers.
-         The entering panel floats up 6px — transform + opacity only. */
+         Fixed coordinates shared by every category, so switching panels
+         never shifts anything: link columns start at 50% - 13rem (just
+         under the centered nav triggers), the anchor column sits at a
+         fixed slot left of them. The entering panel floats up 6px —
+         transform + opacity only. */
       & .desktop-nav {
-        @apply pointer-events-none absolute top-14 left-1/2 flex min-h-60 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-1.5 gap-12 px-4 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-200 ease-out;
+        @apply pointer-events-none absolute inset-x-0 top-14 min-h-60 translate-y-1.5 pt-7 pb-8 pl-[calc(50%-13rem)] opacity-0 transition-[opacity,transform] duration-200 ease-out;
 
         &.active {
           @apply pointer-events-auto translate-y-0 opacity-100;
         }
 
         & .desktop-nav-anchor {
-          @apply flex min-w-44 shrink-0 flex-col max-lg:hidden;
+          @apply absolute top-7 bottom-8 left-[calc(50%-30rem)] flex w-56 flex-col max-lg:hidden;
 
           & .desktop-nav-title {
             @apply text-foreground text-2xl font-semibold tracking-tight;
@@ -40,7 +42,7 @@ header {
             @apply mt-auto flex flex-col gap-2 pt-6;
 
             & .board-line {
-              @apply text-muted-foreground/80 flex max-w-72 items-center gap-2.5 text-xs;
+              @apply text-muted-foreground/80 flex max-w-full items-center gap-2.5 text-xs;
 
               &::before {
                 @apply size-4 shrink-0 bg-current content-[''];
