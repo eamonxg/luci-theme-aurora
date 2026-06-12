@@ -584,8 +584,6 @@ return baseclass.extend({
       if (container?.classList.contains("active")) applyCanvasHeight();
     });
 
-    const boardTemplate = container?.querySelector(".desktop-menu-board");
-
     children.forEach((child) => {
       const { li, nav, menuLink, hasSubmenu } = this.buildDropdownItem(
         child,
@@ -600,15 +598,6 @@ return baseclass.extend({
       // width. Inside the container the panel is also clipped by the same
       // clip-path reveal as the rest of the canvas.
       if (container) container.appendChild(nav);
-
-      // The panel is content-sized and centered, so the device summary
-      // must travel with each panel's anchor column — clone it from the
-      // server-rendered template (removed after the loop).
-      if (boardTemplate) {
-        nav
-          .querySelector(".desktop-nav-anchor")
-          ?.appendChild(boardTemplate.cloneNode(true));
-      }
 
       li.addEventListener("mouseenter", () => {
         if (hideTimer) {
@@ -641,8 +630,6 @@ return baseclass.extend({
         }
       });
     });
-
-    boardTemplate?.remove();
 
     const hideMenu = () => {
       if (showTimer) {

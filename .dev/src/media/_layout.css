@@ -29,52 +29,17 @@ header {
         }
 
         & .desktop-nav-anchor {
-          @apply absolute top-7 bottom-8 left-[calc(50%-30rem)] flex w-56 flex-col max-lg:hidden;
+          @apply absolute top-7 left-[calc(50%-30rem)] w-56 max-lg:hidden;
 
           & .desktop-nav-title {
             @apply text-foreground text-2xl font-semibold tracking-tight;
-          }
-
-          /* Device summary: cloned into each panel's anchor (from the
-             server-rendered template below) so it centers with the panel
-             cluster. Pinned to the panel bottom by mt-auto. */
-          & .desktop-menu-board {
-            @apply mt-auto flex flex-col gap-2 pt-6;
-
-            & .board-line {
-              @apply text-muted-foreground/80 flex max-w-full items-center gap-2.5 text-xs;
-
-              &::before {
-                @apply size-4 shrink-0 bg-current content-[''];
-              }
-
-              & .board-text {
-                @apply min-w-0 truncate;
-              }
-            }
-
-            & .board-line-host::before {
-              @apply [mask:url('@assets/icons/server.svg')_center/contain_no-repeat];
-            }
-
-            & .board-line-model::before {
-              @apply [mask:url('@assets/icons/cpu-chip.svg')_center/contain_no-repeat];
-            }
-
-            & .board-line-firmware::before {
-              @apply [mask:url('@assets/icons/cube.svg')_center/contain_no-repeat];
-            }
-
-            & .board-line-kernel::before {
-              @apply [mask:url('@assets/icons/cog.svg')_center/contain_no-repeat];
-            }
           }
         }
 
         & .desktop-nav-list {
           /* Vertical fill: columns of equal height, no orphan rows. Row
              count is set per submenu via --menu-rows in menu-aurora.js. */
-          @apply grid grid-flow-col content-start gap-x-4 gap-y-1;
+          @apply grid grid-flow-col content-start gap-x-0 gap-y-1;
           grid-template-rows: repeat(var(--menu-rows, 6), auto);
 
           & > li {
@@ -87,10 +52,41 @@ header {
         }
       }
 
-      /* The server-rendered device-summary template; menu-aurora.js clones
-         it into each panel's anchor column and removes the original. */
-      & > .desktop-menu-board {
-        @apply hidden;
+      /* Constant part of the canvas, Apple-flyout style: the device
+         summary lives once at container level, pinned to the canvas
+         bottom at the fixed anchor slot. Its position never depends on an
+         individual panel's height, and switching categories never
+         re-fades it. */
+      & .desktop-menu-board {
+        @apply absolute bottom-8 left-[calc(50%-30rem)] flex w-56 flex-col gap-2 max-lg:hidden;
+
+        & .board-line {
+          @apply text-muted-foreground/80 flex max-w-full items-center gap-2.5 text-xs;
+
+          &::before {
+            @apply size-4 shrink-0 bg-current content-[''];
+          }
+
+          & .board-text {
+            @apply min-w-0 truncate;
+          }
+        }
+
+        & .board-line-host::before {
+          @apply [mask:url('@assets/icons/server.svg')_center/contain_no-repeat];
+        }
+
+        & .board-line-model::before {
+          @apply [mask:url('@assets/icons/cpu-chip.svg')_center/contain_no-repeat];
+        }
+
+        & .board-line-firmware::before {
+          @apply [mask:url('@assets/icons/cube.svg')_center/contain_no-repeat];
+        }
+
+        & .board-line-kernel::before {
+          @apply [mask:url('@assets/icons/cog.svg')_center/contain_no-repeat];
+        }
       }
     }
   }
