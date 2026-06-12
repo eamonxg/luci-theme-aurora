@@ -1,7 +1,7 @@
 .theme-switcher {
   @apply bg-page-bg relative inline-flex items-center gap-0 rounded-full shadow-sm backdrop-blur-sm transition-transform duration-300 max-md:py-0.5;
-  @apply border-border/70 border;
-  @apply before:bg-border/50 before:ring-border/60 before:absolute before:top-1 before:left-1 before:z-0 before:h-[calc(100%-0.5rem)] before:w-[calc(33.333%-0.5rem)] before:rounded-full before:shadow-md before:ring-1 before:transition-transform before:duration-300;
+  @apply border-ink-soft border;
+  @apply before:bg-ink-soft before:ring-ink-soft before:absolute before:top-1 before:left-1 before:z-0 before:h-[calc(100%-0.5rem)] before:w-[calc(33.333%-0.5rem)] before:rounded-full before:shadow-md before:ring-1 before:transition-transform before:duration-300;
 
   footer & {
     @apply max-md:hidden;
