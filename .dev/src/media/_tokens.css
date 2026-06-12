@@ -4,74 +4,100 @@
  * Licensed to the public under the Apache License 2.0.
  *
  * Shared between main.css and login.css.
- * aurora-config writes UCI overrides that target the same --* variable
- * names, so customizations apply automatically to both stylesheets.
+ *
+ * Two-layer model (spec: 2026-06-12-two-layer-token-system-design.md):
+ *   Layer 1 "knobs"   — literal colors a preset normally sets.
+ *   Layer 2 "derived" — formulas sampling the knobs. Any derived token can
+ *                       still be overridden with an explicit value via UCI
+ *                       (aurora-config targets the same --* names).
+ *   Alpha roles       — the ONLY legitimate transparency: scrim, ink scale,
+ *                       glass surfaces. Disabled states use opacity
+ *                       utilities, never translucent colors.
+ *
+ * Component CSS must reference named tokens; numeric /N color modifiers
+ * are banned (checked by `pnpm lint:tokens`).
+ *
+ * ORDER MATTERS: [data-darkmode="true"] ties with :root on specificity,
+ * so the dark block must come AFTER every :root block to win in dark mode.
  */
 
 :root {
+  /* ---------- Layer 1: knobs ---------- */
   --background: oklch(0.968 0.007 247.896);
   --foreground: oklch(0.208 0.042 265.755);
 
   --primary: oklch(0.68 0.11 233);
   --primary-foreground: oklch(1 0 0);
 
-  --secondary: oklch(0.929 0.013 255.508);
-  --secondary-foreground: oklch(0.372 0.044 257.287);
-
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.446 0.043 257.281);
-
-  --destructive: oklch(0.94 0.05 25);
-  --destructive-foreground: oklch(0.35 0.12 25);
-
-  --accent: oklch(0.62 0.22 25);
-  --accent-foreground: oklch(0.97 0.02 25);
-
-  --default: oklch(0.97 0 0);
-  --default-foreground: oklch(0.205 0 0);
-
-  --info: oklch(0.94 0.05 230);
-  --info-foreground: oklch(0.35 0.08 240);
-
-  --warning: oklch(0.95 0.05 90);
-  --warning-foreground: oklch(0.35 0.08 60);
-
-  --success: oklch(0.94 0.05 160);
-  --success-foreground: oklch(0.32 0.09 165);
-
-  --error: oklch(0.94 0.05 25);
-  --error-foreground: oklch(0.35 0.12 25);
-
-  --border: oklch(0.92 0 0);
-
   --link: oklch(0.74 0.238 322.16);
 
-  --input-checked: oklch(1 0 0);
+  --info-foreground: oklch(0.35 0.08 240);
+  --warning-foreground: oklch(0.35 0.08 60);
+  --success-foreground: oklch(0.32 0.09 165);
+  --error-foreground: oklch(0.35 0.12 25);
 
-  --label-surface: oklch(from var(--panel-bg) calc(l - 0.02) c h);
-
-  --login-aurora-1: oklch(0.70 0.26 148);
-  --login-aurora-2: oklch(0.65 0.22 190);
-  --login-aurora-3: oklch(0.58 0.24 268);
-  --login-aurora-4: oklch(0.62 0.26 312);
-
+  /* ---------- Layer 2: surfaces (explicit in classic) ---------- */
+  --page-bg: oklch(1 0 0);
+  --panel-bg: oklch(1 0 0);
   --terminal-bg: oklch(0.24 0.02 260);
   --terminal-foreground: oklch(1 0 0);
 
-  --overlay-base: oklch(0 0 0);
+  /* ---------- Layer 2: neutrals (literals until the phase-4 retune) ---------- */
+  --secondary: oklch(0.929 0.013 255.508);
+  --secondary-foreground: oklch(0.372 0.044 257.287);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.446 0.043 257.281);
+  --default: oklch(0.97 0 0);
+  --default-foreground: oklch(0.205 0 0);
+  --accent: oklch(0.62 0.22 25);
+  --accent-foreground: oklch(0.97 0.02 25);
+  --input-checked: oklch(1 0 0);
 
-  --progress-bar-start: oklch(0.68 0.11 233);
-  --progress-bar-end: oklch(0.7535 0.1034 198.37);
+  /* ---------- Layer 2: mode-agnostic formulas ---------- */
+  --header-bg: var(--background);
+  --destructive: var(--error);
+  --destructive-foreground: var(--error-foreground);
+  --border: var(--ink-soft);
 
-  --header-bg: oklch(from var(--background) l c h);
+  --primary-faint: color-mix(in oklab, var(--primary) 8%, var(--panel-bg));
+  --primary-soft: color-mix(in oklab, var(--primary) 15%, var(--panel-bg));
+  --primary-emphasis: color-mix(in oklab, var(--primary) 25%, var(--panel-bg));
+  --primary-hover: color-mix(in oklab, var(--primary) 90%, var(--panel-bg));
+  --secondary-hover: color-mix(in oklab, var(--secondary) 90%, var(--panel-bg));
+  --muted-hover: color-mix(in oklab, var(--muted) 90%, var(--panel-bg));
+  --destructive-hover: color-mix(in oklab, var(--destructive) 90%, var(--panel-bg));
+
+  --info-border: color-mix(in oklab, var(--info-foreground) 25%, var(--panel-bg));
+  --warning-border: color-mix(in oklab, var(--warning-foreground) 25%, var(--panel-bg));
+  --success-border: color-mix(in oklab, var(--success-foreground) 25%, var(--panel-bg));
+  --error-border: color-mix(in oklab, var(--error-foreground) 25%, var(--panel-bg));
+
+  /* ---------- Layer 2: light-direction formulas ---------- */
   --header-interactive: oklch(from var(--header-bg) calc(l - 0.12) c h);
-
-  --page-bg: oklch(1 0 0);
-
-  --panel-bg: oklch(1 0 0);
-
   --tooltip-bg: oklch(from var(--page-bg) calc(l - 0.015) c h);
+  --label-surface: oklch(from var(--panel-bg) calc(l - 0.02) c h);
 
+  --info: oklch(from var(--info-foreground) 0.94 0.05 h);
+  --warning: oklch(from var(--warning-foreground) 0.95 0.05 h);
+  --success: oklch(from var(--success-foreground) 0.94 0.05 h);
+  --error: oklch(from var(--error-foreground) 0.94 0.05 h);
+
+  --progress-bar-start: var(--primary);
+  --progress-bar-end: oklch(from var(--primary) calc(l + 0.07) c calc(h - 35));
+
+  /* ---------- Alpha roles ---------- */
+  --ink-faint: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --ink-soft: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --ink-strong: color-mix(in oklab, var(--foreground) 28%, transparent);
+
+  --scrim: oklch(0 0 0 / 0.5);
+
+  --glass-soft: color-mix(in oklab, var(--page-bg) 60%, transparent);
+  --glass: color-mix(in oklab, var(--page-bg) 92%, transparent);
+  --glass-panel: color-mix(in oklab, var(--panel-bg) 96%, transparent);
+  --glass-header: color-mix(in oklab, var(--header-bg) 40%, transparent);
+
+  /* ---------- Structure ---------- */
   --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
 
@@ -80,69 +106,55 @@
   --radius-base: 0.5rem;
 }
 
+/* Dark block LAST — wins ties against the :root formulas above. */
 [data-darkmode="true"] {
+  /* ---------- Layer 1: knobs ---------- */
   --background: oklch(0.32 0.059 188.42);
   --foreground: oklch(0.968 0.007 247.896);
 
   --primary: oklch(0.6 0.13 188.745);
   --primary-foreground: oklch(1 0 0);
 
-  --secondary: oklch(0.372 0.044 257.287);
-  --secondary-foreground: oklch(0.928 0.006 264.531);
-
-  --muted: oklch(0.373 0.026 259.733);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-
-  --destructive: oklch(0.258 0.092 26.042);
-  --destructive-foreground: oklch(0.88 0.14 26.042);
-
-  --accent: oklch(0.35 0.12 25);
-  --accent-foreground: oklch(0.88 0.14 25);
-
-  --default: oklch(0.274 0.006 286.033/0.5);
-  --default-foreground: oklch(0.985 0.01 285.805);
-
-  --info: oklch(0.391 0.09 240.876/0.5);
-  --info-foreground: oklch(0.88 0.06 230);
-
-  --warning: oklch(0.414 0.112 45.904/0.5);
-  --warning-foreground: oklch(0.924 0.12 95.746);
-
-  --success: oklch(0.378 0.077 168.94/0.5);
-  --success-foreground: oklch(0.92 0.09 160);
-
-  --error: oklch(0.41 0.159 10.272/0.5);
-  --error-foreground: oklch(0.88 0.14 25);
-
-  --border: oklch(0.38 0.041 260.031);
-
   --link: oklch(0.702 0.183 293.541);
 
-  --input-checked: oklch(1 0 0);
+  --info-foreground: oklch(0.88 0.06 230);
+  --warning-foreground: oklch(0.924 0.12 95.746);
+  --success-foreground: oklch(0.92 0.09 160);
+  --error-foreground: oklch(0.88 0.14 25);
 
-  --label-surface: oklch(from var(--panel-bg) calc(l + 0.04) c h);
-
-  --login-aurora-1: oklch(0.76 0.28 148);
-  --login-aurora-2: oklch(0.70 0.23 192);
-  --login-aurora-3: oklch(0.63 0.25 268);
-  --login-aurora-4: oklch(0.67 0.27 312);
-
+  /* ---------- Layer 2: surfaces (explicit in classic) ---------- */
+  --page-bg: oklch(0.21 0.034 264.665);
+  --panel-bg: oklch(0.279 0.041 260.031);
   --terminal-bg: oklch(0.18 0.03 260);
   --terminal-foreground: oklch(1 0 0);
 
-  --overlay-base: oklch(0 0 0);
+  /* ---------- Layer 2: neutrals (literals until the phase-4 retune) ---------- */
+  --secondary: oklch(0.372 0.044 257.287);
+  --secondary-foreground: oklch(0.928 0.006 264.531);
+  --muted: oklch(0.373 0.026 259.733);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --default: oklch(0.274 0.006 286.033);
+  --default-foreground: oklch(0.985 0.01 285.805);
+  --accent: oklch(0.35 0.12 25);
+  --accent-foreground: oklch(0.88 0.14 25);
+  --input-checked: oklch(1 0 0);
+
+  /* ---------- Layer 2: dark-direction formula overrides ---------- */
+  --header-bg: var(--page-bg);
+  --header-interactive: oklch(from var(--header-bg) calc(l + 0.24) c h);
+  --tooltip-bg: oklch(from var(--page-bg) calc(l + 0.06) c h);
+  --label-surface: oklch(from var(--panel-bg) calc(l + 0.04) c h);
+
+  --info: oklch(from var(--info-foreground) 0.34 0.07 h);
+  --warning: oklch(from var(--warning-foreground) 0.35 0.08 h);
+  --success: oklch(from var(--success-foreground) 0.33 0.06 h);
+  --error: oklch(from var(--error-foreground) 0.34 0.09 h);
 
   --progress-bar-start: oklch(0.4318 0.0865 166.91);
-  --progress-bar-end: oklch(62.1% 0.145 189.632);
+  --progress-bar-end: oklch(0.621 0.145 189.632);
 
-  --header-bg: oklch(from var(--page-bg) l c h);
-  --header-interactive: oklch(from var(--header-bg) calc(l + 0.24) c h);
-
-  --page-bg: oklch(0.21 0.034 264.665);
-
-  --panel-bg: oklch(0.279 0.041 260.031);
-
-  --tooltip-bg: oklch(from var(--page-bg) calc(l + 0.06) c h);
+  /* ---------- Alpha roles (dark-direction) ---------- */
+  --glass-header: color-mix(in oklab, var(--header-bg) 90%, transparent);
 }
 
 @theme inline {
@@ -151,16 +163,21 @@
   --color-foreground: var(--foreground);
 
   --color-page-bg: var(--page-bg);
-
   --color-panel-bg: var(--panel-bg);
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-faint: var(--primary-faint);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-emphasis: var(--primary-emphasis);
+  --color-primary-hover: var(--primary-hover);
 
   --color-border: var(--border);
+  --color-ink-faint: var(--ink-faint);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-strong: var(--ink-strong);
 
   /* Component Colors */
-
   --color-header-bg: var(--header-bg);
   --color-header-interactive: var(--header-interactive);
 
@@ -172,7 +189,13 @@
 
   --color-tooltip-bg: var(--tooltip-bg);
 
-  --color-overlay-base: var(--overlay-base);
+  --color-overlay-base: var(--scrim); /* TEMP: removed in the scrim sweep task */
+
+  --color-scrim: var(--scrim);
+  --color-glass-soft: var(--glass-soft);
+  --color-glass: var(--glass);
+  --color-glass-panel: var(--glass-panel);
+  --color-glass-header: var(--glass-header);
 
   --color-link: var(--link);
 
@@ -181,33 +204,39 @@
   --color-label-surface: var(--label-surface);
 
   /* Semantic & Status Colors */
-
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-hover: var(--destructive-hover);
 
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
 
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-muted-hover: var(--muted-hover);
 
   --color-default: var(--default);
   --color-default-foreground: var(--default-foreground);
 
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-info-border: var(--info-border);
 
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-border: var(--warning-border);
 
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-border: var(--success-border);
 
   --color-error: var(--error);
   --color-error-foreground: var(--error-foreground);
+  --color-error-border: var(--error-border);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
