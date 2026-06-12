@@ -74,7 +74,7 @@ header {
         & .desktop-nav-list {
           /* Vertical fill: columns of equal height, no orphan rows. Row
              count is set per submenu via --menu-rows in menu-aurora.js. */
-          @apply grid grid-flow-col content-start gap-x-10 gap-y-1;
+          @apply grid grid-flow-col content-start gap-x-6 gap-y-1;
           grid-template-rows: repeat(var(--menu-rows, 6), auto);
 
           & > li {
