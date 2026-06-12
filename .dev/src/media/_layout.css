@@ -16,22 +16,56 @@ header {
       /* Category panels live inside the container, not the nav items: the
          transformed #topmenu would otherwise become the containing block of
          a position:fixed panel and shrink the canvas to the menu's width.
-         The content cluster is capped at max-w-5xl and centered so it sits
-         under the centered nav triggers instead of hugging the left edge of
-         wide viewports. The entering panel floats up 6px — transform +
-         opacity only. */
+         The panel is content-sized (w-max) and centered, so the cluster of
+         anchor + link columns truly sits under the centered nav triggers.
+         The entering panel floats up 6px — transform + opacity only. */
       & .desktop-nav {
-        @apply pointer-events-none absolute top-14 left-1/2 flex min-h-60 w-23/24 max-w-5xl -translate-x-1/2 translate-y-1.5 gap-12 px-4 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-200 ease-out;
+        @apply pointer-events-none absolute top-14 left-1/2 flex min-h-60 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-1.5 gap-12 px-4 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-200 ease-out;
 
         &.active {
           @apply pointer-events-auto translate-y-0 opacity-100;
         }
 
         & .desktop-nav-anchor {
-          @apply w-44 shrink-0 max-lg:hidden;
+          @apply flex min-w-44 shrink-0 flex-col max-lg:hidden;
 
           & .desktop-nav-title {
             @apply text-foreground text-2xl font-semibold tracking-tight;
+          }
+
+          /* Device summary: cloned into each panel's anchor (from the
+             server-rendered template below) so it centers with the panel
+             cluster. Pinned to the panel bottom by mt-auto. */
+          & .desktop-menu-board {
+            @apply mt-auto flex flex-col gap-2 pt-6;
+
+            & .board-line {
+              @apply text-muted-foreground/80 flex max-w-72 items-center gap-2.5 text-xs;
+
+              &::before {
+                @apply size-4 shrink-0 bg-current content-[''];
+              }
+
+              & .board-text {
+                @apply min-w-0 truncate;
+              }
+            }
+
+            & .board-line-host::before {
+              @apply [mask:url('@assets/icons/server.svg')_center/contain_no-repeat];
+            }
+
+            & .board-line-model::before {
+              @apply [mask:url('@assets/icons/cpu-chip.svg')_center/contain_no-repeat];
+            }
+
+            & .board-line-firmware::before {
+              @apply [mask:url('@assets/icons/cube.svg')_center/contain_no-repeat];
+            }
+
+            & .board-line-kernel::before {
+              @apply [mask:url('@assets/icons/cog.svg')_center/contain_no-repeat];
+            }
           }
         }
 
@@ -51,38 +85,10 @@ header {
         }
       }
 
-      /* Constant part of the canvas: lives once in the container (not per
-         panel) so switching categories never re-fades the device summary. */
-      & .desktop-menu-board {
-        @apply absolute bottom-8 left-1/2 flex w-23/24 max-w-5xl -translate-x-1/2 flex-col gap-2 px-4 max-lg:hidden;
-
-        & .board-line {
-          @apply text-muted-foreground/80 flex max-w-44 items-center gap-2.5 text-xs;
-
-          &::before {
-            @apply size-4 shrink-0 bg-current content-[''];
-          }
-
-          & .board-text {
-            @apply min-w-0 truncate;
-          }
-        }
-
-        & .board-line-host::before {
-          @apply [mask:url('@assets/icons/server.svg')_center/contain_no-repeat];
-        }
-
-        & .board-line-model::before {
-          @apply [mask:url('@assets/icons/cpu-chip.svg')_center/contain_no-repeat];
-        }
-
-        & .board-line-firmware::before {
-          @apply [mask:url('@assets/icons/cube.svg')_center/contain_no-repeat];
-        }
-
-        & .board-line-kernel::before {
-          @apply [mask:url('@assets/icons/cog-6-tooth.svg')_center/contain_no-repeat];
-        }
+      /* The server-rendered device-summary template; menu-aurora.js clones
+         it into each panel's anchor column and removes the original. */
+      & > .desktop-menu-board {
+        @apply hidden;
       }
     }
   }
