@@ -219,6 +219,9 @@
 					{% if (board_firmware): %}
 					<span class="board-line board-line-firmware" title="{{ entityencode(striptags(board_firmware), true) }}"><span class="board-text">{{ striptags(board_firmware) }}</span></span>
 					{% endif %}
+					{% if (boardinfo.kernel): %}
+					<span class="board-line board-line-kernel" title="{{ entityencode(striptags(boardinfo.kernel), true) }}"><span class="board-text">{{ striptags(boardinfo.kernel) }}</span></span>
+					{% endif %}
 				</div>
 			</div>
 		</header>

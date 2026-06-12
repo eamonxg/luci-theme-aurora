@@ -592,6 +592,13 @@ return baseclass.extend({
       );
       if (!hasSubmenu) return;
 
+      // Reparent the panel into the canvas container: the transformed
+      // #topmenu would otherwise become the containing block of the
+      // absolutely-positioned panel and shrink the canvas to the menu's
+      // width. Inside the container the panel is also clipped by the same
+      // clip-path reveal as the rest of the canvas.
+      if (container) container.appendChild(nav);
+
       li.addEventListener("mouseenter", () => {
         if (hideTimer) {
           clearTimeout(hideTimer);

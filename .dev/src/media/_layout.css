@@ -13,6 +13,41 @@ header {
         @apply pointer-events-auto opacity-100 [clip-path:inset(0)];
       }
 
+      /* Category panels live inside the container, not the nav items: the
+         transformed #topmenu would otherwise become the containing block of
+         a position:fixed panel and shrink the canvas to the menu's width.
+         The entering panel floats up 6px — transform + opacity only. */
+      & .desktop-nav {
+        @apply max-w-max-width pointer-events-none absolute top-14 left-1/2 flex min-h-60 w-23/24 -translate-x-1/2 translate-y-1.5 gap-12 px-4 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-200 ease-out;
+
+        &.active {
+          @apply pointer-events-auto translate-y-0 opacity-100;
+        }
+
+        & .desktop-nav-anchor {
+          @apply w-44 shrink-0 max-lg:hidden;
+
+          & .desktop-nav-title {
+            @apply text-foreground text-2xl font-semibold tracking-tight;
+          }
+        }
+
+        & .desktop-nav-list {
+          /* Vertical fill: columns of equal height, no orphan rows. Row
+             count is set per submenu via --menu-rows in menu-aurora.js. */
+          @apply grid grid-flow-col content-start gap-x-10 gap-y-1;
+          grid-template-rows: repeat(var(--menu-rows, 6), auto);
+
+          & > li {
+            @apply m-0 list-none;
+
+            & > a {
+              @apply text-foreground block py-2.5 whitespace-nowrap no-underline hover:underline hover:decoration-2 hover:underline-offset-4;
+            }
+          }
+        }
+      }
+
       /* Constant part of the canvas: lives once in the container (not per
          panel) so switching categories never re-fades the device summary. */
       & .desktop-menu-board {
@@ -40,6 +75,10 @@ header {
 
         & .board-line-firmware::before {
           @apply [mask:url('@assets/icons/cube.svg')_center/contain_no-repeat];
+        }
+
+        & .board-line-kernel::before {
+          @apply [mask:url('@assets/icons/cog-6-tooth.svg')_center/contain_no-repeat];
         }
       }
     }
@@ -69,40 +108,18 @@ header {
         }
       }
 
+      /* Boxed-dropdown panels only — mega-menu panels are reparented into
+         .desktop-menu-container (see above). */
       & .desktop-nav {
         @apply pointer-events-none left-0 z-40 px-0 pt-0 opacity-0 transition-opacity duration-150;
-        [data-nav-type="mega-menu"] & {
-          /* Constant canvas: same width as #maincontent; the entering panel
-             floats up 6px — transform + opacity only, compositor-friendly. */
-          @apply max-w-max-width fixed top-14 left-1/2 flex min-h-60 w-23/24 -translate-x-1/2 translate-y-1.5 gap-12 px-4 pt-7 pb-8 transition-[opacity,transform] duration-200 ease-out;
-        }
         [data-nav-type="boxed-dropdown"] & {
           @apply absolute top-full mt-2 min-w-48;
         }
         &.active {
           @apply pointer-events-auto opacity-100;
-
-          [data-nav-type="mega-menu"] & {
-            @apply translate-y-0;
-          }
-        }
-
-        & .desktop-nav-anchor {
-          @apply w-44 shrink-0 max-lg:hidden;
-
-          & .desktop-nav-title {
-            @apply text-foreground text-2xl font-semibold tracking-tight;
-          }
         }
 
         & .desktop-nav-list {
-          [data-nav-type="mega-menu"] & {
-            /* Vertical fill: columns of equal height, no orphan rows. Row
-               count is set per submenu via --menu-rows in menu-aurora.js. */
-            @apply grid grid-flow-col content-start gap-x-10 gap-y-1;
-            grid-template-rows: repeat(var(--menu-rows, 6), auto);
-          }
-
           [data-nav-type="boxed-dropdown"] & {
             @apply border-border bg-header-bg/90 flex flex-col gap-y-1 rounded-3xl border py-2 shadow-lg backdrop-blur-md backdrop-saturate-150;
           }
@@ -112,9 +129,6 @@ header {
             & > a {
               @apply text-foreground block whitespace-nowrap no-underline;
 
-              [data-nav-type="mega-menu"] & {
-                @apply py-2.5 hover:underline hover:decoration-2 hover:underline-offset-4;
-              }
               [data-nav-type="boxed-dropdown"] & {
                 @apply hover:bg-header-interactive mx-2 rounded-xl px-4 py-2;
               }
