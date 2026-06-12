@@ -1,31 +1,31 @@
 .label {
-  @apply bg-default text-default-foreground rounded-full px-3 py-1 text-xs font-bold uppercase;
+  @apply bg-neutral-status-surface text-neutral-status-content rounded-full px-3 py-1 text-xs font-bold uppercase;
 
   &.important {
-    @apply bg-info text-info-foreground;
+    @apply bg-info-surface text-info-content;
   }
 
   &.warning {
-    @apply bg-error text-error-foreground;
+    @apply bg-danger-surface text-danger-content;
   }
 
   &.success {
-    @apply bg-success text-success-foreground;
+    @apply bg-success-surface text-success-content;
   }
 
   &.notice {
-    @apply bg-warning text-warning-foreground;
+    @apply bg-warning-surface text-warning-content;
   }
 }
 
 .zonebadge {
-  @apply border-secondary bg-secondary text-secondary-foreground inline-flex items-center gap-1.5 overflow-visible rounded-full border px-1 py-1.5 text-sm font-medium shadow-sm transition-[box-shadow] duration-200 hover:shadow-md max-md:gap-1 max-md:text-xs;
+  @apply border-border-subtle bg-interface-badge-bg text-content inline-flex items-center gap-1.5 overflow-visible rounded-full border px-1 py-1.5 text-sm font-medium shadow-sm transition-[box-shadow] duration-200 hover:shadow-md max-md:gap-1 max-md:text-xs;
 
   &[style*="--zone-color-rgb"] {
     @apply bg-[rgb(var(--zone-color-rgb),.7)]!;
 
     & em {
-      @apply text-default-foreground;
+      @apply text-content;
     }
   }
 
@@ -35,7 +35,7 @@
 }
 
 .ifacebadge {
-  @apply border-border bg-label-surface text-default-foreground hover:border-border hover:bg-label-surface inline-flex cursor-default flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-normal shadow-sm transition-[box-shadow,border-color,background-color] duration-200 hover:shadow-md max-md:gap-1.5 max-md:px-2.5 max-md:py-1.5 max-md:text-xs;
+  @apply border-border-subtle bg-interface-badge-bg text-content hover:border-border-strong hover:bg-interface-badge-bg inline-flex cursor-default flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-normal shadow-sm transition-[box-shadow,border-color,background-color] duration-200 hover:shadow-md max-md:gap-1.5 max-md:px-2.5 max-md:py-1.5 max-md:text-xs;
 
   .cbi-dropdown &,
   .cbi-tooltip & {
@@ -61,7 +61,7 @@
   }
 
   &.ifacebadge-active {
-    @apply border-primary font-semibold;
+    @apply border-brand font-semibold;
   }
 
   &.large {

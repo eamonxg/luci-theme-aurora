@@ -1,13 +1,13 @@
 *:not(html) {
-  @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-transparent scrollbar-thumb-foreground/70;
+  @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-transparent scrollbar-thumb-content-muted;
 }
 
 html {
-  @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-page-bg scrollbar-thumb-foreground/70;
-  @apply bg-background relative h-full font-sans;
+  @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-surface scrollbar-thumb-content-muted;
+  @apply bg-canvas relative h-full font-sans;
 
   body {
-    @apply text-foreground relative flex flex-col bg-transparent text-sm leading-relaxed font-normal;
+    @apply text-content relative flex flex-col bg-transparent text-sm leading-relaxed font-normal;
     &.modal-overlay-active {
       @apply h-screen overflow-hidden;
     }
@@ -20,7 +20,7 @@ h3,
 h4,
 h5,
 h6 {
-  @apply text-foreground font-sans leading-tight font-semibold tracking-tight;
+  @apply text-content font-sans leading-tight font-semibold tracking-tight;
 }
 
 h1 {
@@ -60,15 +60,15 @@ abbr {
 }
 
 p {
-  @apply text-default-foreground text-sm leading-relaxed;
+  @apply text-content text-sm leading-relaxed;
 }
 
 pre {
-  @apply text-secondary-foreground border-secondary/60 bg-secondary/60 block rounded-xl border px-3 py-2 font-mono text-sm leading-relaxed wrap-break-word whitespace-pre-wrap;
+  @apply text-content-muted border-border-subtle bg-surface-muted block rounded-xl border px-3 py-2 font-mono text-sm leading-relaxed wrap-break-word whitespace-pre-wrap;
 }
 
 code {
-  @apply text-secondary-foreground bg-secondary/80 rounded px-2 py-1 font-mono text-sm;
+  @apply text-content-muted bg-surface-muted rounded px-2 py-1 font-mono text-sm;
 }
 
 a {
@@ -80,9 +80,9 @@ var {
 }
 
 small {
-  @apply text-default-foreground text-xs font-normal;
+  @apply text-content text-xs font-normal;
 }
 
 em {
-  @apply text-muted-foreground font-medium italic;
+  @apply text-content-muted font-medium italic;
 }

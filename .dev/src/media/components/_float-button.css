@@ -5,7 +5,7 @@
     @apply visible mb-2 grid origin-bottom grid-rows-[1fr] opacity-100 transition-[grid-template-rows,transform,opacity,visibility] duration-300 ease-in-out max-md:mb-1.5;
 
     .toolbar-list-inner {
-      @apply border-border/70 bg-page-bg/90 flex min-h-0 flex-col items-center gap-2 overflow-hidden rounded-full border p-1 shadow-sm max-md:gap-1.5 max-md:p-0.5;
+      @apply border-border-subtle bg-glass-surface flex min-h-0 flex-col items-center gap-2 overflow-hidden rounded-full border p-1 shadow-sm max-md:gap-1.5 max-md:p-0.5;
     }
   }
 
@@ -17,14 +17,14 @@
     }
 
     &:not(.toggle) {
-      @apply hover:bg-border/40 no-underline hover:scale-110;
+      @apply hover:bg-border-faint no-underline hover:scale-110;
       .icon {
         @apply object-contain dark:invert;
       }
     }
 
     &.toggle {
-      @apply bg-page-bg border-0 shadow-sm;
+      @apply bg-surface border-0 shadow-sm;
       .icon {
         @apply transition-transform duration-300 ease-out;
       }

@@ -5,250 +5,244 @@
  *
  * Shared between main.css and login.css.
  *
- * Two-layer model (spec: 2026-06-12-two-layer-token-system-design.md):
- *   Layer 1 "knobs"   — literal colors a preset normally sets.
- *   Layer 2 "derived" — formulas sampling the knobs. Any derived token can
- *                       still be overridden with an explicit value via UCI
- *                       (aurora-config targets the same --* names).
- *   Alpha roles       — the ONLY legitimate transparency: scrim, ink scale,
- *                       glass surfaces. Disabled states use opacity
- *                       utilities, never translucent colors.
+ * Layer 1 contains broad theme inputs. Layer 2 names semantic and component
+ * responsibilities. Components consume named roles and never apply numeric
+ * color opacity modifiers.
  *
- * Component CSS must reference named tokens; numeric /N color modifiers
- * are banned (checked by `pnpm lint:tokens`).
- *
- * ORDER MATTERS: [data-darkmode="true"] ties with :root on specificity,
- * so the dark block must come AFTER every :root block to win in dark mode.
+ * ORDER MATTERS: [data-darkmode="true"] ties with :root on specificity, so
+ * the dark block must remain after :root.
  */
 
 :root {
-  /* ---------- Layer 1: knobs ---------- */
-  --background: oklch(0.968 0.007 247.896);
-  --foreground: oklch(0.208 0.042 265.755);
-
-  --primary: oklch(0.68 0.11 233);
-  --primary-foreground: oklch(1 0 0);
-
+  /* Layer 1: theme inputs */
+  --canvas: oklch(0.968 0.007 247.896);
+  --surface: oklch(1 0 0);
+  --surface-raised: oklch(1 0 0);
+  --content: oklch(0.208 0.042 265.755);
+  --brand: oklch(0.68 0.11 233);
+  --on-brand: oklch(1 0 0);
   --link: oklch(0.74 0.238 322.16);
+  --info: oklch(0.35 0.08 240);
+  --warning: oklch(0.35 0.08 60);
+  --success: oklch(0.32 0.09 165);
+  --danger: oklch(0.35 0.12 25);
 
-  --info-foreground: oklch(0.35 0.08 240);
-  --warning-foreground: oklch(0.35 0.08 60);
-  --success-foreground: oklch(0.32 0.09 165);
-  --error-foreground: oklch(0.35 0.12 25);
+  /* Layer 2: semantic surface and content roles */
+  --surface-subtle: oklch(from var(--surface-raised) calc(l - 0.02) c h);
+  --surface-muted: oklch(from var(--surface-raised) calc(l - 0.05) c h);
+  --content-muted: oklch(0.446 0.043 257.281);
+  --content-subtle: color-mix(in oklab, var(--content) 52%, var(--surface-raised));
 
-  /* ---------- Layer 2: surfaces (explicit in classic) ---------- */
-  --page-bg: oklch(1 0 0);
-  --panel-bg: oklch(1 0 0);
-  --terminal-bg: oklch(0.24 0.02 260);
-  --terminal-foreground: oklch(1 0 0);
+  /* Layer 2: semantic brand roles */
+  --brand-faint: color-mix(in oklab, var(--brand) 8%, var(--surface-raised));
+  --brand-soft: color-mix(in oklab, var(--brand) 15%, var(--surface-raised));
+  --brand-emphasis: color-mix(in oklab, var(--brand) 25%, var(--surface-raised));
+  --brand-hover: color-mix(in oklab, var(--brand) 90%, var(--surface-raised));
+  --focus-ring: var(--brand-emphasis);
 
-  /* ---------- Layer 2: neutrals (literals until the phase-4 retune) ---------- */
-  --secondary: oklch(0.929 0.013 255.508);
-  --secondary-foreground: oklch(0.372 0.044 257.287);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.446 0.043 257.281);
-  --default: oklch(0.97 0 0);
-  --default-foreground: oklch(0.205 0 0);
-  --accent: oklch(0.62 0.22 25);
-  --accent-foreground: oklch(0.97 0.02 25);
-  --input-checked: oklch(1 0 0);
-
-  /* ---------- Layer 2: mode-agnostic formulas ---------- */
-  --header-bg: var(--background);
-  --destructive: var(--error);
-  --destructive-foreground: var(--error-foreground);
-  --border: var(--ink-soft);
-
-  --primary-faint: color-mix(in oklab, var(--primary) 8%, var(--panel-bg));
-  --primary-soft: color-mix(in oklab, var(--primary) 15%, var(--panel-bg));
-  --primary-emphasis: color-mix(in oklab, var(--primary) 25%, var(--panel-bg));
-  --primary-hover: color-mix(in oklab, var(--primary) 90%, var(--panel-bg));
-  --secondary-hover: color-mix(in oklab, var(--secondary) 90%, var(--panel-bg));
-  --muted-hover: color-mix(in oklab, var(--muted) 90%, var(--panel-bg));
-  --destructive-hover: color-mix(in oklab, var(--destructive) 90%, var(--panel-bg));
-
-  --info-border: color-mix(in oklab, var(--info-foreground) 25%, var(--panel-bg));
-  --warning-border: color-mix(in oklab, var(--warning-foreground) 25%, var(--panel-bg));
-  --success-border: color-mix(in oklab, var(--success-foreground) 25%, var(--panel-bg));
-  --error-border: color-mix(in oklab, var(--error-foreground) 25%, var(--panel-bg));
-
-  /* ---------- Layer 2: light-direction formulas ---------- */
-  --header-interactive: oklch(from var(--header-bg) calc(l - 0.12) c h);
-  --tooltip-bg: oklch(from var(--page-bg) calc(l - 0.015) c h);
-  --label-surface: oklch(from var(--panel-bg) calc(l - 0.02) c h);
-
-  --info: oklch(from var(--info-foreground) 0.94 0.05 h);
-  --warning: oklch(from var(--warning-foreground) 0.95 0.05 h);
-  --success: oklch(from var(--success-foreground) 0.94 0.05 h);
-  --error: oklch(from var(--error-foreground) 0.94 0.05 h);
-
-  --progress-bar-start: var(--primary);
-  --progress-bar-end: oklch(from var(--primary) calc(l + 0.07) c calc(h - 35));
-
-  /* ---------- Alpha roles ---------- */
-  --ink-faint: color-mix(in oklab, var(--foreground) 8%, transparent);
-  --ink-soft: color-mix(in oklab, var(--foreground) 12%, transparent);
-  --ink-strong: color-mix(in oklab, var(--foreground) 28%, transparent);
-
+  /* Layer 2: semantic border and material roles */
+  --border-faint: color-mix(in oklab, var(--content) 8%, transparent);
+  --border-subtle: color-mix(in oklab, var(--content) 12%, transparent);
+  --border-strong: color-mix(in oklab, var(--content) 28%, transparent);
+  --glass-surface: color-mix(in oklab, var(--surface) 92%, transparent);
+  --glass-raised: color-mix(in oklab, var(--surface-raised) 96%, transparent);
   --scrim: oklch(0 0 0 / 0.5);
 
-  --glass-soft: color-mix(in oklab, var(--page-bg) 60%, transparent);
-  --glass: color-mix(in oklab, var(--page-bg) 92%, transparent);
-  --glass-panel: color-mix(in oklab, var(--panel-bg) 96%, transparent);
-  --glass-header: color-mix(in oklab, var(--header-bg) 40%, transparent);
+  /* Layer 2: semantic status families */
+  --info-surface: oklch(from var(--info) 0.94 0.05 h);
+  --info-content: var(--info);
+  --info-border: color-mix(in oklab, var(--info) 28%, var(--surface-raised));
+  --warning-surface: oklch(from var(--warning) 0.95 0.05 h);
+  --warning-content: var(--warning);
+  --warning-border: color-mix(in oklab, var(--warning) 28%, var(--surface-raised));
+  --success-surface: oklch(from var(--success) 0.94 0.05 h);
+  --success-content: var(--success);
+  --success-border: color-mix(in oklab, var(--success) 28%, var(--surface-raised));
+  --danger-surface: oklch(from var(--danger) 0.94 0.05 h);
+  --danger-content: var(--danger);
+  --danger-border: color-mix(in oklab, var(--danger) 28%, var(--surface-raised));
 
-  /* ---------- Structure ---------- */
+  /* Layer 2: shell and navigation */
+  --header-bg: var(--canvas);
+  --header-interactive-bg: oklch(from var(--header-bg) calc(l - 0.12) c h);
+  --header-glass-bg: color-mix(in oklab, var(--header-bg) 40%, transparent);
+
+  /* Layer 2: focused component responsibilities */
+  --tooltip-bg: oklch(from var(--surface) calc(l - 0.015) c h);
+  --terminal-bg: oklch(0.24 0.02 260);
+  --terminal-content: oklch(1 0 0);
+  --progress-track-bg: oklch(0.929 0.013 255.508);
+  --progress-start: var(--brand);
+  --progress-end: oklch(from var(--brand) calc(l + 0.07) c calc(h - 35));
+  --input-bg: var(--surface);
+  --input-checked-content: oklch(1 0 0);
+
+  /* Layer 2: buttons and neutral status */
+  --button-secondary-bg: oklch(0.929 0.013 255.508);
+  --button-secondary-hover-bg: color-mix(
+    in oklab,
+    var(--button-secondary-bg) 90%,
+    var(--surface-raised)
+  );
+  --button-secondary-content: oklch(0.372 0.044 257.287);
+  --button-secondary-border: var(--button-secondary-bg);
+  --button-muted-bg: var(--surface-muted);
+  --button-muted-hover-bg: color-mix(
+    in oklab,
+    var(--button-muted-bg) 90%,
+    var(--surface-raised)
+  );
+  --button-muted-content: var(--content-muted);
+  --button-muted-border: var(--button-muted-bg);
+  --neutral-status-surface: oklch(0.97 0 0);
+  --neutral-status-content: oklch(0.205 0 0);
+  --neutral-status-border: var(--border-faint);
+
+  /* Layer 2: responsibilities formerly shared by label-surface */
+  --card-action-bg: var(--surface-subtle);
+  --interface-badge-bg: var(--surface-subtle);
+  --segmented-control-bg: var(--surface-subtle);
+  --ifacebox-header-bg: var(--surface-subtle);
+  --table-header-bg: var(--surface-subtle);
+  --table-row-hover-bg: var(--surface-subtle);
+  --table-row-alternate-bg: color-mix(
+    in oklab,
+    var(--table-row-hover-bg) 50%,
+    var(--surface-raised)
+  );
+
+  /* Structure */
   --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
-
   --spacing: 0.25rem;
   --container-max-width: 80rem;
   --radius-base: 0.5rem;
 }
 
-/* Dark block LAST — wins ties against the :root formulas above. */
 [data-darkmode="true"] {
-  /* ---------- Layer 1: knobs ---------- */
-  --background: oklch(0.32 0.059 188.42);
-  --foreground: oklch(0.968 0.007 247.896);
-
-  --primary: oklch(0.6 0.13 188.745);
-  --primary-foreground: oklch(1 0 0);
-
+  /* Layer 1: theme inputs */
+  --canvas: oklch(0.32 0.059 188.42);
+  --surface: oklch(0.21 0.034 264.665);
+  --surface-raised: oklch(0.279 0.041 260.031);
+  --content: oklch(0.968 0.007 247.896);
+  --brand: oklch(0.6 0.13 188.745);
+  --on-brand: oklch(1 0 0);
   --link: oklch(0.702 0.183 293.541);
+  --info: oklch(0.88 0.06 230);
+  --warning: oklch(0.924 0.12 95.746);
+  --success: oklch(0.92 0.09 160);
+  --danger: oklch(0.88 0.14 25);
 
-  --info-foreground: oklch(0.88 0.06 230);
-  --warning-foreground: oklch(0.924 0.12 95.746);
-  --success-foreground: oklch(0.92 0.09 160);
-  --error-foreground: oklch(0.88 0.14 25);
+  /* Mode-sensitive semantic roles */
+  --surface-subtle: oklch(from var(--surface-raised) calc(l + 0.04) c h);
+  --surface-muted: oklch(from var(--surface-raised) calc(l + 0.09) c h);
+  --content-muted: oklch(0.704 0.04 256.788);
+  --info-surface: oklch(from var(--info) 0.34 0.07 h);
+  --warning-surface: oklch(from var(--warning) 0.35 0.08 h);
+  --success-surface: oklch(from var(--success) 0.33 0.06 h);
+  --danger-surface: oklch(from var(--danger) 0.34 0.09 h);
 
-  /* ---------- Layer 2: surfaces (explicit in classic) ---------- */
-  --page-bg: oklch(0.21 0.034 264.665);
-  --panel-bg: oklch(0.279 0.041 260.031);
+  /* Mode-sensitive component roles */
+  --header-bg: var(--surface);
+  --header-interactive-bg: oklch(from var(--header-bg) calc(l + 0.24) c h);
+  --header-glass-bg: color-mix(in oklab, var(--header-bg) 90%, transparent);
+  --tooltip-bg: oklch(from var(--surface) calc(l + 0.06) c h);
   --terminal-bg: oklch(0.18 0.03 260);
-  --terminal-foreground: oklch(1 0 0);
-
-  /* ---------- Layer 2: neutrals (literals until the phase-4 retune) ---------- */
-  --secondary: oklch(0.372 0.044 257.287);
-  --secondary-foreground: oklch(0.928 0.006 264.531);
-  --muted: oklch(0.373 0.026 259.733);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --default: oklch(0.274 0.006 286.033);
-  --default-foreground: oklch(0.985 0.01 285.805);
-  --accent: oklch(0.35 0.12 25);
-  --accent-foreground: oklch(0.88 0.14 25);
-  --input-checked: oklch(1 0 0);
-
-  /* ---------- Layer 2: dark-direction formula overrides ---------- */
-  --header-bg: var(--page-bg);
-  --header-interactive: oklch(from var(--header-bg) calc(l + 0.24) c h);
-  --tooltip-bg: oklch(from var(--page-bg) calc(l + 0.06) c h);
-  --label-surface: oklch(from var(--panel-bg) calc(l + 0.04) c h);
-
-  --info: oklch(from var(--info-foreground) 0.34 0.07 h);
-  --warning: oklch(from var(--warning-foreground) 0.35 0.08 h);
-  --success: oklch(from var(--success-foreground) 0.33 0.06 h);
-  --error: oklch(from var(--error-foreground) 0.34 0.09 h);
-
-  --progress-bar-start: oklch(0.4318 0.0865 166.91);
-  --progress-bar-end: oklch(0.621 0.145 189.632);
-
-  /* ---------- Alpha roles (dark-direction) ---------- */
-  --glass-header: color-mix(in oklab, var(--header-bg) 90%, transparent);
+  --terminal-content: oklch(1 0 0);
+  --progress-track-bg: oklch(0.372 0.044 257.287);
+  --progress-start: oklch(0.4318 0.0865 166.91);
+  --progress-end: oklch(0.621 0.145 189.632);
+  --input-checked-content: oklch(1 0 0);
+  --button-secondary-bg: oklch(0.372 0.044 257.287);
+  --button-secondary-content: oklch(0.928 0.006 264.531);
+  --button-muted-content: oklch(0.704 0.04 256.788);
+  --neutral-status-surface: oklch(0.274 0.006 286.033);
+  --neutral-status-content: oklch(0.985 0.01 285.805);
 }
 
 @theme inline {
-  /* Base Colors */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  --color-page-bg: var(--page-bg);
-  --color-panel-bg: var(--panel-bg);
-
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary-faint: var(--primary-faint);
-  --color-primary-soft: var(--primary-soft);
-  --color-primary-emphasis: var(--primary-emphasis);
-  --color-primary-hover: var(--primary-hover);
-
-  --color-border: var(--border);
-  --color-ink-faint: var(--ink-faint);
-  --color-ink-soft: var(--ink-soft);
-  --color-ink-strong: var(--ink-strong);
-
-  /* Component Colors */
-  --color-header-bg: var(--header-bg);
-  --color-header-interactive: var(--header-interactive);
-
-  --color-progress-bar-start: var(--progress-bar-start);
-  --color-progress-bar-end: var(--progress-bar-end);
-
-  --color-terminal-bg: var(--terminal-bg);
-  --color-terminal-foreground: var(--terminal-foreground);
-
-  --color-tooltip-bg: var(--tooltip-bg);
-
-  --color-overlay-base: var(--scrim); /* TEMP: removed in the scrim sweep task */
-
-  --color-scrim: var(--scrim);
-  --color-glass-soft: var(--glass-soft);
-  --color-glass: var(--glass);
-  --color-glass-panel: var(--glass-panel);
-  --color-glass-header: var(--glass-header);
-
+  /* Layer 1 */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-content: var(--content);
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
   --color-link: var(--link);
-
-  --color-input-checked: var(--input-checked);
-
-  --color-label-surface: var(--label-surface);
-
-  /* Semantic & Status Colors */
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary-hover: var(--secondary-hover);
-
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-destructive-hover: var(--destructive-hover);
-
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted-hover: var(--muted-hover);
-
-  --color-default: var(--default);
-  --color-default-foreground: var(--default-foreground);
-
   --color-info: var(--info);
-  --color-info-foreground: var(--info-foreground);
-  --color-info-border: var(--info-border);
-
   --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-warning-border: var(--warning-border);
-
   --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
-  --color-success-border: var(--success-border);
+  --color-danger: var(--danger);
 
-  --color-error: var(--error);
-  --color-error-foreground: var(--error-foreground);
-  --color-error-border: var(--error-border);
+  /* Layer 2: semantic */
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-muted: var(--surface-muted);
+  --color-content-muted: var(--content-muted);
+  --color-content-subtle: var(--content-subtle);
+  --color-brand-faint: var(--brand-faint);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-emphasis: var(--brand-emphasis);
+  --color-brand-hover: var(--brand-hover);
+  --color-focus-ring: var(--focus-ring);
+  --color-border-faint: var(--border-faint);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-glass-surface: var(--glass-surface);
+  --color-glass-raised: var(--glass-raised);
+  --color-scrim: var(--scrim);
+  --color-info-surface: var(--info-surface);
+  --color-info-content: var(--info-content);
+  --color-info-border: var(--info-border);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-content: var(--warning-content);
+  --color-warning-border: var(--warning-border);
+  --color-success-surface: var(--success-surface);
+  --color-success-content: var(--success-content);
+  --color-success-border: var(--success-border);
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-content: var(--danger-content);
+  --color-danger-border: var(--danger-border);
+
+  /* Layer 2: component */
+  --color-header-bg: var(--header-bg);
+  --color-header-interactive-bg: var(--header-interactive-bg);
+  --color-header-glass-bg: var(--header-glass-bg);
+  --color-tooltip-bg: var(--tooltip-bg);
+  --color-terminal-bg: var(--terminal-bg);
+  --color-terminal-content: var(--terminal-content);
+  --color-progress-track-bg: var(--progress-track-bg);
+  --color-progress-start: var(--progress-start);
+  --color-progress-end: var(--progress-end);
+  --color-input-bg: var(--input-bg);
+  --color-input-checked-content: var(--input-checked-content);
+  --color-button-secondary-bg: var(--button-secondary-bg);
+  --color-button-secondary-hover-bg: var(--button-secondary-hover-bg);
+  --color-button-secondary-content: var(--button-secondary-content);
+  --color-button-secondary-border: var(--button-secondary-border);
+  --color-button-muted-bg: var(--button-muted-bg);
+  --color-button-muted-hover-bg: var(--button-muted-hover-bg);
+  --color-button-muted-content: var(--button-muted-content);
+  --color-button-muted-border: var(--button-muted-border);
+  --color-neutral-status-surface: var(--neutral-status-surface);
+  --color-neutral-status-content: var(--neutral-status-content);
+  --color-neutral-status-border: var(--neutral-status-border);
+  --color-card-action-bg: var(--card-action-bg);
+  --color-interface-badge-bg: var(--interface-badge-bg);
+  --color-segmented-control-bg: var(--segmented-control-bg);
+  --color-ifacebox-header-bg: var(--ifacebox-header-bg);
+  --color-table-header-bg: var(--table-header-bg);
+  --color-table-row-hover-bg: var(--table-row-hover-bg);
+  --color-table-row-alternate-bg: var(--table-row-alternate-bg);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-
   --spacing: var(--spacing);
   --container-max-width: var(--container-max-width);
-
-  --radius-sm:  calc(var(--radius-base) * 0.25);
-  --radius:     calc(var(--radius-base) * 0.5);
-  --radius-md:  calc(var(--radius-base) * 0.75);
-  --radius-lg:  var(--radius-base);
-  --radius-xl:  calc(var(--radius-base) * 1.5);
+  --radius-sm: calc(var(--radius-base) * 0.25);
+  --radius: calc(var(--radius-base) * 0.5);
+  --radius-md: calc(var(--radius-base) * 0.75);
+  --radius-lg: var(--radius-base);
+  --radius-xl: calc(var(--radius-base) * 1.5);
   --radius-2xl: calc(var(--radius-base) * 2);
   --radius-3xl: calc(var(--radius-base) * 3);
   --radius-4xl: calc(var(--radius-base) * 4);

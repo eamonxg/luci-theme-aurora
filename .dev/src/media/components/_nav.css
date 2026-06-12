@@ -8,12 +8,12 @@
  */
 
 .nav-link {
-  @apply text-foreground hover:bg-header-interactive block rounded-xl px-3 py-1.5 no-underline transition-all duration-150;
+  @apply text-content hover:bg-header-interactive-bg block rounded-xl px-3 py-1.5 no-underline transition-all duration-150;
 }
 
 /* Modifier applied on top of a base link class; repeats its own colors on hover so the base class's hover styles never bleed through. */
 .nav-link-active {
-  @apply bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary rounded-xl font-medium;
+  @apply bg-brand-faint text-brand hover:bg-brand-faint hover:text-brand rounded-xl font-medium;
 }
 
 /* Category rows are group labels, not buttons: no hover surface, just a
@@ -21,7 +21,7 @@
    appearance-none + border-0 + shadow-none strip the theme's global
    <button> chrome (_button.css), which would otherwise box every row. */
 .nav-category {
-  @apply text-muted-foreground hover:text-foreground focus-visible:ring-primary/40 flex w-full cursor-pointer appearance-none items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2 text-left text-lg font-semibold tracking-wide shadow-none transition-colors duration-150 select-none focus-visible:ring-2 focus-visible:outline-none;
+  @apply text-content-muted hover:text-content focus-visible:ring-focus-ring flex w-full cursor-pointer appearance-none items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2 text-left text-lg font-semibold tracking-wide shadow-none transition-colors duration-150 select-none focus-visible:ring-2 focus-visible:outline-none;
 
   /* Trailing chevron shares arrow-right.svg with the collapsible cards:
      points right when closed, rotates to point down when open. */
@@ -35,16 +35,16 @@
 /* Open group: label darkens to foreground; the active child's pill is the
    sole location anchor, so no primary tint on the label itself. */
 .sidebar-group-open > .nav-category {
-  @apply text-foreground after:rotate-90;
+  @apply text-content after:rotate-90;
 }
 
 /* The desktop sidebar no longer uses previews; the mobile drawer is the
    sole consumer and sets its own px/text-size (_overlay.css), so the base
    only carries the mode-agnostic bits. */
 .nav-category-preview {
-  @apply text-muted-foreground/60 truncate pb-1;
+  @apply text-content-subtle truncate pb-1;
 
   & .nav-preview-current {
-    @apply text-primary;
+    @apply text-brand;
   }
 }
