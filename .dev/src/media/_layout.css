@@ -42,8 +42,7 @@ header {
              w-max is load-bearing: without it the block-level list fills
              the viewport and justify-content:normal stretches the auto
              column tracks across all of it. */
-          @apply grid w-max grid-flow-col content-start gap-x-8 gap-y-1;
-          grid-template-rows: repeat(var(--menu-rows, 6), auto);
+          @apply grid w-max grid-flow-col grid-rows-[repeat(var(--menu-rows,6),auto)] content-start gap-x-8 gap-y-1;
 
           & > li {
             @apply m-0 list-none;

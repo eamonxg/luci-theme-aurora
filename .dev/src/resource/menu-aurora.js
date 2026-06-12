@@ -579,9 +579,12 @@ return baseclass.extend({
       container?.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
     };
 
+    let resizeTimer = null;
     window.addEventListener("resize", () => {
       canvasHeight = 0;
-      if (container?.classList.contains("active")) applyCanvasHeight();
+      if (!container?.classList.contains("active")) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(applyCanvasHeight, 150);
     });
 
     children.forEach((child) => {
