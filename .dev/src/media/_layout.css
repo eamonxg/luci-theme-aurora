@@ -53,12 +53,13 @@ header {
       }
 
       /* Constant part of the canvas, Apple-flyout style: the device
-         summary lives once at container level, pinned to the canvas
-         bottom at the fixed anchor slot. Its position never depends on an
-         individual panel's height, and switching categories never
-         re-fades it. */
+         summary lives once at container level, pinned just below the
+         fixed category-title slot (header 3.5rem + panel pt 1.75rem +
+         title line 2rem + 1.25rem gap = top-34). Its position never
+         depends on an individual panel's height, and switching categories
+         never re-fades it. */
       & .desktop-menu-board {
-        @apply absolute bottom-8 left-[calc(50%-30rem)] flex w-56 flex-col gap-2 max-lg:hidden;
+        @apply absolute top-34 left-[calc(50%-30rem)] flex w-56 flex-col gap-2 max-lg:hidden;
 
         & .board-line {
           @apply text-muted-foreground/80 flex max-w-full items-center gap-2.5 text-xs;
