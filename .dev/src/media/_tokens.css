@@ -37,6 +37,11 @@
   --brand-faint: color-mix(in oklab, var(--brand) 8%, var(--surface-raised));
   --brand-soft: color-mix(in oklab, var(--brand) 15%, var(--surface-raised));
   --brand-emphasis: color-mix(in oklab, var(--brand) 25%, var(--surface-raised));
+  --brand-emphasis-hover: color-mix(
+    in oklab,
+    var(--brand) 30%,
+    var(--surface-raised)
+  );
   --brand-hover: color-mix(in oklab, var(--brand) 90%, var(--surface-raised));
   --focus-ring: var(--brand-emphasis);
 
@@ -182,6 +187,7 @@
   --color-brand-faint: var(--brand-faint);
   --color-brand-soft: var(--brand-soft);
   --color-brand-emphasis: var(--brand-emphasis);
+  --color-brand-emphasis-hover: var(--brand-emphasis-hover);
   --color-brand-hover: var(--brand-hover);
   --color-focus-ring: var(--focus-ring);
   --color-border-faint: var(--border-faint);

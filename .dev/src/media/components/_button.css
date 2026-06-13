@@ -42,7 +42,7 @@ input[type="reset"],
 .cbi-button-positive,
 .cbi-button-fieldadd,
 .cbi-button-save {
-  @apply border-brand-emphasis bg-brand-emphasis text-brand hover:bg-brand-emphasis;
+  @apply border-brand-emphasis bg-brand-emphasis text-brand hover:bg-brand-emphasis-hover;
 }
 
 .cbi-button-negative,
