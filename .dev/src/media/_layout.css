@@ -7,7 +7,7 @@ header {
 
   [data-nav-type="mega-menu"] & {
     & .desktop-menu-container {
-      @apply bg-header-bg/40 dark:bg-header-bg/90 pointer-events-none absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden opacity-0 backdrop-blur-xl transition-[clip-path,opacity] duration-200 ease-out [will-change:clip-path,opacity] [clip-path:inset(0_0_100%_0)] max-md:hidden;
+      @apply bg-header-glass-bg pointer-events-none absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden opacity-0 backdrop-blur-xl transition-[clip-path,opacity] duration-200 ease-out [will-change:clip-path,opacity] [clip-path:inset(0_0_100%_0)] max-md:hidden;
 
       &.active {
         @apply pointer-events-auto opacity-100 [clip-path:inset(0)];
@@ -32,7 +32,7 @@ header {
           @apply absolute top-7 left-[calc(50%-30rem)] w-56 max-lg:hidden;
 
           & .desktop-nav-title {
-            @apply text-foreground text-2xl font-semibold tracking-tight;
+            @apply text-content text-2xl font-semibold tracking-tight;
           }
         }
 
@@ -48,7 +48,7 @@ header {
             @apply m-0 list-none;
 
             & > a {
-              @apply text-foreground block w-fit py-2.5 text-sm whitespace-nowrap no-underline hover:underline hover:decoration-2 hover:underline-offset-4;
+              @apply text-content block w-fit py-2.5 text-sm whitespace-nowrap no-underline hover:underline hover:decoration-2 hover:underline-offset-4;
             }
           }
         }
@@ -64,7 +64,7 @@ header {
         @apply absolute top-34 left-[calc(50%-30rem)] flex w-56 flex-col gap-2 max-lg:hidden;
 
         & .board-line {
-          @apply text-muted-foreground/80 flex max-w-full items-center gap-2.5 text-xs;
+          @apply text-content-muted flex max-w-full items-center gap-2.5 text-xs;
 
           &::before {
             @apply size-4 shrink-0 bg-current content-[''];
@@ -95,7 +95,7 @@ header {
   }
 
   .brand {
-    @apply hover:text-primary text-foreground inline-block shrink-0 text-xl font-semibold tracking-tight no-underline transition-[color,transform] duration-200 hover:-translate-y-0.5 max-md:flex-1 max-md:text-lg;
+    @apply hover:text-brand text-content inline-block shrink-0 text-xl font-semibold tracking-tight no-underline transition-[color,transform] duration-200 hover:-translate-y-0.5 max-md:flex-1 max-md:text-lg;
   }
 
   .nav {
@@ -105,15 +105,15 @@ header {
       @apply relative;
 
       .menu {
-        @apply text-foreground block rounded-xl px-3.5 py-1.5 font-medium no-underline transition-colors duration-150;
+        @apply text-content block rounded-xl px-3.5 py-1.5 font-medium no-underline transition-colors duration-150;
 
         &.menu-active {
-          @apply text-foreground;
+          @apply text-content;
           [data-nav-type="mega-menu"] & {
             @apply underline decoration-2 underline-offset-4;
           }
           [data-nav-type="boxed-dropdown"] & {
-            @apply bg-header-interactive;
+            @apply bg-header-interactive-bg;
           }
         }
       }
@@ -131,16 +131,16 @@ header {
 
         & .desktop-nav-list {
           [data-nav-type="boxed-dropdown"] & {
-            @apply border-border bg-header-bg/90 flex flex-col gap-y-1 rounded-3xl border py-2 shadow-lg backdrop-blur-md backdrop-saturate-150;
+            @apply border-border-subtle bg-header-glass-bg flex flex-col gap-y-1 rounded-3xl border py-2 shadow-lg backdrop-blur-md backdrop-saturate-150;
           }
           & > li {
             @apply m-0 list-none;
 
             & > a {
-              @apply text-foreground block whitespace-nowrap no-underline;
+              @apply text-content block whitespace-nowrap no-underline;
 
               [data-nav-type="boxed-dropdown"] & {
-                @apply hover:bg-header-interactive mx-2 rounded-xl px-4 py-2;
+                @apply hover:bg-header-interactive-bg mx-2 rounded-xl px-4 py-2;
               }
             }
           }
@@ -160,7 +160,7 @@ header {
       @apply cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95;
 
       & svg {
-        @apply text-foreground size-5;
+        @apply text-content size-5;
       }
 
       & .navigation-toggle-line {
@@ -189,7 +189,7 @@ header {
     @apply flex shrink-0 flex-row-reverse gap-5 md:gap-8;
 
     & span[data-indicator] {
-      @apply before:text-foreground size-5 cursor-pointer text-[0px] before:absolute before:size-5 before:bg-current;
+      @apply before:text-content size-5 cursor-pointer text-[0px] before:absolute before:size-5 before:bg-current;
 
       &[data-indicator="media_error"] {
         @apply before:[mask:url('@assets/icons/error.svg')_center/cover_no-repeat];
@@ -209,7 +209,7 @@ header {
         @apply relative before:[mask:url('@assets/icons/setting.svg')_center/cover_no-repeat];
 
         &[data-count]:not([data-count="0"]) {
-          @apply after:bg-accent after:text-accent-foreground after:absolute after:-top-0.5 after:-right-0.5 after:z-10 after:flex after:min-h-3 after:min-w-3 after:items-center after:justify-center after:rounded-full after:px-0.5 after:text-[8px] after:leading-none after:font-bold after:shadow-sm after:content-[attr(data-count)];
+          @apply after:bg-danger after:text-on-brand after:absolute after:-top-0.5 after:-right-0.5 after:z-10 after:flex after:min-h-3 after:min-w-3 after:items-center after:justify-center after:rounded-full after:px-0.5 after:text-[8px] after:leading-none after:font-bold after:shadow-sm after:content-[attr(data-count)];
         }
       }
     }
@@ -230,7 +230,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & > header {
-    @apply md:border-border/60 md:col-span-full md:row-start-1 md:mb-0 md:border-b;
+    @apply md:border-border-subtle md:col-span-full md:row-start-1 md:mb-0 md:border-b;
   }
 
   & > .sidebar-panel {
@@ -242,7 +242,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .header-crumb {
-    @apply text-muted-foreground my-0 mr-auto ml-6 hidden min-w-0 list-none items-center gap-2 overflow-hidden p-0 text-sm md:flex;
+    @apply text-content-muted my-0 mr-auto ml-6 hidden min-w-0 list-none items-center gap-2 overflow-hidden p-0 text-sm md:flex;
 
     & li {
       @apply m-0 list-none whitespace-nowrap;
@@ -253,12 +253,12 @@ body[data-nav-type="sidebar"] {
     }
 
     & .current {
-      @apply text-foreground min-w-0 truncate font-medium;
+      @apply text-content min-w-0 truncate font-medium;
     }
   }
 
   & .sidebar-panel {
-    @apply border-border/60 sticky top-14 hidden h-[calc(100vh-3.5rem)] w-full overflow-hidden rounded-none border-r transition-[visibility] duration-300 md:block;
+    @apply border-border-subtle sticky top-14 hidden h-[calc(100vh-3.5rem)] w-full overflow-hidden rounded-none border-r transition-[visibility] duration-300 md:block;
   }
 
   /* Visibility flips at the end of the slide so collapsed controls leave the
@@ -302,20 +302,20 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-submenu .nav-link {
-    @apply text-muted-foreground hover:text-foreground rounded-lg px-3 py-1.5 text-sm;
+    @apply text-content-muted hover:text-content rounded-lg px-3 py-1.5 text-sm;
   }
 
   & .sidebar-submenu .nav-link-active {
-    @apply bg-primary/10 text-primary hover:text-primary;
+    @apply bg-brand-faint text-brand hover:text-brand;
   }
 
   & .sidebar-footer {
-    @apply border-border/60 shrink-0 border-t p-3;
+    @apply border-border-subtle shrink-0 border-t p-3;
 
     /* Logout: muted at rest; on hover the base .nav-link pill background
        plus error-colored text is the intended compound state (matches v1). */
     & .nav-link {
-      @apply text-muted-foreground hover:text-error-foreground;
+      @apply text-content-muted hover:text-danger-content;
     }
   }
 }
@@ -324,7 +324,7 @@ body[data-nav-type="sidebar"] {
   @apply max-w-max-width mx-auto min-h-[calc(100vh-4rem)] w-23/24 px-4 max-md:w-full max-md:px-3;
 
   #view {
-    @apply animate-in fade-in-0 slide-in-from-top-2 fill-mode-both md:border-border/30 md:bg-page-bg mx-0 w-full p-0 shadow-none empty:hidden md:rounded-4xl md:border md:p-6 md:shadow-xl;
+    @apply animate-in fade-in-0 slide-in-from-top-2 fill-mode-both md:border-border-faint md:bg-surface mx-0 w-full p-0 shadow-none empty:hidden md:rounded-4xl md:border md:p-6 md:shadow-xl;
 
     .cbi-title-section {
       @apply mb-6 leading-relaxed max-md:mx-2 max-md:mb-3;
@@ -355,10 +355,10 @@ body[data-nav-type="sidebar"] {
 
     & div[style] {
       & > svg {
-        @apply dark:!bg-page-bg;
+        @apply dark:!bg-surface;
 
         & line[style] {
-          @apply dark:!stroke-foreground;
+          @apply dark:!stroke-content;
         }
       }
     }
@@ -366,18 +366,18 @@ body[data-nav-type="sidebar"] {
 
   .cbi-map-descr,
   .cbi-section-descr {
-    @apply text-muted-foreground mb-6 text-sm leading-relaxed max-md:mx-2 max-md:mb-3 max-md:text-sm;
+    @apply text-content-muted mb-6 text-sm leading-relaxed max-md:mx-2 max-md:mb-3 max-md:text-sm;
   }
 
   .cbi-page-actions {
-    @apply border-border/50 mt-6 flex flex-wrap items-center justify-end gap-3 border-t pt-4 max-md:mx-2 max-md:mt-4 max-md:gap-2 max-md:pt-3;
+    @apply border-border-subtle mt-6 flex flex-wrap items-center justify-end gap-3 border-t pt-4 max-md:mx-2 max-md:mt-4 max-md:gap-2 max-md:pt-3;
   }
 
   .zone-forwards {
     @apply flex items-start gap-3 leading-relaxed;
 
     & > span {
-      @apply text-muted-foreground mt-1.5;
+      @apply text-content-muted mt-1.5;
     }
 
     .zone-dest {
@@ -391,15 +391,15 @@ body[data-nav-type="sidebar"] {
   }
 
   #syslog {
-    @apply bg-terminal-bg text-terminal-foreground rounded-3xl border p-6 shadow-lg max-md:p-3;
+    @apply bg-terminal-bg text-terminal-content rounded-3xl border p-6 shadow-lg max-md:p-3;
   }
 }
 
 footer {
-  @apply text-secondary-foreground mt-2 flex min-h-16 flex-wrap items-center justify-between text-xs;
+  @apply text-content-muted mt-2 flex min-h-16 flex-wrap items-center justify-between text-xs;
 
   & a {
-    @apply text-primary;
+    @apply text-brand;
   }
 
   & span {
@@ -407,13 +407,13 @@ footer {
   }
 
   & .breadcrumb {
-    @apply bg-page-bg/60 hover:bg-page-bg/80 flex items-center gap-1 rounded-full px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm transition-colors duration-200;
+    @apply bg-glass-surface hover:bg-surface flex items-center gap-1 rounded-full px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm transition-colors duration-200;
 
     & li {
       @apply list-none;
 
       &.active a {
-        @apply text-default-foreground;
+        @apply text-content;
       }
     }
   }

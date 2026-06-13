@@ -9,7 +9,7 @@
   }
 
   #maincontent & {
-    @apply border-border/30 bg-panel-bg hover:border-border/50 border shadow-lg hover:shadow-xl;
+    @apply border-border-faint bg-surface-raised hover:border-border-subtle border shadow-lg hover:shadow-xl;
   }
 
   & > .cbi-title {
@@ -19,7 +19,7 @@
       @apply flex-1;
 
       & .label[data-clickable] {
-        @apply text-foreground bg-label-surface;
+        @apply text-content bg-card-action-bg;
         @apply inline-flex size-7 cursor-pointer items-center justify-center p-0 before:size-4 before:bg-current before:transition-transform before:duration-300 hover:shadow-md active:scale-95 max-md:size-6;
       }
 
@@ -42,7 +42,7 @@
   }
 
   & h3 {
-    @apply text-foreground border-border/50 border-b pb-4 max-md:mx-0 max-md:pb-2;
+    @apply text-content border-border-subtle border-b pb-4 max-md:mx-0 max-md:pb-2;
   }
 
   & div[style*="display:grid"] {
@@ -63,14 +63,14 @@
 }
 
 .ifacebox {
-  @apply border-border bg-panel-bg/95 hover:border-border max-md:border-border/70 max-md:bg-panel-bg/98 relative inline-flex min-w-40 flex-col items-stretch overflow-visible rounded-2xl border text-center text-base leading-5 shadow-md hover:shadow-lg max-md:min-w-30 max-md:flex-1 max-md:rounded-3xl max-md:shadow-sm;
+  @apply border-border-subtle bg-glass-raised hover:border-border-strong max-md:border-border-subtle relative inline-flex min-w-40 flex-col items-stretch overflow-visible rounded-2xl border text-center text-base leading-5 shadow-md hover:shadow-lg max-md:min-w-30 max-md:flex-1 max-md:rounded-3xl max-md:shadow-sm;
 
   td & {
     @apply max-md:flex-row;
   }
 
   & .ifacebox-head {
-    @apply border-border bg-label-surface text-foreground max-md:border-border/80 w-full rounded-t-2xl border-b px-4 py-3 text-center font-semibold tracking-tight transition-[background-color,border-color,color] duration-200 max-md:rounded-t-3xl max-md:px-3 max-md:py-2.5 max-md:text-sm max-md:leading-5 max-md:font-medium;
+    @apply border-border-subtle bg-ifacebox-header-bg text-content w-full rounded-t-2xl border-b px-4 py-3 text-center font-semibold tracking-tight transition-[background-color,border-color,color] duration-200 max-md:rounded-t-3xl max-md:px-3 max-md:py-2.5 max-md:text-sm max-md:leading-5 max-md:font-medium;
 
     &[style*="--zone-color-rgb"] {
       @apply bg-[rgb(var(--zone-color-rgb),.75)]!;
@@ -88,19 +88,19 @@
     }
 
     &.active {
-      @apply border-primary bg-primary text-primary-foreground;
+      @apply border-brand bg-brand text-on-brand;
     }
   }
 
   & .ifacebox-body {
-    @apply text-default-foreground flex w-full flex-1 flex-col items-center justify-around gap-2 rounded-b-2xl p-4 text-center max-md:rounded-b-3xl;
+    @apply text-content flex w-full flex-1 flex-col items-center justify-around gap-2 rounded-b-2xl p-4 text-center max-md:rounded-b-3xl;
 
     td & {
       @apply max-md:flex-row max-md:rounded-r-3xl max-md:rounded-bl-none max-md:py-2 max-md:pr-2 max-md:pl-4;
     }
 
     & > span {
-      @apply text-foreground space-y-1.5 max-md:space-y-1 max-md:text-sm max-md:leading-5;
+      @apply text-content space-y-1.5 max-md:space-y-1 max-md:text-sm max-md:leading-5;
 
       .network-status-table & {
         @apply w-full;
@@ -138,7 +138,7 @@
     }
 
     & .cbi-tooltip-container {
-      @apply text-foreground static inline-flex cursor-help items-center justify-center;
+      @apply text-content static inline-flex cursor-help items-center justify-center;
 
       & .cbi-tooltip {
         @apply bottom-0 md:left-0;

@@ -1,6 +1,6 @@
 .cbi-input-invalid,
 .cbi-value-error {
-  @apply !border-error/70 focus:!ring-error/40;
+  @apply !border-danger-border focus:!ring-danger-border;
 }
 
 .cbi-value {
@@ -25,10 +25,10 @@
       @apply cursor-not-allowed;
     }
     & .cbi-value-description {
-      @apply text-muted-foreground relative mt-1 pl-4 leading-none wrap-break-word;
+      @apply text-content-muted relative mt-1 pl-4 leading-none wrap-break-word;
 
       &:not(:empty) {
-        @apply before:bg-info-foreground before:absolute before:-left-0.5 before:inline-block before:size-4 before:[mask:url('@assets/icons/info.svg')_center/cover_no-repeat];
+        @apply before:bg-info-content before:absolute before:-left-0.5 before:inline-block before:size-4 before:[mask:url('@assets/icons/info.svg')_center/cover_no-repeat];
       }
     }
   }
@@ -43,15 +43,15 @@
   @apply inline-flex w-max max-w-120 flex-col items-start gap-3 max-md:max-w-full!;
 
   & .item {
-    @apply border-border/40 bg-panel-bg pointer-events-auto relative inline-flex cursor-move flex-col items-start gap-2 self-stretch overflow-hidden rounded-2xl border py-3 pr-10 pl-4 break-all shadow-sm transition-[transform,box-shadow,opacity,border-color,background-color] duration-200 select-text max-md:w-full max-md:py-2.5 max-md:pr-8 max-md:pl-3;
-    @apply after:bg-muted after:text-muted-foreground after:absolute after:top-2.5 after:right-2 after:inline-flex after:h-6 after:w-6 after:shrink-0 after:cursor-pointer after:items-center after:justify-center after:rounded-xl after:text-sm after:font-medium after:content-['\00D7'];
+    @apply border-border-faint bg-surface-raised pointer-events-auto relative inline-flex cursor-move flex-col items-start gap-2 self-stretch overflow-hidden rounded-2xl border py-3 pr-10 pl-4 break-all shadow-sm transition-[transform,box-shadow,opacity,border-color,background-color] duration-200 select-text max-md:w-full max-md:py-2.5 max-md:pr-8 max-md:pl-3;
+    @apply after:bg-button-muted-bg after:text-button-muted-content after:absolute after:top-2.5 after:right-2 after:inline-flex after:h-6 after:w-6 after:shrink-0 after:cursor-pointer after:items-center after:justify-center after:rounded-xl after:text-sm after:font-medium after:content-['\00D7'];
 
     &.dragging {
       @apply scale-95 cursor-grabbing opacity-50 shadow-2xl;
     }
 
     &.drag-over {
-      @apply border-primary/60 bg-primary/5 ring-primary/30 scale-105 shadow-lg ring-2;
+      @apply border-brand bg-brand-faint ring-brand-emphasis scale-105 shadow-lg ring-2;
     }
 
     & > span,
@@ -65,7 +65,7 @@
   }
 
   & .add-item {
-    @apply border-border/70 hover:border-border hover:bg-page-bg/50 inline-flex items-center gap-1.5 self-stretch rounded-2xl border border-dashed bg-transparent px-1 py-1 transition-[border-color,background-color] duration-200;
+    @apply border-border-subtle hover:border-border-strong hover:bg-surface-subtle inline-flex items-center gap-1.5 self-stretch rounded-2xl border border-dashed bg-transparent px-1 py-1 transition-[border-color,background-color] duration-200;
 
     & > input {
       @apply min-w-61 flex-1;

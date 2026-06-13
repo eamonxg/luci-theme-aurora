@@ -1,7 +1,7 @@
 .theme-switcher {
-  @apply bg-page-bg relative inline-flex items-center gap-0 rounded-full shadow-sm backdrop-blur-sm transition-transform duration-300 max-md:py-0.5;
-  @apply border-border/70 border;
-  @apply before:bg-border/50 before:ring-border/60 before:absolute before:top-1 before:left-1 before:z-0 before:h-[calc(100%-0.5rem)] before:w-[calc(33.333%-0.5rem)] before:rounded-full before:shadow-md before:ring-1 before:transition-transform before:duration-300;
+  @apply bg-surface relative inline-flex items-center gap-0 rounded-full shadow-sm backdrop-blur-sm transition-transform duration-300 max-md:py-0.5;
+  @apply border-border-subtle border;
+  @apply before:bg-border-subtle before:ring-border-subtle before:absolute before:top-1 before:left-1 before:z-0 before:h-[calc(100%-0.5rem)] before:w-[calc(33.333%-0.5rem)] before:rounded-full before:shadow-md before:ring-1 before:transition-transform before:duration-300;
 
   footer & {
     @apply max-md:hidden;
@@ -15,7 +15,7 @@
     }
 
     & .theme-icon {
-      @apply text-muted-foreground flex items-center justify-center transition-colors duration-300;
+      @apply text-content-muted flex items-center justify-center transition-colors duration-300;
 
       & svg {
         @apply size-4 transition-transform duration-300;
@@ -23,12 +23,12 @@
     }
 
     & .theme-label {
-      @apply text-muted-foreground hidden text-xs font-medium transition-colors duration-300;
+      @apply text-content-muted hidden text-xs font-medium transition-colors duration-300;
     }
 
     &.active {
       & .theme-icon {
-        @apply text-foreground;
+        @apply text-content;
 
         & svg {
           @apply scale-110;
@@ -36,17 +36,17 @@
       }
 
       & .theme-label {
-        @apply text-foreground;
+        @apply text-content;
       }
     }
 
     &:hover:not(.active) {
       & .theme-icon {
-        @apply text-foreground;
+        @apply text-content;
       }
 
       & .theme-label {
-        @apply text-foreground;
+        @apply text-content;
       }
     }
   }

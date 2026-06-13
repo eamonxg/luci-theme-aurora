@@ -12,7 +12,7 @@
       @apply max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col max-md:px-5 max-md:pt-5;
 
       & .mobile-nav-label {
-        @apply max-md:text-muted-foreground max-md:mb-2 max-md:text-[0.6875rem] max-md:font-semibold max-md:tracking-[0.12em];
+        @apply max-md:text-content-muted max-md:mb-2 max-md:text-[0.6875rem] max-md:font-semibold max-md:tracking-[0.12em];
       }
     }
 
@@ -23,7 +23,7 @@
         @apply max-md:shrink-0;
 
         & .mobile-nav-link {
-          @apply max-md:text-foreground max-md:hover:text-primary max-md:flex max-md:min-h-12 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-4 max-md:px-0 max-md:py-2 max-md:text-lg max-md:leading-tight max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200;
+          @apply max-md:text-content max-md:hover:text-brand max-md:flex max-md:min-h-12 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-4 max-md:px-0 max-md:py-2 max-md:text-lg max-md:leading-tight max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200;
         }
 
         & .mobile-nav-link.nav-link-active {
@@ -64,7 +64,7 @@
 
           & .mobile-nav-subitem {
             & .mobile-nav-sublink {
-              @apply max-md:text-default-foreground max-md:hover:text-primary max-md:flex max-md:min-h-10 max-md:w-full max-md:items-center max-md:py-2 max-md:pr-0 max-md:pl-4 max-md:text-[0.9375rem] max-md:font-normal max-md:no-underline max-md:transition-colors max-md:duration-200;
+              @apply max-md:text-content max-md:hover:text-brand max-md:flex max-md:min-h-10 max-md:w-full max-md:items-center max-md:py-2 max-md:pr-0 max-md:pl-4 max-md:text-[0.9375rem] max-md:font-normal max-md:no-underline max-md:transition-colors max-md:duration-200;
             }
           }
         }
@@ -76,14 +76,14 @@
     }
 
     & .mobile-nav-footer {
-      @apply max-md:border-border/30 max-md:flex max-md:shrink-0 max-md:items-center max-md:justify-between max-md:border-t max-md:px-5 max-md:py-4;
+      @apply max-md:border-border-faint max-md:flex max-md:shrink-0 max-md:items-center max-md:justify-between max-md:border-t max-md:px-5 max-md:py-4;
 
       & .mobile-nav-footer-action {
         @apply max-md:flex max-md:items-center;
       }
 
       & .mobile-nav-logout {
-        @apply max-md:text-foreground max-md:hover:text-primary max-md:text-sm max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200;
+        @apply max-md:text-content max-md:hover:text-brand max-md:text-sm max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200;
       }
 
       & .theme-switcher {
@@ -97,7 +97,7 @@
 
 [data-nav-type="mega-menu"] {
   & .desktop-menu-overlay {
-    @apply bg-overlay-base/35 pointer-events-none fixed inset-0 z-50 opacity-0 transition-opacity duration-300 max-md:hidden;
+    @apply bg-scrim pointer-events-none fixed inset-0 z-50 opacity-0 transition-opacity duration-300 max-md:hidden;
 
     &.active {
       @apply pointer-events-auto opacity-100 backdrop-blur-sm;

@@ -14,7 +14,7 @@
 #file-manager-container {
   @apply overflow-auto;
   #status-bar {
-    @apply bg-page-bg border-0;
+    @apply bg-surface border-0;
   }
 }
 
@@ -52,17 +52,17 @@
       &.tr {
         @apply rounded-none;
       }
-      @apply bg-panel-bg/95 not-[.tr]:border-border/40 not-[.tr]:hover:border-border/50 max-md:bg-panel-bg/98 not-[.tr]:max-md:border-border/30 not-[.tr]:border not-[.tr]:shadow-lg not-[.tr]:hover:shadow-xl not-[.tr]:max-md:border;
+      @apply bg-glass-raised not-[.tr]:border-border-faint not-[.tr]:hover:border-border-subtle max-md:bg-glass-raised not-[.tr]:max-md:border-border-faint not-[.tr]:border not-[.tr]:shadow-lg not-[.tr]:hover:shadow-xl not-[.tr]:max-md:border;
 
       /* Dark mode: override custom.css hardcoded light-mode colors on all text nodes */
       & span {
-        @apply dark:text-foreground!;
+        @apply dark:text-content!;
       }
       & td {
-        @apply dark:text-foreground!;
+        @apply dark:text-content!;
       }
       & th {
-        @apply dark:text-foreground!;
+        @apply dark:text-content!;
       }
 
       img[src*=".svg"] {
@@ -94,7 +94,7 @@
 
     .title {
       h3 {
-        @apply text-foreground border-0 pb-4 max-md:mx-0 max-md:pb-2;
+        @apply text-content border-0 pb-4 max-md:mx-0 max-md:pb-2;
       }
     }
 

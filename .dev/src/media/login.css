@@ -12,11 +12,11 @@
 
 @layer base {
   html {
-    @apply bg-background h-full font-sans;
+    @apply bg-canvas h-full font-sans;
   }
 
   body {
-    @apply text-foreground bg-background min-h-full;
+    @apply text-content bg-canvas min-h-full;
   }
 }
 
@@ -55,7 +55,7 @@
   }
 
   .login-card {
-    @apply bg-panel-bg border-border flex flex-col gap-7 rounded-4xl border p-14 max-md:rounded-3xl max-md:p-9;
+    @apply bg-surface-raised border-border-subtle flex flex-col gap-7 rounded-4xl border p-14 max-md:rounded-3xl max-md:p-9;
   }
 
   .login-brand {
@@ -63,11 +63,11 @@
   }
 
   .login-divider {
-    @apply via-border h-px w-full border-0 bg-linear-to-r from-transparent to-transparent animate-[divider-in_0.7s_cubic-bezier(0.16,1,0.3,1)_0.1s_both];
+    @apply via-border-subtle h-px w-full border-0 bg-linear-to-r from-transparent to-transparent animate-[divider-in_0.7s_cubic-bezier(0.16,1,0.3,1)_0.1s_both];
   }
 
   .login-logo {
-    @apply bg-primary/15 ring-primary/20 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1;
+    @apply bg-brand-soft ring-brand-emphasis flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1;
 
     & img {
       @apply h-6 w-6;
@@ -79,11 +79,11 @@
   }
 
   .login-hostname {
-    @apply text-foreground text-xl font-semibold tracking-tight;
+    @apply text-content text-xl font-semibold tracking-tight;
   }
 
   .login-subtitle {
-    @apply text-default-foreground text-sm;
+    @apply text-content text-sm;
   }
 
   .login-form {
@@ -99,17 +99,17 @@
   }
 
   .login-label {
-    @apply text-default-foreground text-[0.6875rem] font-semibold tracking-widest uppercase;
+    @apply text-content text-[0.6875rem] font-semibold tracking-widest uppercase;
   }
 
   .input-wrap {
-    @apply border-border bg-panel-bg relative rounded-2xl border [contain:layout_style];
+    @apply border-border-subtle bg-surface-raised relative rounded-2xl border [contain:layout_style];
   }
 
   /* Focus ring: opacity-only transition runs on compositor thread, not main thread —
      border-color changes require a repaint (~400 ms INP); opacity changes do not. */
   .input-wrap::after {
-    @apply border-primary pointer-events-none absolute -inset-px rounded-[calc(var(--radius-2xl)+1px)] border-2 opacity-0 [will-change:opacity] content-[''] [transition:opacity_150ms_ease];
+    @apply border-brand pointer-events-none absolute -inset-px rounded-[calc(var(--radius-2xl)+1px)] border-2 opacity-0 [will-change:opacity] content-[''] [transition:opacity_150ms_ease];
   }
 
   .input-wrap:focus-within::after {
@@ -117,11 +117,11 @@
   }
 
   .login-input {
-    @apply text-foreground placeholder:text-muted-foreground/60 w-full appearance-none rounded-2xl border-0 bg-transparent px-3 py-2.5 text-base outline-none;
+    @apply text-content placeholder:text-content-subtle w-full appearance-none rounded-2xl border-0 bg-transparent px-3 py-2.5 text-base outline-none;
   }
 
   .login-error {
-    @apply bg-error text-error-foreground border-error/40 rounded-2xl border px-3 py-2 text-center text-sm;
+    @apply bg-danger-surface text-danger-content border-danger-border rounded-2xl border px-3 py-2 text-center text-sm;
   }
 
   .login-actions {
@@ -129,18 +129,18 @@
   }
 
   .login-submit {
-    @apply bg-primary text-primary-foreground w-full cursor-pointer rounded-2xl border-0 py-2.5 text-base font-medium hover:opacity-90 active:opacity-80;
+    @apply bg-brand text-on-brand w-full cursor-pointer rounded-2xl border-0 py-2.5 text-base font-medium hover:opacity-90 active:opacity-80;
   }
 
   .login-footer {
-    @apply text-muted-foreground absolute right-0 bottom-5 left-0 px-5 text-center text-xs;
+    @apply text-content-muted absolute right-0 bottom-5 left-0 px-5 text-center text-xs;
 
     & p {
       @apply whitespace-normal;
     }
 
     & a {
-      @apply text-primary hover:underline;
+      @apply text-brand hover:underline;
     }
   }
 }

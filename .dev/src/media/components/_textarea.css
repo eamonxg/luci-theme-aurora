@@ -1,5 +1,5 @@
 textarea {
-  @apply text-foreground border-border/70 bg-page-bg placeholder-muted-foreground/70 focus:border-primary focus:ring-primary/20 min-h-24 w-full resize-y rounded-2xl border px-3 py-2 text-sm font-normal shadow-sm transition-[border-color,box-shadow] duration-200 focus:ring-2 focus:outline-none;
+  @apply text-content border-border-subtle bg-surface placeholder-content-muted focus:border-brand focus:ring-brand-emphasis min-h-24 w-full resize-y rounded-2xl border px-3 py-2 text-sm font-normal shadow-sm transition-[border-color,box-shadow] duration-200 focus:ring-2 focus:outline-none;
   &[disabled] {
     @apply cursor-not-allowed opacity-40 dark:opacity-30;
   }

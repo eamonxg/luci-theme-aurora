@@ -6,7 +6,7 @@
   }
 
   &:not(.btn):not(.cbi-button) {
-    @apply border-border/70 bg-page-bg rounded-2xl border;
+    @apply border-border-subtle bg-surface rounded-2xl border;
     & > ul > li {
       &[placeholder] {
         @apply hidden;
@@ -50,10 +50,10 @@
     }
 
     &.dropdown {
-      @apply border-border/60 bg-page-bg/95 absolute left-0 z-60 w-fit min-w-full overflow-y-auto rounded-lg border shadow-xl backdrop-blur-sm;
+      @apply border-border-subtle bg-glass-surface absolute left-0 z-60 w-fit min-w-full overflow-y-auto rounded-lg border shadow-xl backdrop-blur-sm;
 
       & > li {
-        @apply text-muted-foreground hover:bg-primary/15 min-h-9 w-full cursor-pointer px-3 py-1.5 font-medium;
+        @apply text-content-muted hover:bg-brand-soft min-h-9 w-full cursor-pointer px-3 py-1.5 font-medium;
       }
     }
 
@@ -77,7 +77,7 @@
   }
 
   &[open] {
-    @apply border-primary ring-primary/20 relative ring-2;
+    @apply border-brand ring-focus-ring relative ring-2;
 
     & > ul.dropdown {
       @apply block w-auto max-w-none;
@@ -86,7 +86,7 @@
         @apply flex;
 
         &[selected] {
-          @apply bg-primary/20 text-primary;
+          @apply bg-brand-emphasis text-brand;
         }
 
         &[unselectable] {
@@ -127,7 +127,7 @@
   }
 
   & > .open {
-    @apply border-border/70 flex flex-none shrink-0 cursor-pointer items-center justify-center border-l px-2.5 py-0.5 text-sm text-current;
+    @apply border-border-subtle flex flex-none shrink-0 cursor-pointer items-center justify-center border-l px-2.5 py-0.5 text-sm text-current;
   }
 
   & > .more {

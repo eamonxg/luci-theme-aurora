@@ -1,5 +1,5 @@
 .alert-message {
-  @apply bg-default text-default-foreground border-default/30 sticky top-14 z-40 mb-4 rounded-4xl border p-6 max-md:mx-0 max-md:mb-3 max-md:rounded-3xl max-md:p-4;
+  @apply bg-neutral-status-surface text-neutral-status-content border-neutral-status-border sticky top-14 z-40 mb-4 rounded-4xl border p-6 max-md:mx-0 max-md:mb-3 max-md:rounded-3xl max-md:p-4;
 
   &.modal {
     @apply static top-auto;
@@ -14,21 +14,21 @@
   }
 
   &.success {
-    @apply border-success/30 bg-success text-success-foreground;
+    @apply border-success-border bg-success-surface text-success-content;
   }
 
   &.info {
-    @apply border-info/30 bg-info text-info-foreground;
+    @apply border-info-border bg-info-surface text-info-content;
   }
 
   &.warning,
   &.notice {
-    @apply border-warning/30 bg-warning text-warning-foreground;
+    @apply border-warning-border bg-warning-surface text-warning-content;
   }
 
   &.error,
   &.danger {
-    @apply border-error/30 bg-error text-error-foreground;
+    @apply border-danger-border bg-danger-surface text-danger-content;
   }
 
   h4,

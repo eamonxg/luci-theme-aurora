@@ -1,21 +1,21 @@
 .cbi-tabmenu {
-  @apply border-border/60 bg-label-surface mb-1 flex items-center gap-1 overflow-x-auto rounded-4xl border p-1;
+  @apply border-border-subtle bg-segmented-control-bg mb-1 flex items-center gap-1 overflow-x-auto rounded-4xl border p-1;
 
   & li {
     @apply relative m-0 min-w-fit shrink-0 list-none;
     &[data-errors] {
-      @apply after:bg-accent after:text-accent-foreground after:absolute after:-top-0.5 after:-right-1.5 after:z-20 after:inline-flex after:min-h-4 after:min-w-4 after:items-center after:justify-center after:rounded-full after:px-1.5 after:py-0.5 after:text-xs after:font-semibold after:content-[attr(data-errors)];
+      @apply after:bg-danger after:text-on-brand after:absolute after:-top-0.5 after:-right-1.5 after:z-20 after:inline-flex after:min-h-4 after:min-w-4 after:items-center after:justify-center after:rounded-full after:px-1.5 after:py-0.5 after:text-xs after:font-semibold after:content-[attr(data-errors)];
 
       & > a {
-        @apply border-error/50 border;
+        @apply border-danger-border border;
       }
     }
     & > a {
-      @apply text-muted-foreground hover:text-foreground block rounded-4xl px-4 py-2 text-center text-sm font-medium whitespace-nowrap no-underline;
+      @apply text-content-muted hover:text-content block rounded-4xl px-4 py-2 text-center text-sm font-medium whitespace-nowrap no-underline;
     }
 
     &.cbi-tab a {
-      @apply bg-foreground text-page-bg font-semibold shadow-sm;
+      @apply bg-content text-surface font-semibold shadow-sm;
     }
   }
 }
