@@ -185,13 +185,13 @@
 		<header>
 			<div class="header-content">
 				<div class="navigation-controls">
-					<div class="navigation-toggle" id="navigation-toggle" title="{{ _('Menu') }}" role="button" aria-expanded="false">
+					<button class="navigation-toggle" id="navigation-toggle" type="button" title="{{ _('Menu') }}" aria-label="{{ _('Menu') }}" aria-controls="mobile-menu-overlay" aria-expanded="false">
 						<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 							<line class="navigation-toggle-line navigation-toggle-line-top" x1="2.5" y1="5" x2="17.5" y2="5"/>
 							<line class="navigation-toggle-line navigation-toggle-line-middle" x1="2.5" y1="10" x2="17.5" y2="10"/>
 							<line class="navigation-toggle-line navigation-toggle-line-bottom" x1="2.5" y1="15" x2="10" y2="15"/>
 						</svg>
-					</div>
+					</button>
 				</div>
 				<a class="brand" href="/">{{ striptags(boardinfo.hostname ?? '?') }}</a>
 				<ul class="nav" id="topmenu" style="display:none"></ul>
@@ -246,9 +246,9 @@
 		{% endif %}
 
 		<div class="mobile-menu-overlay" id="mobile-menu-overlay">
-			<nav class="mobile-nav">
+			<nav class="mobile-nav" aria-label="{{ _('Menu') }}">
 				<div class="mobile-nav-body">
-					<div class="mobile-nav-label">{{ _('Navigation') }}</div>
+					<div class="mobile-nav-label">{{ _('Menu') }}</div>
 					<ul class="mobile-nav-list" id="mobile-nav-list">
 					</ul>
 				</div>
