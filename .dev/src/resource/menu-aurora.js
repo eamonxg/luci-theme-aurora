@@ -34,18 +34,20 @@ return baseclass.extend({
       desktop.matches && document.body.dataset.navType === "sidebar";
 
     const resetMobileSubmenus = () => {
-      document
+      overlay
         .querySelectorAll(".mobile-nav-item.submenu-expanded")
-        .forEach((item) => item.classList.remove("submenu-expanded"));
+        .forEach((item) => this.setMobileSubmenuExpanded(item, false));
     };
 
     const expandActiveMobileGroup = () => {
-      document
-        .querySelector(".mobile-nav-item.has-active")
-        ?.classList.add("submenu-expanded");
+      const activeGroup = overlay.querySelector(".mobile-nav-item.has-active");
+
+      if (activeGroup) this.setMobileSubmenuExpanded(activeGroup, true);
     };
 
     const updateToggleState = (expanded) => {
+      const desktopSidebar = isDesktopSidebar();
+
       // The hamburger ↔ X morph is a mobile-drawer affordance; the desktop
       // sidebar toggle stays a static hamburger (see 2026-06-11 redesign
       // spec, superseding the unified-toggle "always X when expanded" rule).
@@ -53,11 +55,24 @@ return baseclass.extend({
         "is-expanded",
         expanded && !desktop.matches,
       );
-      navigationToggle.setAttribute("aria-expanded", expanded);
+      navigationToggle.setAttribute(
+        "aria-expanded",
+        expanded ? "true" : "false",
+      );
+      navigationToggle.setAttribute(
+        "aria-controls",
+        desktopSidebar ? "sidebar-panel" : "mobile-menu-overlay",
+      );
+
+      const label = expanded && !desktopSidebar ? _("Close") : _("Navigation");
+
+      navigationToggle.setAttribute("title", label);
+      navigationToggle.setAttribute("aria-label", label);
     };
 
     const closeMobileNavigation = () => {
       overlay.classList.remove("mobile-menu-open");
+      document.body.classList.remove("mobile-navigation-open");
       document.body.style.overflow = "";
       resetMobileSubmenus();
     };
@@ -88,6 +103,7 @@ return baseclass.extend({
       }
 
       overlay.classList.toggle("mobile-menu-open", expanded);
+      document.body.classList.toggle("mobile-navigation-open", expanded);
       document.body.style.overflow = expanded ? "hidden" : "";
 
       if (expanded) expandActiveMobileGroup();
@@ -135,25 +151,35 @@ return baseclass.extend({
     syncNavigationState();
 
     document.addEventListener("click", (e) => {
-      const link = e.target.closest(".mobile-nav-link");
-      if (!link) return;
+      const toggle = e.target.closest(".mobile-nav-toggle");
 
-      const item = link.closest(".mobile-nav-item");
-      const submenu = item?.querySelector(".mobile-nav-submenu");
-
-      if (submenu) {
+      if (toggle && overlay.contains(toggle)) {
         e.preventDefault();
         e.stopPropagation();
 
+        const item = toggle.closest(".mobile-nav-item");
+        if (!item) return;
+
         const isExpanded = item.classList.contains("submenu-expanded");
 
-        document
+        overlay
           .querySelectorAll(".mobile-nav-item.submenu-expanded")
-          .forEach((i) => {
-            if (i !== item) i.classList.remove("submenu-expanded");
+          .forEach((expandedItem) => {
+            if (expandedItem !== item) {
+              this.setMobileSubmenuExpanded(expandedItem, false);
+            }
           });
 
-        item.classList.toggle("submenu-expanded", !isExpanded);
+        this.setMobileSubmenuExpanded(item, !isExpanded);
+        return;
+      }
+
+      const destination = e.target.closest(
+        ".mobile-nav-link:not(.mobile-nav-toggle), .mobile-nav-sublink, .mobile-nav-logout",
+      );
+
+      if (destination && overlay.contains(destination)) {
+        setNavigationExpanded(false);
       }
     });
   },
@@ -163,10 +189,11 @@ return baseclass.extend({
     const footerAction = document.querySelector("#mobile-nav-footer-action");
     const children = ui.menu.getChildren(tree);
 
-    if (!list || !footerAction || !children.length) return;
+    if (!list) return;
 
     list.innerHTML = "";
-    footerAction.innerHTML = "";
+    if (footerAction) footerAction.innerHTML = "";
+    if (!children.length) return;
 
     children.forEach((child) => {
       const submenu = ui.menu.getChildren(child);
@@ -174,44 +201,61 @@ return baseclass.extend({
       const isActive = this.isActivePath(child.name);
 
       if (child.name === "logout") {
-        footerAction.appendChild(
-          E(
-            "a",
-            {
-              class: "mobile-nav-logout",
-              href: L.url(url, child.name),
-            },
-            [_(child.title)],
-          ),
-        );
+        if (footerAction) {
+          footerAction.appendChild(
+            E(
+              "a",
+              {
+                class: "mobile-nav-logout",
+                href: L.url(url, child.name),
+              },
+              [_(child.title)],
+            ),
+          );
+        }
         return;
       }
 
-      // "has-submenu" gates the drawer's expand chevron in _overlay.css.
-      // "has-active" drives the auto-expand on drawer open.
       const itemClasses = [
         "mobile-nav-item",
         hasSubmenu ? "has-submenu" : "",
         isActive && hasSubmenu ? "has-active" : "",
       ].filter(Boolean);
+      const submenuId = `mobile-submenu-${String(child.name).replace(
+        /[^A-Za-z0-9_-]/g,
+        "-",
+      )}`;
+      const control = hasSubmenu
+        ? E(
+            "button",
+            {
+              class: `mobile-nav-link mobile-nav-toggle${
+                isActive ? " nav-link-active" : ""
+              }`,
+              type: "button",
+              "aria-expanded": "false",
+              "aria-controls": submenuId,
+            },
+            [_(child.title)],
+          )
+        : E(
+            "a",
+            {
+              class: `mobile-nav-link${isActive ? " nav-link-active" : ""}`,
+              href: L.url(url, child.name),
+            },
+            [_(child.title)],
+          );
 
-      const li = E("li", { class: itemClasses.join(" ") }, [
-        E(
-          "a",
-          {
-            class: `mobile-nav-link${
-              isActive && !hasSubmenu ? " nav-link-active" : ""
-            }`,
-            href: hasSubmenu ? "#" : L.url(url, child.name),
-          },
-          [_(child.title)],
-        ),
-      ]);
+      const li = E("li", { class: itemClasses.join(" ") }, [control]);
 
       if (hasSubmenu) {
-        li.appendChild(this.buildCategoryPreview(child.name, submenu));
-
-        const wrap = E("div", { class: "mobile-nav-submenu" });
+        const wrap = E("div", {
+          class: "mobile-nav-submenu",
+          id: submenuId,
+          "aria-hidden": "true",
+          inert: "",
+        });
         const ul = E("ul", { class: "mobile-nav-submenu-list" });
 
         submenu.forEach((item) => {
@@ -333,25 +377,16 @@ return baseclass.extend({
     return page == null || L.env.dispatchpath[2] === page;
   },
 
-  // Decorative, aria-hidden summary used by collapsed mobile groups.
-  buildCategoryPreview(parentName, submenu) {
-    const nodes = [];
+  setMobileSubmenuExpanded(item, expanded) {
+    const toggle = item.querySelector(".mobile-nav-toggle");
+    const submenu = item.querySelector(".mobile-nav-submenu");
 
-    submenu.forEach((item, i) => {
-      if (i) nodes.push(" · ");
+    item.classList.toggle("submenu-expanded", expanded);
+    toggle?.setAttribute("aria-expanded", expanded ? "true" : "false");
+    submenu?.setAttribute("aria-hidden", expanded ? "false" : "true");
 
-      nodes.push(
-        this.isActivePath(parentName, item.name)
-          ? E("span", { class: "nav-preview-current" }, [_(item.title)])
-          : _(item.title),
-      );
-    });
-
-    return E(
-      "div",
-      { class: "nav-category-preview", "aria-hidden": "true" },
-      nodes,
-    );
+    if (expanded) submenu?.removeAttribute("inert");
+    else submenu?.setAttribute("inert", "");
   },
 
   setSidebarSectionExpanded(item, expanded) {

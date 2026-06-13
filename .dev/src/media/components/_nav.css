@@ -11,9 +11,12 @@
   @apply text-content hover:bg-header-interactive-bg block rounded-xl px-3 py-1.5 no-underline transition-all duration-150;
 }
 
-/* Modifier applied on top of a base link class; repeats its own colors on hover so the base class's hover styles never bleed through. */
+/* Mode-agnostic active state: brand text + weight only. The selected-pill
+   background is a sidebar affordance (set in _layout.css); the mobile drawer
+   deliberately omits it and uses an accent indicator bar instead (_overlay.css).
+   Repeats text-brand on hover so the base link's hover color never bleeds through. */
 .nav-link-active {
-  @apply bg-brand-faint text-brand hover:bg-brand-faint hover:text-brand rounded-xl font-medium;
+  @apply text-brand hover:text-brand font-medium;
 }
 
 /* Category rows are group labels, not buttons: no hover surface, just a

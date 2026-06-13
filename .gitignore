@@ -12,3 +12,4 @@ yarn.lock
 # Superpowers AI workflow docs
 docs/superpowers/
 .superpowers/
+.worktrees/
