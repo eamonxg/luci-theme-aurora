@@ -232,7 +232,7 @@
 		{% endif %}
 
 		{% if (nav_submenu_type == 'sidebar'): %}
-		<aside class="sidebar-panel" aria-label="{{ _('Navigation') }}">
+		<aside class="sidebar-panel" id="sidebar-panel" aria-label="{{ _('Navigation') }}">
 			<nav class="sidebar-panel-inner">
 				<ul class="sidebar-list" id="sidebar-list"></ul>
 				<div class="sidebar-footer" id="sidebar-footer"></div>

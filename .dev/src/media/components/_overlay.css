@@ -27,7 +27,7 @@
         @apply max-md:shrink-0;
 
         & .mobile-nav-link {
-          @apply max-md:text-content max-md:hover:text-brand max-md:flex max-md:min-h-13 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-4 max-md:bg-transparent max-md:px-0 max-md:py-2.5 max-md:text-left max-md:text-2xl max-md:leading-tight max-md:font-medium max-md:tracking-tight max-md:no-underline max-md:transition-colors max-md:duration-200;
+          @apply max-md:text-content max-md:hover:text-brand max-md:flex max-md:min-h-13 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2.5 max-md:text-left max-md:text-2xl max-md:leading-tight max-md:font-medium max-md:tracking-tight max-md:no-underline max-md:shadow-none max-md:transition-colors max-md:duration-200;
         }
 
         & .mobile-nav-link.nav-link-active {

@@ -46,6 +46,8 @@ return baseclass.extend({
     };
 
     const updateToggleState = (expanded) => {
+      const desktopSidebar = isDesktopSidebar();
+
       // The hamburger ↔ X morph is a mobile-drawer affordance; the desktop
       // sidebar toggle stays a static hamburger (see 2026-06-11 redesign
       // spec, superseding the unified-toggle "always X when expanded" rule).
@@ -58,9 +60,20 @@ return baseclass.extend({
         expanded ? "true" : "false",
       );
       navigationToggle.setAttribute(
-        "aria-label",
-        expanded && !desktop.matches ? _("Close") : _("Menu"),
+        "aria-controls",
+        desktopSidebar ? "sidebar-panel" : "mobile-menu-overlay",
       );
+
+      const label = desktopSidebar
+        ? expanded
+          ? _("Collapse navigation")
+          : _("Expand navigation")
+        : expanded
+          ? _("Close")
+          : _("Menu");
+
+      navigationToggle.setAttribute("title", label);
+      navigationToggle.setAttribute("aria-label", label);
     };
 
     const closeMobileNavigation = () => {

@@ -157,7 +157,7 @@ header {
     }
 
     & .navigation-toggle {
-      @apply cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95;
+      @apply cursor-pointer rounded-none border-0 bg-transparent p-0 shadow-none transition-transform duration-200 hover:scale-105 active:scale-95;
 
       & svg {
         @apply text-content size-5;
