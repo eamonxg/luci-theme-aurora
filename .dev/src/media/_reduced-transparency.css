@@ -1,0 +1,25 @@
+/**
+ * Reduced-transparency fallback.
+ *
+ * When the user asks for less transparency, drop the most expensive layer —
+ * backdrop-filter blur — everywhere, and turn the one surface that relies on
+ * "translucent + blur" to stay readable (the mega-menu backdrop) opaque, so
+ * removing the blur doesn't let the page content bleed through it.
+ *
+ * surface-overlay / surface are already opaque, so dropping their blur is
+ * harmless; scrim keeps its translucency on purpose (it's a dimming layer).
+ * --mega-menu-bg points at surface-overlay via var() so it tracks light/dark
+ * automatically (resolved at the point of use, not here).
+ */
+@media (prefers-reduced-transparency: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* standard property only — lightningcss adds the -webkit- prefix per browserslist */
+    @apply [backdrop-filter:none]!;
+  }
+
+  :root {
+    --mega-menu-bg: var(--surface-overlay);
+  }
+}

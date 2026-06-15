@@ -16,79 +16,121 @@ header {
       /* Category panels live inside the container, not the nav items: the
          transformed #topmenu would otherwise become the containing block of
          a position:fixed panel and shrink the canvas to the menu's width.
-         Fixed coordinates shared by every category, so switching panels
-         never shifts anything: link columns start at 50% - 13rem (just
-         under the centered nav triggers), the anchor column sits at a
-         fixed slot left of them. The entering panel floats up 6px —
-         transform + opacity only. */
+         Each panel is the same centered three-column grid (max-width fixed),
+         so switching categories is a pure cross-fade with no width shift.
+         The entering panel floats up 6px — transform + opacity only. */
+      /* The server-rendered board is only a template that menu-aurora.js
+         clones into each panel's right column — the original stays hidden. */
+      & > .desktop-menu-board {
+        @apply hidden;
+      }
+
       & .desktop-nav {
-        @apply pointer-events-none absolute inset-x-0 top-14 min-h-60 translate-y-1.5 pt-7 pb-8 pl-[calc(50%-13rem)] opacity-0 transition-[opacity,transform] duration-[250ms] ease-out;
+        /* Centered three-column canvas: anchor / links / device board.
+           Fixed max-width keeps every category the same width, so switching
+           is a pure cross-fade. Below lg the side tracks drop and only the
+           links column remains (tablet → just the submenu). */
+        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 px-10 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
 
         &.active {
           @apply pointer-events-auto translate-y-0 opacity-100;
         }
 
         & .desktop-nav-anchor {
-          @apply absolute top-7 left-[calc(50%-30rem)] w-56 max-lg:hidden;
+          @apply self-start max-lg:hidden;
 
           & .desktop-nav-title {
-            @apply text-text text-2xl font-semibold tracking-tight;
+            @apply text-text flex items-center gap-2.5 text-2xl font-semibold tracking-tight;
+
+            /* First-level icon: mask + currentColor so it follows the theme.
+               --menu-icon is set per node name below; unmapped → default. */
+            &::before {
+              @apply size-6 shrink-0 bg-current content-[''];
+              mask: var(--menu-icon, url("@assets/icons/category.svg")) center / contain no-repeat;
+            }
+          }
+
+          /* name → icon map (the only maintenance point). Keyed on the LuCI
+             node name, not the translated title. Add new first-level
+             sections here; anything unmapped keeps the default icon. */
+          & .desktop-nav-title[data-section="status"] {
+            --menu-icon: url("@assets/icons/activity.svg");
+          }
+          & .desktop-nav-title[data-section="system"] {
+            --menu-icon: url("@assets/icons/settings.svg");
+          }
+          & .desktop-nav-title[data-section="services"] {
+            --menu-icon: url("@assets/icons/apps.svg");
+          }
+          & .desktop-nav-title[data-section="nas"] {
+            --menu-icon: url("@assets/icons/server-2.svg");
+          }
+          & .desktop-nav-title[data-section="control"] {
+            --menu-icon: url("@assets/icons/adjustments.svg");
+          }
+          & .desktop-nav-title[data-section="network"] {
+            --menu-icon: url("@assets/icons/world.svg");
           }
         }
 
         & .desktop-nav-list {
-          /* Vertical fill: columns of equal height, no orphan rows. Row
-             count is set per submenu via --menu-rows in menu-aurora.js.
-             w-max is load-bearing: without it the block-level list fills
-             the viewport and justify-content:normal stretches the auto
-             column tracks across all of it. */
-          @apply grid w-max grid-flow-col grid-rows-[repeat(var(--menu-rows,6),auto)] content-start gap-x-8 gap-y-1;
+          /* Vertical fill, content-width columns. Row count per submenu via
+             --menu-rows (menu-aurora.js); more items grow rows, not width,
+             so the list stays inside the middle track. */
+          @apply grid grid-flow-col grid-rows-[repeat(var(--menu-rows,6),auto)] content-start justify-start gap-x-8 gap-y-1;
 
           & > li {
             @apply m-0 list-none;
 
             & > a {
-              @apply text-text block w-fit py-2.5 text-sm whitespace-nowrap no-underline hover:underline hover:decoration-2 hover:underline-offset-4;
+              @apply text-text block w-fit rounded-lg px-3 py-2 text-sm whitespace-nowrap no-underline transition-colors duration-150 hover:bg-hover-faint;
+
+              &.is-active-page {
+                @apply bg-brand-subtle text-brand font-medium;
+              }
             }
           }
         }
-      }
 
-      /* Constant part of the canvas, Apple-flyout style: the device
-         summary lives once at container level, pinned just below the
-         fixed category-title slot (header 3.5rem + panel pt 1.75rem +
-         title line 2rem + 1.25rem gap = top-34). Its position never
-         depends on an individual panel's height, and switching categories
-         never re-fades it. */
-      & .desktop-menu-board {
-        @apply absolute top-34 left-[calc(50%-30rem)] flex w-56 flex-col gap-2 max-lg:hidden;
+        /* Right column: device summary, cloned per panel. self-start so it
+           sits at the top regardless of how tall the links column grows. */
+        & .desktop-menu-board {
+          @apply border-hairline flex flex-col gap-2 self-start border-l pl-7 max-lg:hidden;
 
-        & .board-line {
-          @apply text-text-muted flex max-w-full items-center gap-2.5 text-xs;
-
-          &::before {
-            @apply size-4 shrink-0 bg-current content-[''];
+          & .board-label {
+            @apply text-text-subtle mb-0.5 text-[11px] font-medium tracking-wide uppercase;
           }
 
-          & .board-text {
-            @apply min-w-0 truncate;
+          & .board-line {
+            /* items-start keeps the icon aligned to the FIRST text line when a
+               long value wraps. Icon height (size-4) == text leading (leading-4)
+               so a single line still reads as vertically centered. */
+            @apply text-text-muted flex max-w-full items-start gap-2.5 text-xs;
+
+            &::before {
+              @apply size-4 shrink-0 bg-current content-[''];
+            }
+
+            & .board-text {
+              @apply min-w-0 leading-4 [overflow-wrap:anywhere];
+            }
           }
-        }
 
-        & .board-line-host::before {
-          @apply [mask:url('@assets/icons/server.svg')_center/contain_no-repeat];
-        }
+          & .board-line-host::before {
+            @apply [mask:url('@assets/icons/router.svg')_center/contain_no-repeat];
+          }
 
-        & .board-line-model::before {
-          @apply [mask:url('@assets/icons/cpu-chip.svg')_center/contain_no-repeat];
-        }
+          & .board-line-model::before {
+            @apply [mask:url('@assets/icons/cpu.svg')_center/contain_no-repeat];
+          }
 
-        & .board-line-firmware::before {
-          @apply [mask:url('@assets/icons/cube.svg')_center/contain_no-repeat];
-        }
+          & .board-line-firmware::before {
+            @apply [mask:url('@assets/icons/package.svg')_center/contain_no-repeat];
+          }
 
-        & .board-line-kernel::before {
-          @apply [mask:url('@assets/icons/cog.svg')_center/contain_no-repeat];
+          & .board-line-kernel::before {
+            @apply [mask:url('@assets/icons/tag.svg')_center/contain_no-repeat];
+          }
         }
       }
     }
@@ -105,16 +147,12 @@ header {
       @apply relative;
 
       .menu {
-        @apply text-text block rounded-xl px-3.5 py-1.5 font-medium no-underline transition-colors duration-150;
+        @apply text-text block rounded-xl px-3.5 py-1.5 font-medium no-underline transition-colors duration-150 hover:bg-hover-faint;
 
+        /* Unified pill for both dropdown modes — the open/active category is a
+           filled brand pill, matching the submenu links and the sidebar. */
         &.menu-active {
-          @apply text-text;
-          [data-nav-type="mega-menu"] & {
-            @apply underline decoration-2 underline-offset-4;
-          }
-          [data-nav-type="boxed-dropdown"] & {
-            @apply bg-brand-subtle text-brand;
-          }
+          @apply bg-brand-subtle text-brand;
         }
       }
 
@@ -140,7 +178,13 @@ header {
               @apply text-text block whitespace-nowrap no-underline;
 
               [data-nav-type="boxed-dropdown"] & {
-                @apply hover:bg-hover-faint mx-2 rounded-xl px-4 py-2;
+                @apply hover:bg-hover-faint mx-2 rounded-xl px-4 py-2 transition-colors duration-150;
+              }
+
+              /* Same active pill as the mega submenu and the top-level
+                 trigger — one unified vocabulary across both dropdown modes. */
+              &.is-active-page {
+                @apply bg-brand-subtle text-brand font-medium;
               }
             }
           }

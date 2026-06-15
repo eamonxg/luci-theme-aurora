@@ -213,7 +213,7 @@
 					trim(`${boardinfo.release?.distribution ?? ''} ${boardinfo.release?.version ?? ''}`);
 			-%}
 			<div class="desktop-menu-container">
-				<div class="desktop-menu-board" aria-hidden="true">
+				<div class="desktop-menu-board" aria-hidden="true"><span class="board-label">{{ _('Device') }}</span>
 					<span class="board-line board-line-host" title="{{ entityencode(striptags(boardinfo.hostname ?? '?'), true) }}"><span class="board-text">{{ striptags(boardinfo.hostname ?? '?') }}</span></span>
 					{% if (board_model): %}
 					<span class="board-line board-line-model" title="{{ entityencode(striptags(board_model), true) }}"><span class="board-text">{{ striptags(board_model) }}</span></span>

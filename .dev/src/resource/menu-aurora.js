@@ -255,9 +255,20 @@ return baseclass.extend({
       if (!children.length) return E([]);
 
       children.forEach((child) => {
+        // Mark the current page so it gets the active pill — same vocabulary
+        // as the top-level trigger (.menu-active). tree is the section node,
+        // so tree.name is its dispatch segment.
+        const isActive = this.isActivePath(tree.name, child.name);
         ul.appendChild(
           E("li", {}, [
-            E("a", { href: L.url(url, child.name) }, [_(child.title)]),
+            E(
+              "a",
+              {
+                class: isActive ? "is-active-page" : "",
+                href: L.url(url, child.name),
+              },
+              [_(child.title)],
+            ),
           ]),
         );
       });
@@ -515,17 +526,30 @@ return baseclass.extend({
       const children = [list];
 
       if (document.body?.dataset?.navType === "mega-menu") {
-        // Constant canvas: links fill top-to-bottom; capping at 4 columns
-        // keeps the canvas height stable until a submenu exceeds 24 items.
+        // Constant canvas: links fill top-to-bottom. Base column count is 4;
+        // more items grow the row count, not the width, so the list stays
+        // inside the three-column canvas middle track.
         list.style.setProperty(
           "--menu-rows",
           Math.max(6, Math.ceil(submenu.length / 4)),
         );
+        // data-section keys the first-level icon off the node name (stable,
+        // language-independent) — see _layout.css. Unmapped names fall back
+        // to the default icon via var(--menu-icon, …).
         children.unshift(
           E("div", { class: "desktop-nav-anchor" }, [
-            E("span", { class: "desktop-nav-title" }, [_(child.title)]),
+            E("span", { class: "desktop-nav-title", "data-section": child.name }, [
+              _(child.title),
+            ]),
           ]),
         );
+        // Right column: clone the server-rendered device board into each
+        // panel so the grid can lay it out as the third track. The original
+        // stays hidden as the template (see _layout.css).
+        const board = document.querySelector(
+          ".desktop-menu-container > .desktop-menu-board",
+        );
+        if (board) children.push(board.cloneNode(true));
       }
 
       nav = E("div", { class: "desktop-nav" }, children);
