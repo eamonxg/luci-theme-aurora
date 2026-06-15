@@ -42,12 +42,12 @@ input[type="reset"],
 .cbi-button-positive,
 .cbi-button-fieldadd,
 .cbi-button-save {
-  @apply border-transparent bg-brand-subtle text-brand hover:bg-brand-subtle;
+  @apply border-transparent bg-brand-subtle text-brand hover:bg-brand-subtle-hover;
 }
 
 .cbi-button-negative,
 .cbi-section-remove .cbi-button,
 .cbi-button-reset,
 .cbi-button-remove {
-  @apply border-transparent bg-danger-surface text-danger hover:bg-danger-surface;
+  @apply border-transparent bg-danger-surface text-danger hover:bg-danger-surface-hover;
 }

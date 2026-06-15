@@ -98,7 +98,7 @@
   /* Focus ring: opacity-only transition runs on compositor thread, not main thread —
      border-color changes require a repaint (~400 ms INP); opacity changes do not. */
   .input-wrap::after {
-    @apply border-brand pointer-events-none absolute -inset-px rounded-xl border-2 opacity-0 [will-change:opacity] content-[''] [transition:opacity_150ms_ease];
+    @apply border-brand pointer-events-none absolute -inset-px rounded-[calc(var(--radius-2xl)+1px)] border-2 opacity-0 [will-change:opacity] content-[''] [transition:opacity_150ms_ease];
   }
 
   .input-wrap:focus-within::after {

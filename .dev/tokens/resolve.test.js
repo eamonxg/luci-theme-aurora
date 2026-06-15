@@ -4,7 +4,7 @@ import { resolveMode } from "./resolve.js";
 
 test("resolveMode(light) returns flat oklch for all tokens", () => {
   const out = resolveMode("light");
-  // 10 inputs + 17 derived = 27 color tokens.
+  // 10 inputs + 19 derived = 29 color tokens.
   for (const k of [
     "bg",
     "surface",
