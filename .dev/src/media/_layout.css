@@ -7,7 +7,7 @@ header {
 
   [data-nav-type="mega-menu"] & {
     & .desktop-menu-container {
-      @apply border-hairline pointer-events-none absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden border-b bg-mega-menu-bg opacity-0 shadow-xl backdrop-blur-lg backdrop-saturate-150 transition-[clip-path,opacity] duration-[250ms] ease-out [will-change:clip-path,opacity] [clip-path:inset(0_0_100%_0)] max-md:hidden;
+      @apply border-hairline bg-mega-menu-bg pointer-events-none absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden border-b opacity-0 shadow-xl backdrop-blur-lg backdrop-saturate-150 transition-[clip-path,opacity] duration-[250ms] ease-out [will-change:clip-path,opacity] [clip-path:inset(0_0_100%_0)] max-md:hidden;
 
       &.active {
         @apply pointer-events-auto opacity-100 [clip-path:inset(0)];
@@ -283,37 +283,16 @@ body[data-nav-type="sidebar"] {
     }
   }
 
-  & .sidebar-list .nav-link {
+  & .sidebar-list .navigation-direct {
     @apply truncate text-lg;
   }
 
-  /* Selected-pill background for top-level leaf links. The shared
-     .nav-link-active carries only brand text, so the sidebar owns its pill
-     here (submenu links get theirs below). */
-  & .sidebar-list > li > .nav-link-active {
-    @apply bg-brand-subtle hover:bg-brand-subtle;
-  }
-
-  & .sidebar-section {
-    @apply grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-[250ms] ease-out;
-  }
-
-  & .sidebar-group-open > .sidebar-section {
-    @apply grid-rows-[1fr] opacity-100;
-  }
-
-  /* Child links sit indented under their category — hierarchy comes from
-     spacing alone, no guide line, for a calmer look. */
   & .sidebar-submenu {
-    @apply m-0 min-h-0 list-none space-y-0.5 overflow-hidden p-0 pl-3;
+    @apply m-0 min-h-0 list-none space-y-0.5 overflow-hidden p-0 pl-4;
   }
 
-  & .sidebar-submenu .nav-link {
-    @apply text-text-muted hover:text-text rounded-lg px-3 py-1.5 text-sm;
-  }
-
-  & .sidebar-submenu .nav-link-active {
-    @apply bg-brand-subtle text-brand hover:text-brand;
+  & .sidebar-submenu .navigation-sublink {
+    @apply rounded-lg px-3 py-1.5 text-sm;
   }
 
   & .sidebar-footer {

@@ -27,23 +27,12 @@ return baseclass.extend({
 
     if (!navigationToggle || !overlay) return;
 
+    const mobileList = overlay.querySelector("#mobile-nav-list");
     const desktop = window.matchMedia("(min-width: 768px)");
     const SIDEBAR_COLLAPSED_KEY = "aurora.sidebarCollapsed";
 
     const isDesktopSidebar = () =>
       desktop.matches && document.body.dataset.navType === "sidebar";
-
-    const resetMobileSubmenus = () => {
-      overlay
-        .querySelectorAll(".mobile-nav-item.submenu-expanded")
-        .forEach((item) => this.setMobileSubmenuExpanded(item, false));
-    };
-
-    const expandActiveMobileGroup = () => {
-      const activeGroup = overlay.querySelector(".mobile-nav-item.has-active");
-
-      if (activeGroup) this.setMobileSubmenuExpanded(activeGroup, true);
-    };
 
     const updateToggleState = (expanded) => {
       const desktopSidebar = isDesktopSidebar();
@@ -74,7 +63,7 @@ return baseclass.extend({
       overlay.classList.remove("mobile-menu-open");
       document.body.classList.remove("mobile-navigation-open");
       document.body.style.overflow = "";
-      resetMobileSubmenus();
+      this.resetNavigationGroups(mobileList);
     };
 
     const getNavigationExpanded = () => {
@@ -106,8 +95,8 @@ return baseclass.extend({
       document.body.classList.toggle("mobile-navigation-open", expanded);
       document.body.style.overflow = expanded ? "hidden" : "";
 
-      if (expanded) expandActiveMobileGroup();
-      else resetMobileSubmenus();
+      if (expanded) this.expandActiveNavigationGroup(mobileList);
+      else this.resetNavigationGroups(mobileList);
 
       updateToggleState(expanded);
     };
@@ -151,31 +140,8 @@ return baseclass.extend({
     syncNavigationState();
 
     document.addEventListener("click", (e) => {
-      const toggle = e.target.closest(".mobile-nav-toggle");
-
-      if (toggle && overlay.contains(toggle)) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const item = toggle.closest(".mobile-nav-item");
-        if (!item) return;
-
-        const isExpanded = item.classList.contains("submenu-expanded");
-
-        overlay
-          .querySelectorAll(".mobile-nav-item.submenu-expanded")
-          .forEach((expandedItem) => {
-            if (expandedItem !== item) {
-              this.setMobileSubmenuExpanded(expandedItem, false);
-            }
-          });
-
-        this.setMobileSubmenuExpanded(item, !isExpanded);
-        return;
-      }
-
-      const destination = e.target.closest(
-        ".mobile-nav-link:not(.mobile-nav-toggle), .mobile-nav-sublink, .mobile-nav-logout",
+      const destination = e.target?.closest?.(
+        ".navigation-direct, .navigation-sublink, .mobile-nav-logout",
       );
 
       if (destination && overlay.contains(destination)) {
@@ -184,105 +150,31 @@ return baseclass.extend({
     });
   },
 
-  renderMobileMenu(tree, url) {
+  renderMobileMenu(items) {
     const list = document.querySelector("#mobile-nav-list");
     const footerAction = document.querySelector("#mobile-nav-footer-action");
-    const children = ui.menu.getChildren(tree);
+
+    if (list) list.innerHTML = "";
+    if (footerAction) footerAction.innerHTML = "";
 
     if (!list) return;
 
-    list.innerHTML = "";
-    if (footerAction) footerAction.innerHTML = "";
-    if (!children.length) return;
-
-    children.forEach((child) => {
-      const submenu = ui.menu.getChildren(child);
-      const hasSubmenu = submenu.length > 0;
-      const isActive = this.isActivePath(child.name);
-
-      if (child.name === "logout") {
+    items.forEach((item) => {
+      if (item.isLogout) {
         if (footerAction) {
           footerAction.appendChild(
-            E(
-              "a",
-              {
-                class: "mobile-nav-logout",
-                href: L.url(url, child.name),
-              },
-              [_(child.title)],
-            ),
+            E("a", { class: "mobile-nav-logout", href: item.href }, [
+              item.title,
+            ]),
           );
         }
         return;
       }
 
-      const itemClasses = [
-        "mobile-nav-item",
-        hasSubmenu ? "has-submenu" : "",
-        isActive && hasSubmenu ? "has-active" : "",
-      ].filter(Boolean);
-      const submenuId = `mobile-submenu-${String(child.name).replace(
-        /[^A-Za-z0-9_-]/g,
-        "-",
-      )}`;
-      const control = hasSubmenu
-        ? E(
-            "button",
-            {
-              class: `mobile-nav-link mobile-nav-toggle${
-                isActive ? " nav-link-active" : ""
-              }`,
-              type: "button",
-              "aria-expanded": "false",
-              "aria-controls": submenuId,
-            },
-            [_(child.title)],
-          )
-        : E(
-            "a",
-            {
-              class: `mobile-nav-link${isActive ? " nav-link-active" : ""}`,
-              href: L.url(url, child.name),
-            },
-            [_(child.title)],
-          );
-
-      const li = E("li", { class: itemClasses.join(" ") }, [control]);
-
-      if (hasSubmenu) {
-        const wrap = E("div", {
-          class: "mobile-nav-submenu",
-          id: submenuId,
-          "aria-hidden": "true",
-          inert: "",
-        });
-        const ul = E("ul", { class: "mobile-nav-submenu-list" });
-
-        submenu.forEach((item) => {
-          const subActive = this.isActivePath(child.name, item.name);
-
-          ul.appendChild(
-            E("li", { class: "mobile-nav-subitem" }, [
-              E(
-                "a",
-                {
-                  class: `mobile-nav-sublink${
-                    subActive ? " nav-link-active" : ""
-                  }`,
-                  href: L.url(url, child.name, item.name),
-                },
-                [_(item.title)],
-              ),
-            ]),
-          );
-        });
-
-        wrap.appendChild(ul);
-        li.appendChild(wrap);
-      }
-
-      list.appendChild(li);
+      list.appendChild(this.renderNavigationItem(item, "mobile"));
     });
+
+    this.bindNavigationAccordion(list);
   },
 
   render(tree) {
@@ -336,26 +228,32 @@ return baseclass.extend({
     return ul;
   },
 
-  renderMainMenu(tree, url, level = 0) {
+  renderMainMenu(tree, url, level = 0, navigationItems = null) {
     const ul = level
       ? E("ul", { class: "desktop-nav-list" })
       : document.querySelector("#topmenu");
     const children = ui.menu.getChildren(tree);
 
-    if (!children.length || level > 1) return E([]);
+    if (level > 1) return E([]);
 
     if (level === 0) {
       const navType = document.body?.dataset?.navType || "mega-menu";
 
       if (navType === "sidebar") {
-        this.renderSidebar(children, url);
-        return ul;
-      } else if (navType === "mega-menu") {
+        this.renderSidebar(navigationItems || []);
+        return ul || E([]);
+      }
+
+      if (!ul || !children.length) return E([]);
+
+      if (navType === "mega-menu") {
         this.initMegaMenu(children, url, ul);
       } else {
         this.initBoxedDropdown(children, url, ul);
       }
     } else {
+      if (!children.length) return E([]);
+
       children.forEach((child) => {
         ul.appendChild(
           E("li", {}, [
@@ -377,144 +275,208 @@ return baseclass.extend({
     return page == null || L.env.dispatchpath[2] === page;
   },
 
-  setMobileSubmenuExpanded(item, expanded) {
-    const toggle = item.querySelector(".mobile-nav-toggle");
-    const submenu = item.querySelector(".mobile-nav-submenu");
+  buildNavigationModel(children, url) {
+    return children
+      .filter((child) => child?.name)
+      .map((child) => {
+        const pages = ui.menu
+          .getChildren(child)
+          .filter((page) => page?.name)
+          .map((page) => ({
+            name: page.name,
+            title: _(page.title),
+            href: L.url(url, child.name, page.name),
+            isActivePage: this.isActivePath(child.name, page.name),
+          }));
+        const hasChildren = pages.length > 0;
+        const isCurrentTopLevel = this.isActivePath(child.name);
 
-    item.classList.toggle("submenu-expanded", expanded);
-    toggle?.setAttribute("aria-expanded", expanded ? "true" : "false");
-    submenu?.setAttribute("aria-hidden", expanded ? "false" : "true");
-
-    if (expanded) submenu?.removeAttribute("inert");
-    else submenu?.setAttribute("inert", "");
+        return {
+          name: child.name,
+          title: _(child.title),
+          href: L.url(url, child.name),
+          hasChildren,
+          isLogout: child.name === "logout",
+          isActiveGroup: hasChildren && isCurrentTopLevel,
+          isActivePage: !hasChildren && isCurrentTopLevel,
+          activePage: pages.find((page) => page.isActivePage) || null,
+          pages,
+        };
+      });
   },
 
-  setSidebarSectionExpanded(item, expanded) {
-    const category = item.querySelector(".nav-category");
-    const section = item.querySelector(".sidebar-section");
+  navigationSubmenuId(mode, name) {
+    return `${mode}-submenu-${encodeURIComponent(String(name))}`;
+  },
 
-    item.classList.toggle("sidebar-group-open", expanded);
-    category?.setAttribute("aria-expanded", expanded ? "true" : "false");
-    section?.setAttribute("aria-hidden", expanded ? "false" : "true");
+  renderNavigationItem(item, mode) {
+    const mobile = mode === "mobile";
+    const itemClass = mobile ? "mobile-nav-item" : "";
+    const directClass = mobile
+      ? "navigation-direct mobile-nav-link"
+      : "navigation-direct nav-link";
+
+    if (!item.hasChildren) {
+      const attributes = {
+        class: `${directClass}${item.isActivePage ? " is-active-page" : ""}`,
+        href: item.href,
+      };
+      if (item.isActivePage) attributes["aria-current"] = "page";
+      return E("li", { class: itemClass }, [E("a", attributes, [item.title])]);
+    }
+
+    const submenuId = this.navigationSubmenuId(mode, item.name);
+    const groupClasses = [
+      "navigation-group",
+      mobile ? "mobile-nav-item" : "sidebar-group",
+      item.isActiveGroup ? "is-active-group" : "",
+      item.isActiveGroup ? "is-expanded" : "",
+    ].filter(Boolean);
+    const toggleAttributes = {
+      class: mobile
+        ? "navigation-group-toggle mobile-nav-link mobile-nav-toggle"
+        : "navigation-group-toggle nav-category",
+      type: "button",
+      "aria-expanded": item.isActiveGroup ? "true" : "false",
+      "aria-controls": submenuId,
+    };
+    if (item.isActiveGroup) toggleAttributes["aria-current"] = "location";
+
+    const list = E("ul", {
+      class: mobile
+        ? "navigation-submenu-list mobile-nav-submenu-list"
+        : "navigation-submenu-list sidebar-submenu",
+    });
+    item.pages.forEach((page) => {
+      const linkAttributes = {
+        class: [
+          "navigation-sublink",
+          mobile ? "mobile-nav-sublink" : "",
+          page.isActivePage ? "is-active-page" : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+        href: page.href,
+      };
+      if (page.isActivePage) linkAttributes["aria-current"] = "page";
+      list.appendChild(
+        E("li", { class: mobile ? "mobile-nav-subitem" : "" }, [
+          E("a", linkAttributes, [page.title]),
+        ]),
+      );
+    });
+
+    const regionAttributes = {
+      class: mobile
+        ? "navigation-group-region mobile-nav-submenu"
+        : "navigation-group-region sidebar-section",
+      id: submenuId,
+      "aria-hidden": item.isActiveGroup ? "false" : "true",
+    };
+    if (!item.isActiveGroup) regionAttributes.inert = "";
+
+    return E("li", { class: groupClasses.join(" ") }, [
+      E("button", toggleAttributes, [
+        E("span", { class: "nav-category-label" }, [item.title]),
+      ]),
+      E("div", regionAttributes, [list]),
+    ]);
+  },
+
+  setNavigationGroupExpanded(item, expanded) {
+    const toggle = item.querySelector(".navigation-group-toggle");
+    const region = item.querySelector(".navigation-group-region");
+
+    item.classList.toggle("is-expanded", expanded);
+    toggle?.setAttribute("aria-expanded", expanded ? "true" : "false");
+    region?.setAttribute("aria-hidden", expanded ? "false" : "true");
+
+    if (expanded) region?.removeAttribute("inert");
+    else region?.setAttribute("inert", "");
+  },
+
+  setExclusiveNavigationGroupExpanded(surface, item, expanded) {
+    if (!surface || !item) return;
 
     if (expanded) {
-      section?.removeAttribute("inert");
-    } else {
-      section?.setAttribute("inert", "");
+      surface
+        .querySelectorAll(".navigation-group.is-expanded")
+        .forEach((expandedItem) => {
+          if (expandedItem !== item) {
+            this.setNavigationGroupExpanded(expandedItem, false);
+          }
+        });
+    }
+
+    this.setNavigationGroupExpanded(item, expanded);
+  },
+
+  resetNavigationGroups(surface) {
+    surface
+      ?.querySelectorAll(".navigation-group.is-expanded")
+      .forEach((item) => this.setNavigationGroupExpanded(item, false));
+  },
+
+  expandActiveNavigationGroup(surface) {
+    const activeGroup = surface?.querySelector(
+      ".navigation-group.is-active-group",
+    );
+
+    if (activeGroup) {
+      this.setExclusiveNavigationGroupExpanded(surface, activeGroup, true);
     }
   },
 
-  renderSidebar(children, url) {
+  bindNavigationAccordion(surface) {
+    if (!surface || surface.dataset.accordionBound === "true") return;
+
+    surface.dataset.accordionBound = "true";
+    surface.addEventListener("click", (event) => {
+      const toggle = event.target?.closest?.(".navigation-group-toggle");
+      const item = toggle?.closest?.(".navigation-group");
+
+      if (!item || !surface.contains(item)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      this.setExclusiveNavigationGroupExpanded(
+        surface,
+        item,
+        !item.classList.contains("is-expanded"),
+      );
+    });
+  },
+
+  renderSidebar(items) {
     const list = document.querySelector("#sidebar-list");
     const footer = document.querySelector("#sidebar-footer");
+    const crumbEl = document.querySelector("#header-crumb");
+
+    if (list) list.innerHTML = "";
+    if (footer) footer.innerHTML = "";
+    if (crumbEl) crumbEl.innerHTML = "";
 
     if (!list) return;
 
     const crumb = [];
 
-    const link = (href, title, active) =>
-      E("a", { class: `nav-link${active ? " nav-link-active" : ""}`, href }, [
-        _(title),
-      ]);
-
-    children.forEach((child) => {
-      const submenu = ui.menu.getChildren(child);
-      const inGroup = this.isActivePath(child.name);
-
-      if (inGroup) {
-        crumb.push(_(child.title));
-
-        const page = submenu.find((item) =>
-          this.isActivePath(child.name, item.name),
-        );
-        if (page) crumb.push(_(page.title));
+    items.forEach((item) => {
+      if (item.isActiveGroup || item.isActivePage) {
+        crumb.push(item.title);
+        if (item.activePage) crumb.push(item.activePage.title);
       }
 
-      if (child.name === "logout") {
+      if (item.isLogout) {
         (footer || list).appendChild(
-          link(L.url(url, child.name), child.title, false),
+          E("a", { class: "nav-link", href: item.href }, [item.title]),
         );
         return;
       }
 
-      if (!submenu.length) {
-        list.appendChild(
-          E("li", {}, [link(L.url(url, child.name), child.title, inGroup)]),
-        );
-        return;
-      }
-
-      const sectionId = `sidebar-section-${String(child.name).replace(
-        /[^A-Za-z0-9_-]/g,
-        "-",
-      )}`;
-      const ul = E("ul", { class: "sidebar-submenu" });
-
-      submenu.forEach((item) => {
-        ul.appendChild(
-          E("li", {}, [
-            link(
-              L.url(url, child.name, item.name),
-              item.title,
-              this.isActivePath(child.name, item.name),
-            ),
-          ]),
-        );
-      });
-
-      const sectionAttrs = {
-        class: "sidebar-section",
-        id: sectionId,
-        "aria-hidden": inGroup ? "false" : "true",
-      };
-
-      if (!inGroup) sectionAttrs.inert = "";
-
-      const groupClasses = [
-        "sidebar-group",
-        inGroup ? "sidebar-group-open" : "",
-      ].filter(Boolean);
-
-      list.appendChild(
-        E(
-          "li",
-          {
-            class: groupClasses.join(" "),
-            "data-section": child.name,
-          },
-          [
-            E(
-              "button",
-              {
-                class: "nav-category",
-                type: "button",
-                "aria-expanded": inGroup ? "true" : "false",
-                "aria-controls": sectionId,
-              },
-              [E("span", { class: "nav-category-label" }, [_(child.title)])],
-            ),
-            E("div", sectionAttrs, [ul]),
-          ],
-        ),
-      );
+      list.appendChild(this.renderNavigationItem(item, "sidebar"));
     });
 
-    list.addEventListener("click", (e) => {
-      const category = e.target.closest(".nav-category");
-      const item = category?.closest(".sidebar-group");
-
-      if (!item || !list.contains(item)) return;
-
-      const shouldOpen = !item.classList.contains("sidebar-group-open");
-
-      list.querySelectorAll(".sidebar-group-open").forEach((group) => {
-        if (group !== item) this.setSidebarSectionExpanded(group, false);
-      });
-
-      this.setSidebarSectionExpanded(item, shouldOpen);
-    });
-
-    const crumbEl = document.querySelector("#header-crumb");
+    this.bindNavigationAccordion(list);
 
     crumb.forEach((title, i) => {
       if (i) crumbEl?.appendChild(E("li", { class: "crumb-sep" }, ["/"]));
@@ -789,25 +751,31 @@ return baseclass.extend({
         ? child.name === L.env.requestpath[0]
         : index === 0;
 
-      ul.appendChild(
-        E(
-          "li",
-          {
-            class: isActive ? "active" : "",
-          },
-          [E("a", { href: L.url(child.name) }, [_(child.title)])],
-        ),
-      );
+      if (ul) {
+        ul.appendChild(
+          E(
+            "li",
+            {
+              class: isActive ? "active" : "",
+            },
+            [E("a", { href: L.url(child.name) }, [_(child.title)])],
+          ),
+        );
+      }
 
       if (isActive) activeChild = child;
     });
 
     if (activeChild) {
-      this.renderMainMenu(activeChild, activeChild.name);
-      this.renderMobileMenu(activeChild, activeChild.name);
+      const navigationItems = this.buildNavigationModel(
+        ui.menu.getChildren(activeChild),
+        activeChild.name,
+      );
+      this.renderMainMenu(activeChild, activeChild.name, 0, navigationItems);
+      this.renderMobileMenu(navigationItems);
     }
 
-    if (ul.children.length > 1) {
+    if (ul?.children.length > 1) {
       ul.style.display = "";
     }
   },
