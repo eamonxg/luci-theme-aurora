@@ -1,5 +1,5 @@
 .alert-message {
-  @apply bg-surface-sunken text-text border-hairline sticky top-14 z-40 mb-4 rounded-4xl border p-6 max-md:mx-0 max-md:mb-3 max-md:rounded-3xl max-md:p-4;
+  @apply bg-surface-sunken text-text border-hairline sticky top-14 z-30 mb-4 rounded-4xl border p-6 max-md:mx-0 max-md:mb-3 max-md:rounded-3xl max-md:p-4;
 
   &.modal {
     @apply static top-auto;

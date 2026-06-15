@@ -70,6 +70,47 @@ test("maincontent cards use a hairline border, not heavy shadow", () => {
   assert.ok(!rule.includes("shadow-lg"), `still shadow-lg: ${rule}`);
 });
 
+test("main view does not create an animation stacking context", () => {
+  const layout = read("../src/media/_layout.css");
+  const rule = layout.match(/#view\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
+
+  for (const utility of [
+    "animate-in",
+    "fade-in-0",
+    "slide-in-from-top-2",
+    "fill-mode-backwards",
+    "fill-mode-both",
+  ]) {
+    assert.ok(!rule.includes(utility), `view still uses ${utility}: ${rule}`);
+  }
+});
+
+test("content dropdowns stay above the closed header and below the open mega-menu", () => {
+  const layer = (value) => ["z", value].join("-");
+  const layout = read("../src/media/_layout.css");
+  const dropdown = read("../src/media/components/_dropdown.css");
+  const message = read("../src/media/components/_message.css");
+  const overlay = read("../src/media/components/_overlay.css");
+  const headerRule = layout.match(/^header\s*\{\s*@apply\s+([^;]+);/m)?.[1] ?? "";
+  const activeHeaderRule =
+    layout.match(
+      /\[data-nav-type="mega-menu"\] &:has\(\.desktop-menu-container\.active\)\s*\{\s*@apply\s+([^;]+);/,
+    )?.[1] ?? "";
+  const dropdownRule = dropdown.match(/&\.dropdown\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
+  const messageRule = message.match(/\.alert-message\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
+  const overlayRule =
+    overlay.match(/& \.desktop-menu-overlay\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
+
+  assert.ok(messageRule.includes(layer(30)), `message layer changed: ${messageRule}`);
+  assert.ok(headerRule.includes(layer(40)), `closed header layer changed: ${headerRule}`);
+  assert.ok(dropdownRule.includes(layer(50)), `dropdown layer changed: ${dropdownRule}`);
+  assert.ok(overlayRule.includes(layer(60)), `menu overlay layer changed: ${overlayRule}`);
+  assert.ok(
+    activeHeaderRule.includes(layer(70)),
+    `open mega-menu layer changed: ${activeHeaderRule}`,
+  );
+});
+
 test("tables get a hairline frame + sunken header, body stays unclipped", () => {
   const t = read("../src/media/components/_table.css");
   const root = t.match(/table\.table,\s*\.table\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";

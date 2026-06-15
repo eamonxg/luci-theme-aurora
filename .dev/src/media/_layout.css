@@ -1,5 +1,5 @@
 header {
-  @apply bg-bg sticky top-0 z-60 mb-2;
+  @apply bg-bg sticky top-0 z-40 mb-2;
 
   & .header-content {
     @apply relative flex h-14 items-center justify-between px-6 py-3 max-md:px-4 max-md:py-2;
@@ -134,6 +134,10 @@ header {
         }
       }
     }
+  }
+
+  [data-nav-type="mega-menu"] &:has(.desktop-menu-container.active) {
+    @apply z-70;
   }
 
   .brand {
@@ -354,7 +358,7 @@ body[data-nav-type="sidebar"] {
   @apply max-w-max-width mx-auto min-h-[calc(100vh-4rem)] w-23/24 px-4 max-md:w-full max-md:px-3;
 
   #view {
-    @apply animate-in fade-in-0 slide-in-from-top-2 fill-mode-both mx-0 w-full bg-transparent p-0 shadow-none empty:hidden md:p-0;
+    @apply mx-0 w-full bg-transparent p-0 shadow-none empty:hidden md:p-0;
 
     .cbi-title-section {
       @apply mb-6 leading-relaxed max-md:mx-2 max-md:mb-3;

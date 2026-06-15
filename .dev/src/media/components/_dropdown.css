@@ -50,7 +50,7 @@
     }
 
     &.dropdown {
-      @apply border-hairline bg-surface-overlay absolute left-0 z-60 w-fit min-w-full overflow-y-auto rounded-lg border shadow-xl backdrop-blur-md backdrop-saturate-150;
+      @apply border-hairline bg-surface-overlay absolute left-0 z-50 w-fit min-w-full overflow-y-auto rounded-lg border shadow-xl backdrop-blur-md backdrop-saturate-150;
 
       & > li {
         @apply text-text-muted hover:bg-brand-subtle min-h-9 w-full cursor-pointer px-3 py-1.5 font-medium;

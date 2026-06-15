@@ -70,7 +70,7 @@ body.mobile-navigation-open > header {
 
 [data-nav-type="mega-menu"] {
   & .desktop-menu-overlay {
-    @apply bg-scrim pointer-events-none fixed inset-0 z-50 opacity-0 transition-opacity duration-[250ms] max-md:hidden;
+    @apply bg-scrim pointer-events-none fixed inset-0 z-60 opacity-0 transition-opacity duration-[250ms] max-md:hidden;
 
     &.active {
       @apply pointer-events-auto opacity-100 backdrop-blur-lg backdrop-saturate-150;
