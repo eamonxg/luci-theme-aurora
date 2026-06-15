@@ -157,3 +157,22 @@ test("mobile drawer styles only provide mobile navigation density", () => {
   );
   assert.doesNotMatch(drawer, /bg-brand-subtle/);
 });
+
+test("mega-menu panels scroll within the viewport", () => {
+  const megaMenu = getBlock(layoutStyles, '[data-nav-type="mega-menu"] &');
+  const panel = getBlock(megaMenu, "& .desktop-nav");
+
+  assert.ok(panel.includes("max-h-[calc(100dvh-3.5rem)]"));
+  assertIncludesUtilities(panel, ["overflow-y-auto", "overscroll-contain"]);
+});
+
+test("mega-menu category masks use Tailwind arbitrary utilities", () => {
+  const title = getBlock(layoutStyles, "& .desktop-nav-title");
+  const icon = getBlock(title, "&::before");
+
+  assert.match(
+    icon,
+    /@apply[^;]*\[mask:var\(--menu-icon,url\(["']@assets\/icons\/category\.svg["']\)\)_center\/contain_no-repeat\]/,
+  );
+  assert.doesNotMatch(layoutStyles, /^\s*mask\s*:/m);
+});
