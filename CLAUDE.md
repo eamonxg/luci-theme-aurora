@@ -8,12 +8,14 @@ All dev commands run from `.dev/`:
 
 ```bash
 cd .dev/
-pnpm dev      # Start Vite dev server (proxies to OpenWrt device)
-pnpm build    # Clean + build production assets to htdocs/luci-static/
-pnpm clean    # Remove build output only
+pnpm dev        # Start Vite dev server (proxies to OpenWrt device)
+pnpm build      # Clean + regenerate tokens + build production assets to htdocs/luci-static/
+pnpm gen:tokens # Regenerate src/media/_tokens.css from tokens/ (also runs as part of build)
+pnpm test       # Run tokens/*.test.js (node:test)
+pnpm clean      # Remove build output only
 ```
 
-No test suite or linter CLI. Formatting uses Prettier with format-on-save (`.vscode/settings.json`).
+No linter CLI. Formatting uses Prettier with format-on-save (`.vscode/settings.json`).
 
 ## Architecture
 
@@ -24,7 +26,9 @@ No test suite or linter CLI. Formatting uses Prettier with format-on-save (`.vsc
 - `.dev/public/aurora/` → `htdocs/luci-static/aurora/` (copied as-is)
 - `ucode/template/themes/aurora/*.ut` — server-side templates, not processed by Vite
 
-**CSS**: two Tailwind CSS v4 entry points in `.dev/src/media/` — `main.css` (admin UI; a pure import manifest over `_tokens.css`, `_base.css`, `_layout.css`, `components/*.css`, `_utilities.css`, `_patches.css`) and `login.css` (standalone login page). All styling MUST use TailwindCSS v4 utility classes via `@apply` — no raw CSS properties (e.g. write `@apply text-sm font-semibold;` not `font-size: 14px; font-weight: 600;`). Use [CSS Nesting syntax](https://drafts.csswg.org/css-nesting/) for selectors. Theme colors defined as OKLCH custom properties in `_tokens.css` and mapped via `@theme inline`. `@layer` at-rules stripped by PostCSS plugin for OpenWrt compatibility. See `.dev/docs/DEVELOPMENT.md` for the full CSS file layout.
+**CSS**: two Tailwind CSS v4 entry points in `.dev/src/media/` — `main.css` (admin UI; a pure import manifest over `_tokens.css`, `_base.css`, `_elements.css`, `_layout.css`, `components/*.css`, `_utilities.css`, `_patches.css`) and `login.css` (standalone login page; imports `_base.css`). All styling MUST use TailwindCSS v4 utility classes via `@apply` — no raw CSS properties (e.g. write `@apply text-sm font-semibold;` not `font-size: 14px; font-weight: 600;`). Use [CSS Nesting syntax](https://drafts.csswg.org/css-nesting/) for selectors. Theme colors defined as OKLCH custom properties in `_tokens.css` and mapped via `@theme inline`. `@layer` at-rules stripped by PostCSS plugin for OpenWrt compatibility. See `.dev/docs/DEVELOPMENT.md` for the full CSS file layout.
+
+**Design tokens**: `_tokens.css` is GENERATED — do not hand-edit (see its header comment). Source of truth is `.dev/tokens/`: `defaults.js` holds the 10 editable input colors per mode (`bg`, `surface`, `text`, `brand`, `on_brand`, `link`, `info`, `warning`, `success`, `danger`); `spec.js` declares how every other token derives from those via `mix`/`shade`/`set`/`alpha`/`const` operators plus `FIXED` literals (shadows); `engine.js`/`resolve.js` do the OKLCH math and flatten everything to plain `oklch(...)` values. After changing inputs or derivations, run `pnpm gen:tokens` to rewrite `_tokens.css`, and `pnpm test` to check the color-math and token invariants.
 
 **JavaScript**: LuCI `E()` DOM API (not React/Vue). Minified but not bundled.
 

@@ -2,11 +2,11 @@
   @apply pointer-events-none fixed top-0 bottom-0 hidden overflow-auto bg-transparent;
 
   .modal-overlay-active & {
-    @apply bg-scrim pointer-events-auto inset-0 right-0 left-0 z-100 grid grid-cols-1 place-items-center backdrop-blur-sm;
+    @apply bg-scrim pointer-events-auto inset-0 right-0 left-0 z-100 grid grid-cols-1 place-items-center backdrop-blur-md backdrop-saturate-150;
   }
 
   & > .modal {
-    @apply border-border-subtle bg-surface relative flex w-5xl flex-col gap-4 rounded-3xl border p-6 wrap-break-word whitespace-normal shadow-2xl max-md:w-full max-md:gap-3 max-md:p-4;
+    @apply border-hairline bg-surface-overlay relative flex w-5xl flex-col gap-4 rounded-3xl border p-6 wrap-break-word whitespace-normal shadow-2xl max-md:w-full max-md:gap-3 max-md:p-4;
 
     & h4 {
       @apply mb-0 text-center;
@@ -16,26 +16,26 @@
     }
 
     & h5 {
-      @apply text-content my-3;
+      @apply text-text my-3;
     }
 
     & p {
-      @apply text-content text-sm leading-relaxed;
+      @apply text-text text-sm leading-relaxed;
     }
 
     & > ul {
-      @apply border-border-subtle bg-surface-subtle overflow-auto rounded-2xl border p-3;
+      @apply border-hairline overflow-auto rounded-2xl border p-3;
     }
 
     & label.btn {
-      @apply border-border-subtle bg-surface-subtle text-content hover:border-border-strong border;
+      @apply border-hairline bg-surface-sunken text-text hover:border-hairline border;
     }
 
     & pre {
       @apply overflow-auto;
 
       &.errors {
-        @apply border-danger-border bg-danger-surface text-danger-content;
+        @apply border-hairline bg-danger-surface text-danger;
       }
     }
 
@@ -46,7 +46,7 @@
     & .button-row,
     & div.left,
     & div.right {
-      @apply border-border-subtle flex shrink-0 gap-3 border-t p-4 max-md:gap-1.5 max-md:p-2.5;
+      @apply border-hairline flex shrink-0 gap-3 border-t p-4 max-md:gap-1.5 max-md:p-2.5;
     }
 
     & div.left {
@@ -66,22 +66,22 @@
       }
 
       & ins {
-        @apply border-success-border bg-success-surface text-success-content border;
+        @apply border-hairline bg-success-surface text-success border;
       }
 
       & del {
-        @apply border-danger-border bg-danger-surface text-danger-content border;
+        @apply border-hairline bg-danger-surface text-danger border;
       }
 
       & var {
-        @apply border-info-border bg-info-surface text-info-content border;
+        @apply border-hairline bg-info-surface text-info border;
       }
 
       & .uci-change-legend {
-        @apply border-border-subtle bg-surface-subtle mt-4 grid grid-cols-2 gap-3 rounded-2xl border p-4 max-md:grid-cols-1 max-md:gap-2 max-md:p-3;
+        @apply border-hairline bg-surface-sunken mt-4 grid grid-cols-2 gap-3 rounded-2xl border p-4 max-md:grid-cols-1 max-md:gap-2 max-md:p-3;
 
         & .uci-change-legend-label {
-          @apply text-content flex items-center gap-2 text-sm font-medium;
+          @apply text-text flex items-center gap-2 text-sm font-medium;
 
           & ins,
           & del,
@@ -102,7 +102,7 @@
         @apply mt-4 space-y-3;
 
         & h5 {
-          @apply bg-neutral-status-surface text-neutral-status-content mt-6 mb-2 rounded-xl px-3 py-2 text-sm font-semibold first:mt-0;
+          @apply bg-surface-sunken text-text mt-6 mb-2 rounded-xl px-3 py-2 text-sm font-semibold first:mt-0;
         }
 
         & ins,

@@ -1,0 +1,88 @@
+*:not(html) {
+  @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-transparent scrollbar-thumb-text-muted;
+}
+
+html {
+  @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-surface scrollbar-thumb-text-muted;
+
+  body {
+    @apply text-text relative flex min-h-dvh flex-col text-sm leading-relaxed font-normal;
+
+    &.modal-overlay-active {
+      @apply h-screen overflow-hidden;
+    }
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply text-text font-sans leading-tight font-semibold tracking-tight;
+}
+
+h1 {
+  @apply mb-4 pl-6 text-3xl max-md:pl-4 max-md:text-2xl;
+}
+
+h2 {
+  @apply mb-4 pl-5 text-2xl max-md:mb-2 max-md:pl-4 max-md:text-xl;
+}
+
+h3 {
+  @apply mb-4 text-xl font-semibold tracking-tight max-md:mb-2 max-md:text-lg;
+}
+
+h4 {
+  @apply mb-2 text-lg max-md:text-base;
+}
+
+h5 {
+  @apply mb-2 text-base max-md:text-sm;
+}
+
+h6 {
+  @apply mb-2 text-sm max-md:text-xs;
+}
+
+hr {
+  @apply border-0;
+}
+
+strong {
+  @apply font-semibold tracking-tight;
+}
+
+abbr {
+  @apply cursor-help;
+}
+
+p {
+  @apply text-text text-sm leading-relaxed;
+}
+
+pre {
+  @apply text-text-muted border-hairline bg-surface-sunken block rounded-xl border px-3 py-2 font-mono text-sm leading-relaxed wrap-break-word whitespace-pre-wrap;
+}
+
+code {
+  @apply text-text-muted bg-surface-sunken rounded px-2 py-1 font-mono text-sm;
+}
+
+a {
+  @apply text-link no-underline hover:underline;
+}
+
+var {
+  @apply text-link font-mono;
+}
+
+small {
+  @apply text-text text-xs font-normal;
+}
+
+em {
+  @apply text-text-muted font-medium italic;
+}

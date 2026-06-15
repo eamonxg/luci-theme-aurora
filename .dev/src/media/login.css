@@ -7,18 +7,9 @@
 @import "tailwindcss";
 @import "./_tokens.css";
 @import "./_reduced-motion.css";
+@import "./_base.css";
 
 @custom-variant dark (&:where([data-darkmode=true], [data-darkmode=true] *));
-
-@layer base {
-  html {
-    @apply bg-canvas h-full font-sans;
-  }
-
-  body {
-    @apply text-content bg-canvas min-h-full;
-  }
-}
 
 @keyframes divider-in {
   from {
@@ -38,16 +29,14 @@
 
   /* Fixed sibling layer (not form ancestor) on its own GPU surface so input
      paints don't re-sample the bg image. DOM order keeps the form on top. */
+  /* LQIP shown immediately; falls back to full image when no LQIP stored */
   .login-bg {
-    @apply pointer-events-none fixed inset-0 transform-[translateZ(0)] bg-cover bg-center bg-no-repeat;
-    /* LQIP shown immediately; falls back to full image when no LQIP stored */
-    background-image: var(--login-bg-lqip, var(--login-bg));
+    @apply pointer-events-none fixed inset-0 transform-[translateZ(0)] bg-cover bg-center bg-no-repeat [background-image:var(--login-bg-lqip,var(--login-bg))];
   }
 
   /* Full image fades in on top once loaded (compositor-only opacity change) */
   .login-bg::after {
-    @apply pointer-events-none absolute inset-0 content-[''] bg-cover bg-center bg-no-repeat opacity-0 [will-change:opacity] [transition:opacity_0.5s_ease];
-    background-image: var(--login-bg);
+    @apply pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat opacity-0 [will-change:opacity] content-[''] [transition:opacity_0.5s_ease] [background-image:var(--login-bg)];
   }
 
   .login-bg.full-loaded::after {
@@ -55,7 +44,7 @@
   }
 
   .login-card {
-    @apply bg-surface-raised border-border-subtle flex flex-col gap-7 rounded-4xl border p-14 max-md:rounded-3xl max-md:p-9;
+    @apply bg-surface flex flex-col gap-7 rounded-4xl p-14 shadow-lg max-md:rounded-3xl max-md:p-9;
   }
 
   .login-brand {
@@ -63,11 +52,11 @@
   }
 
   .login-divider {
-    @apply via-border-subtle h-px w-full border-0 bg-linear-to-r from-transparent to-transparent animate-[divider-in_0.7s_cubic-bezier(0.16,1,0.3,1)_0.1s_both];
+    @apply via-hairline h-px w-full animate-[divider-in_0.7s_cubic-bezier(0.16,1,0.3,1)_0.1s_both] border-0 bg-linear-to-r from-transparent to-transparent;
   }
 
   .login-logo {
-    @apply bg-brand-soft ring-brand-emphasis flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1;
+    @apply bg-brand-subtle ring-brand-subtle flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1;
 
     & img {
       @apply h-6 w-6;
@@ -79,11 +68,11 @@
   }
 
   .login-hostname {
-    @apply text-content text-xl font-semibold tracking-tight;
+    @apply text-text text-xl font-semibold tracking-tight;
   }
 
   .login-subtitle {
-    @apply text-content text-sm;
+    @apply text-text text-sm;
   }
 
   .login-form {
@@ -99,17 +88,17 @@
   }
 
   .login-label {
-    @apply text-content text-[0.6875rem] font-semibold tracking-widest uppercase;
+    @apply text-text text-[0.6875rem] font-semibold tracking-widest uppercase;
   }
 
   .input-wrap {
-    @apply border-border-subtle bg-surface-raised relative rounded-2xl border [contain:layout_style];
+    @apply border-hairline bg-surface-sunken relative rounded-2xl border [contain:layout_style];
   }
 
   /* Focus ring: opacity-only transition runs on compositor thread, not main thread —
      border-color changes require a repaint (~400 ms INP); opacity changes do not. */
   .input-wrap::after {
-    @apply border-brand pointer-events-none absolute -inset-px rounded-[calc(var(--radius-2xl)+1px)] border-2 opacity-0 [will-change:opacity] content-[''] [transition:opacity_150ms_ease];
+    @apply border-brand pointer-events-none absolute -inset-px rounded-xl border-2 opacity-0 [will-change:opacity] content-[''] [transition:opacity_150ms_ease];
   }
 
   .input-wrap:focus-within::after {
@@ -117,11 +106,11 @@
   }
 
   .login-input {
-    @apply text-content placeholder:text-content-subtle w-full appearance-none rounded-2xl border-0 bg-transparent px-3 py-2.5 text-base outline-none;
+    @apply text-text placeholder:text-text-subtle w-full appearance-none rounded-2xl border-0 bg-transparent px-3 py-2.5 text-base outline-none;
   }
 
   .login-error {
-    @apply bg-danger-surface text-danger-content border-danger-border rounded-2xl border px-3 py-2 text-center text-sm;
+    @apply bg-danger-surface text-danger border-hairline rounded-2xl border px-3 py-2 text-center text-sm;
   }
 
   .login-actions {
@@ -133,7 +122,7 @@
   }
 
   .login-footer {
-    @apply text-content-muted absolute right-0 bottom-5 left-0 px-5 text-center text-xs;
+    @apply text-text-muted absolute right-0 bottom-5 left-0 px-5 text-center text-xs;
 
     & p {
       @apply whitespace-normal;

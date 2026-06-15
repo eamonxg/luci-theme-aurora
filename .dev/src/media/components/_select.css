@@ -1,5 +1,5 @@
 select {
-  @apply text-content border-border-subtle bg-surface focus:border-brand focus:ring-brand-emphasis appearance-none rounded-2xl border px-3 py-1.5 pr-10 text-sm font-normal shadow-sm transition-[border-color,box-shadow] duration-200 focus:ring-2 focus:outline-none;
+  @apply text-text border-hairline bg-surface-sunken focus:border-brand focus:ring-focus-ring appearance-none rounded-2xl border px-3 py-1.5 pr-10 text-sm font-normal shadow-sm transition-[border-color,box-shadow] duration-150 focus:ring-2 focus:outline-none;
   @apply bg-[url('@assets/icons/arrow-down.svg')] bg-size-[16px] bg-position-[right_0.75rem_center] bg-no-repeat dark:bg-[url('@assets/icons/arrow-down-dark.svg')];
   &[disabled] {
     @apply cursor-not-allowed opacity-40 dark:opacity-30;

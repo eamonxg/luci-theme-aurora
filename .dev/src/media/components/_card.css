@@ -9,7 +9,7 @@
   }
 
   #maincontent & {
-    @apply border-border-faint bg-surface-raised hover:border-border-subtle border shadow-lg hover:shadow-xl;
+    @apply bg-surface border-hairline border shadow-sm;
   }
 
   & > .cbi-title {
@@ -19,12 +19,12 @@
       @apply flex-1;
 
       & .label[data-clickable] {
-        @apply text-content bg-card-action-bg;
-        @apply inline-flex size-7 cursor-pointer items-center justify-center p-0 before:size-4 before:bg-current before:transition-transform before:duration-300 hover:shadow-md active:scale-95 max-md:size-6;
+        @apply text-text bg-surface-sunken;
+        @apply inline-flex size-7 cursor-pointer items-center justify-center p-0 before:size-4 before:bg-current before:transition-transform before:duration-150 hover:shadow-md active:scale-95 max-md:size-6;
       }
 
       & span[data-indicator="poll-status"] {
-        @apply relative size-5 cursor-pointer text-[0px] before:absolute before:size-5 before:bg-current before:transition-transform before:duration-300 before:ease-out hover:before:scale-110 active:before:scale-95;
+        @apply relative size-5 cursor-pointer text-[0px] before:absolute before:size-5 before:bg-current before:transition-transform before:duration-150 before:ease-out hover:before:scale-110 active:before:scale-95;
 
         &[data-style="active"] {
           @apply before:rotate-0 before:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat];
@@ -42,7 +42,7 @@
   }
 
   & h3 {
-    @apply text-content border-border-subtle border-b pb-4 max-md:mx-0 max-md:pb-2;
+    @apply text-text border-hairline border-b pb-4 max-md:mx-0 max-md:pb-2;
   }
 
   & div[style*="display:grid"] {
@@ -63,14 +63,14 @@
 }
 
 .ifacebox {
-  @apply border-border-subtle bg-glass-raised hover:border-border-strong max-md:border-border-subtle relative inline-flex min-w-40 flex-col items-stretch overflow-visible rounded-2xl border text-center text-base leading-5 shadow-md hover:shadow-lg max-md:min-w-30 max-md:flex-1 max-md:rounded-3xl max-md:shadow-sm;
+  @apply border-hairline bg-surface-overlay hover:border-hairline max-md:border-hairline relative inline-flex min-w-40 flex-col items-stretch overflow-visible rounded-2xl border text-center text-base leading-5 shadow-md hover:shadow-xl max-md:min-w-30 max-md:flex-1 max-md:rounded-3xl max-md:shadow-sm;
 
   td & {
     @apply max-md:flex-row;
   }
 
   & .ifacebox-head {
-    @apply border-border-subtle bg-ifacebox-header-bg text-content w-full rounded-t-2xl border-b px-4 py-3 text-center font-semibold tracking-tight transition-[background-color,border-color,color] duration-200 max-md:rounded-t-3xl max-md:px-3 max-md:py-2.5 max-md:text-sm max-md:leading-5 max-md:font-medium;
+    @apply border-hairline bg-surface-sunken text-text w-full rounded-t-2xl border-b px-4 py-3 text-center font-semibold tracking-tight transition-[background-color,border-color,color] duration-150 max-md:rounded-t-3xl max-md:px-3 max-md:py-2.5 max-md:text-sm max-md:leading-5 max-md:font-medium;
 
     &[style*="--zone-color-rgb"] {
       @apply bg-[rgb(var(--zone-color-rgb),.75)]!;
@@ -93,14 +93,14 @@
   }
 
   & .ifacebox-body {
-    @apply text-content flex w-full flex-1 flex-col items-center justify-around gap-2 rounded-b-2xl p-4 text-center max-md:rounded-b-3xl;
+    @apply text-text flex w-full flex-1 flex-col items-center justify-around gap-2 rounded-b-2xl p-4 text-center max-md:rounded-b-3xl;
 
     td & {
       @apply max-md:flex-row max-md:rounded-r-3xl max-md:rounded-bl-none max-md:py-2 max-md:pr-2 max-md:pl-4;
     }
 
     & > span {
-      @apply text-content space-y-1.5 max-md:space-y-1 max-md:text-sm max-md:leading-5;
+      @apply text-text space-y-1.5 max-md:space-y-1 max-md:text-sm max-md:leading-5;
 
       .network-status-table & {
         @apply w-full;
@@ -138,7 +138,7 @@
     }
 
     & .cbi-tooltip-container {
-      @apply text-content static inline-flex cursor-help items-center justify-center;
+      @apply text-text static inline-flex cursor-help items-center justify-center;
 
       & .cbi-tooltip {
         @apply bottom-0 md:left-0;

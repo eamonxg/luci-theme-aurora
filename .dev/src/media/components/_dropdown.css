@@ -6,7 +6,7 @@
   }
 
   &:not(.btn):not(.cbi-button) {
-    @apply border-border-subtle bg-surface rounded-2xl border;
+    @apply border-hairline bg-surface rounded-2xl border;
     & > ul > li {
       &[placeholder] {
         @apply hidden;
@@ -50,10 +50,10 @@
     }
 
     &.dropdown {
-      @apply border-border-subtle bg-glass-surface absolute left-0 z-60 w-fit min-w-full overflow-y-auto rounded-lg border shadow-xl backdrop-blur-sm;
+      @apply border-hairline bg-surface-overlay absolute left-0 z-60 w-fit min-w-full overflow-y-auto rounded-lg border shadow-xl backdrop-blur-md backdrop-saturate-150;
 
       & > li {
-        @apply text-content-muted hover:bg-brand-soft min-h-9 w-full cursor-pointer px-3 py-1.5 font-medium;
+        @apply text-text-muted hover:bg-brand-subtle min-h-9 w-full cursor-pointer px-3 py-1.5 font-medium;
       }
     }
 
@@ -86,7 +86,7 @@
         @apply flex;
 
         &[selected] {
-          @apply bg-brand-emphasis text-brand;
+          @apply bg-brand-subtle text-brand;
         }
 
         &[unselectable] {
@@ -127,7 +127,7 @@
   }
 
   & > .open {
-    @apply border-border-subtle flex flex-none shrink-0 cursor-pointer items-center justify-center border-l px-2.5 py-0.5 text-sm text-current;
+    @apply border-hairline flex flex-none shrink-0 cursor-pointer items-center justify-center border-l px-2.5 py-0.5 text-sm text-current;
   }
 
   & > .more {

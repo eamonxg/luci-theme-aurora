@@ -6,7 +6,7 @@ input[type="text"],
 input[type="password"],
 .cbi-input-text,
 .cbi-input {
-  @apply text-content border-border-subtle bg-surface placeholder-content-muted focus:border-brand focus:ring-brand-emphasis relative rounded-2xl border px-3 py-1.5 text-sm font-normal shadow-sm transition-[border-color,box-shadow] duration-200 focus:ring-2 focus:outline-none;
+  @apply text-text border-hairline bg-surface-sunken placeholder-text-muted focus:border-brand focus:ring-focus-ring relative rounded-2xl border px-3 py-1.5 text-sm font-normal shadow-sm transition-[border-color,box-shadow] duration-150 focus:ring-2 focus:outline-none;
 
   .table.cbi-section-table & {
     @apply w-full;
@@ -23,7 +23,7 @@ input[type="password"],
 
 input[type="radio"],
 input[type="checkbox"] {
-  @apply focus:before:border-brand focus:before:ring-brand-emphasis checked:before:border-brand checked:before:bg-brand before:border-border-subtle before:bg-surface after:bg-input-checked-content hover:before:border-border-strong relative mr-3 inline-block h-4 w-4 cursor-pointer appearance-none before:absolute before:top-0 before:left-0 before:h-4 before:w-4 before:border before:transition-[background-color,border-color,box-shadow] before:duration-200 after:absolute after:top-0.5 after:left-0.5 after:h-3 after:w-3 after:opacity-0 after:transition-opacity after:duration-200 checked:after:opacity-100 focus:before:ring-2 focus:before:outline-none disabled:cursor-not-allowed;
+  @apply focus:before:border-brand focus:before:ring-focus-ring checked:before:border-brand checked:before:bg-brand before:border-hairline before:bg-surface-sunken after:bg-on-brand hover:before:border-hairline relative mr-3 inline-block h-4 w-4 cursor-pointer appearance-none before:absolute before:top-0 before:left-0 before:h-4 before:w-4 before:border before:transition-[background-color,border-color,box-shadow] before:duration-150 after:absolute after:top-0.5 after:left-0.5 after:h-3 after:w-3 after:opacity-0 after:transition-opacity after:duration-150 checked:after:opacity-100 focus:before:ring-2 focus:before:outline-none disabled:cursor-not-allowed;
 }
 
 input[type="radio"] {

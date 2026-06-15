@@ -4,9 +4,11 @@
  */
 
 import tailwindcss from "@tailwindcss/vite";
+import browserslist from "browserslist";
 import { exec } from "child_process";
 import { watch as fsWatch } from "fs";
 import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { browserslistToTargets } from "lightningcss";
 import { basename, dirname, join, relative, resolve } from "path";
 import { minify as terserMinify } from "terser";
 import { promisify } from "util";
@@ -382,6 +384,11 @@ export default defineConfig(({ mode }) => {
     ],
 
     css: {
+      lightningcss: {
+        targets: browserslistToTargets(
+          browserslist("last 4 versions, Firefox ESR, not dead"),
+        ),
+      },
       postcss: {
         plugins: [
           {
