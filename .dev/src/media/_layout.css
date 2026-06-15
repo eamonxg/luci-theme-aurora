@@ -29,8 +29,9 @@ header {
         /* Centered three-column canvas: anchor / links / device board.
            Fixed max-width keeps every category the same width, so switching
            is a pure cross-fade. Below lg the side tracks drop and only the
-           links column remains (tablet → just the submenu). */
-        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 px-10 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
+           links column remains (tablet → just the submenu). The panel scrolls
+           internally when its content exceeds the viewport below the header. */
+        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-h-[calc(100dvh-3.5rem)] max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 overflow-y-auto overscroll-contain px-10 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
 
         &.active {
           @apply pointer-events-auto translate-y-0 opacity-100;
@@ -45,8 +46,7 @@ header {
             /* First-level icon: mask + currentColor so it follows the theme.
                --menu-icon is set per node name below; unmapped → default. */
             &::before {
-              @apply size-6 shrink-0 bg-current content-[''];
-              mask: var(--menu-icon, url("@assets/icons/category.svg")) center / contain no-repeat;
+              @apply size-6 shrink-0 bg-current content-[''] [mask:var(--menu-icon,url('@assets/icons/category.svg'))_center/contain_no-repeat];
             }
           }
 
@@ -54,22 +54,22 @@ header {
              node name, not the translated title. Add new first-level
              sections here; anything unmapped keeps the default icon. */
           & .desktop-nav-title[data-section="status"] {
-            --menu-icon: url("@assets/icons/activity.svg");
+            @apply [--menu-icon:url('@assets/icons/activity.svg')];
           }
           & .desktop-nav-title[data-section="system"] {
-            --menu-icon: url("@assets/icons/settings.svg");
+            @apply [--menu-icon:url('@assets/icons/settings.svg')];
           }
           & .desktop-nav-title[data-section="services"] {
-            --menu-icon: url("@assets/icons/apps.svg");
+            @apply [--menu-icon:url('@assets/icons/apps.svg')];
           }
           & .desktop-nav-title[data-section="nas"] {
-            --menu-icon: url("@assets/icons/server-2.svg");
+            @apply [--menu-icon:url('@assets/icons/server-2.svg')];
           }
           & .desktop-nav-title[data-section="control"] {
-            --menu-icon: url("@assets/icons/adjustments.svg");
+            @apply [--menu-icon:url('@assets/icons/adjustments.svg')];
           }
           & .desktop-nav-title[data-section="network"] {
-            --menu-icon: url("@assets/icons/world.svg");
+            @apply [--menu-icon:url('@assets/icons/world.svg')];
           }
         }
 
@@ -83,7 +83,7 @@ header {
             @apply m-0 list-none;
 
             & > a {
-              @apply text-text block w-fit rounded-lg px-3 py-2 text-sm whitespace-nowrap no-underline transition-colors duration-150 hover:bg-hover-faint;
+              @apply text-text hover:bg-hover-faint block w-fit rounded-lg px-3 py-2 text-sm whitespace-nowrap no-underline transition-colors duration-150;
 
               &.is-active-page {
                 @apply bg-brand-subtle text-brand font-medium;
@@ -147,7 +147,7 @@ header {
       @apply relative;
 
       .menu {
-        @apply text-text block rounded-xl px-3.5 py-1.5 font-medium no-underline transition-colors duration-150 hover:bg-hover-faint;
+        @apply text-text hover:bg-hover-faint block rounded-xl px-3.5 py-1.5 font-medium no-underline transition-colors duration-150;
 
         /* Unified pill for both dropdown modes — the open/active category is a
            filled brand pill, matching the submenu links and the sidebar. */

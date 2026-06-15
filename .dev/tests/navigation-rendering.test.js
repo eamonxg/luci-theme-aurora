@@ -385,6 +385,30 @@ test("renders an active group expanded with active page semantics", () => {
   assert.equal(activeLink.getAttribute("aria-current"), "page");
 });
 
+test("renders the active desktop submenu link with current-page semantics", () => {
+  const menu = loadMenuModule({
+    dispatchpath: ["admin", "network", "wireless"],
+  });
+  const list = menu.renderMainMenu(
+    {
+      name: "network",
+      children: {
+        interfaces: { title: "Interfaces" },
+        wireless: { title: "Wireless" },
+      },
+    },
+    "admin/network",
+    1,
+  );
+  const [inactiveItem, activeItem] = list.children;
+  const inactiveLink = inactiveItem.children[0];
+  const activeLink = activeItem.children[0];
+
+  assert.equal(inactiveLink.hasAttribute("aria-current"), false);
+  assert.equal(activeLink.getAttribute("class"), "is-active-page");
+  assert.equal(activeLink.getAttribute("aria-current"), "page");
+});
+
 test("renders an inactive group collapsed and inert", () => {
   const menu = loadMenuModule();
   const item = menu.renderNavigationItem(
@@ -504,6 +528,13 @@ test("skips mega-menu initialization when the top menu is missing", () => {
   });
   assert.equal(calls, 0);
   assert.ok(result instanceof FakeElement);
+});
+
+test("measures mega-menu canvas from the viewport-bounded panel height", () => {
+  const initMegaMenu = getMethodSource("initMegaMenu");
+
+  assert.match(initMegaMenu, /nav\.offsetHeight/);
+  assert.doesNotMatch(initMegaMenu, /nav\.scrollHeight/);
 });
 
 test("skips boxed-dropdown initialization when the top menu is missing", () => {

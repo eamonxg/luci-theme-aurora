@@ -259,18 +259,13 @@ return baseclass.extend({
         // as the top-level trigger (.menu-active). tree is the section node,
         // so tree.name is its dispatch segment.
         const isActive = this.isActivePath(tree.name, child.name);
-        ul.appendChild(
-          E("li", {}, [
-            E(
-              "a",
-              {
-                class: isActive ? "is-active-page" : "",
-                href: L.url(url, child.name),
-              },
-              [_(child.title)],
-            ),
-          ]),
-        );
+        const attributes = {
+          class: isActive ? "is-active-page" : "",
+          href: L.url(url, child.name),
+        };
+        if (isActive) attributes["aria-current"] = "page";
+
+        ul.appendChild(E("li", {}, [E("a", attributes, [_(child.title)])]));
       });
     }
 
@@ -538,9 +533,11 @@ return baseclass.extend({
         // to the default icon via var(--menu-icon, …).
         children.unshift(
           E("div", { class: "desktop-nav-anchor" }, [
-            E("span", { class: "desktop-nav-title", "data-section": child.name }, [
-              _(child.title),
-            ]),
+            E(
+              "span",
+              { class: "desktop-nav-title", "data-section": child.name },
+              [_(child.title)],
+            ),
           ]),
         );
         // Right column: clone the server-rendered device board into each
@@ -594,7 +591,7 @@ return baseclass.extend({
         let maxPanel = 0;
         header
           .querySelectorAll(".desktop-nav")
-          .forEach((nav) => (maxPanel = Math.max(maxPanel, nav.scrollHeight)));
+          .forEach((nav) => (maxPanel = Math.max(maxPanel, nav.offsetHeight)));
         canvasHeight = headerHeight + maxPanel;
       }
       container?.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
