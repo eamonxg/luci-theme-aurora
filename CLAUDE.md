@@ -11,7 +11,7 @@ cd .dev/
 pnpm dev        # Start Vite dev server (proxies to OpenWrt device)
 pnpm build      # Clean + regenerate tokens + build production assets to htdocs/luci-static/
 pnpm gen:tokens # Regenerate src/media/_tokens.css from tokens/ (also runs as part of build)
-pnpm test       # Run tokens/*.test.js (node:test)
+pnpm test       # Run tests/*.test.js (node:test)
 pnpm clean      # Remove build output only
 ```
 

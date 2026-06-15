@@ -49,13 +49,13 @@ test("shared navigation styles define active and expanded states", () => {
     navigationStyles,
     ".navigation-direct.is-active-page",
   );
-  const activeGroup = getBlock(
-    navigationStyles,
-    ".navigation-group.is-active-group > .navigation-group-toggle",
-  );
   const expandedToggle = getBlock(
     navigationStyles,
     ".navigation-group.is-expanded > .navigation-group-toggle",
+  );
+  const activeGroupToggle = getBlock(
+    navigationStyles,
+    ".navigation-group.is-active-group > .navigation-group-toggle",
   );
   const activeSublink = getBlock(
     navigationStyles,
@@ -64,29 +64,38 @@ test("shared navigation styles define active and expanded states", () => {
   const sublink = getBlock(navigationStyles, ".navigation-sublink");
 
   assertIncludesUtilities(direct, ["text-text", "hover:text-text"]);
+  // Active page is a filled brand pill on both direct links and sublinks.
   assertIncludesUtilities(directActive, [
     "text-brand",
     "hover:text-brand",
     "font-medium",
+    "bg-brand-subtle",
   ]);
-  assertIncludesUtilities(activeGroup, ["text-brand", "hover:text-brand"]);
-  assertIncludesUtilities(expandedToggle, ["after:rotate-90"]);
-  assertIncludesUtilities(sublink, ["font-medium"]);
+  // An expanded group's label turns brand and rotates its arrow open.
+  assertIncludesUtilities(expandedToggle, ["after:rotate-90", "text-brand"]);
+  // The active group keeps a brand label even when manually collapsed, so the
+  // current section stays marked while its pill is hidden — but it must not
+  // rotate the arrow open in that collapsed state.
+  assertIncludesUtilities(activeGroupToggle, ["text-brand"]);
+  assert.doesNotMatch(activeGroupToggle, /after:rotate-90/);
+  // The pill shape lives with the pill fill in the shared recipe, so the
+  // hover/active background is rounded the same way on desktop and mobile.
+  assertIncludesUtilities(sublink, [
+    "font-medium",
+    "hover:bg-hover-faint",
+    "rounded-lg",
+  ]);
   assertIncludesUtilities(activeSublink, [
     "text-brand",
     "hover:text-brand",
     "font-semibold",
-    "before:bg-brand",
-    "before:-left-4",
-    "before:w-0.5",
+    "bg-brand-subtle",
   ]);
-
-  for (const block of [directActive, activeGroup, activeSublink]) {
-    assert.doesNotMatch(block, /bg-brand-subtle/);
-  }
+  // The left accent bar is gone — no before:* rail on the active sublink.
+  assert.doesNotMatch(activeSublink, /before:/);
 });
 
-test("shared navigation styles own accordion animation and guide rail", () => {
+test("shared navigation styles own accordion animation without a guide rail", () => {
   const toggle = getBlock(navigationStyles, ".navigation-group-toggle");
   const region = getBlock(navigationStyles, ".navigation-group-region");
   const expandedRegion = getBlock(
@@ -94,10 +103,6 @@ test("shared navigation styles own accordion animation and guide rail", () => {
     ".navigation-group.is-expanded > .navigation-group-region",
   );
   const submenu = getBlock(navigationStyles, ".navigation-submenu-list");
-  const expandedSubmenu = getBlock(
-    navigationStyles,
-    ".navigation-group.is-expanded .navigation-submenu-list",
-  );
 
   assertIncludesUtilities(toggle, [
     "after:transition-[transform,opacity]",
@@ -112,12 +117,9 @@ test("shared navigation styles own accordion animation and guide rail", () => {
     "duration-[250ms]",
   ]);
   assertIncludesUtilities(expandedRegion, ["grid-rows-[1fr]", "opacity-100"]);
-  assertIncludesUtilities(submenu, [
-    "before:bg-hairline",
-    "before:scale-y-0",
-    "before:duration-[250ms]",
-  ]);
-  assertIncludesUtilities(expandedSubmenu, ["before:scale-y-100"]);
+  // The vertical guide rail is removed: the submenu list carries no before:*
+  // hairline anymore.
+  assert.doesNotMatch(submenu, /before:bg-hairline/);
 });
 
 test("desktop sidebar styles only provide desktop navigation density", () => {
@@ -144,8 +146,9 @@ test("mobile drawer styles only provide mobile navigation density", () => {
   assertIncludesUtilities(submenu, ["max-md:pl-4"]);
   assertIncludesUtilities(sublink, [
     "max-md:min-h-10",
+    "max-md:px-3",
     "max-md:py-2",
-    "max-md:text-[0.9375rem]",
+    "max-md:text-base",
   ]);
   assert.doesNotMatch(sublink, /max-md:font-(?:normal|medium|semibold|bold)/);
   assert.doesNotMatch(

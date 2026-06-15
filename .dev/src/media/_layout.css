@@ -292,7 +292,7 @@ body[data-nav-type="sidebar"] {
   }
 
   & .sidebar-submenu .navigation-sublink {
-    @apply rounded-lg px-3 py-1.5 text-sm;
+    @apply px-3 py-1.5 text-sm;
   }
 
   & .sidebar-footer {

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveMode } from "./resolve.js";
+import { resolveMode } from "../tokens/resolve.js";
 
 test("resolveMode(light) returns flat oklch for all tokens", () => {
   const out = resolveMode("light");

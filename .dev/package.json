@@ -7,7 +7,7 @@
 		"build": "npm run clean && npm run gen:tokens && vite build",
 		"clean": "node scripts/clean.js",
 		"gen:tokens": "node scripts/gen-tokens.js",
-		"test": "node --test tokens/*.test.js tests/*.test.js"
+		"test": "node --test tests/*.test.js"
 	},
 	"devDependencies": {
 		"@tailwindcss/vite": "^4.1.11",

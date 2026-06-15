@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import Color from "colorjs.io";
-import { mix, shade, set, alpha, konst, toOklch } from "./engine.js";
+import { mix, shade, set, alpha, konst, toOklch } from "../tokens/engine.js";
 
 const l = (v) => new Color(toOklch(v)).to("oklch").coords[0];
 const aOf = (v) => {

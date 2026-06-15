@@ -88,7 +88,7 @@
   }
 
   .login-label {
-    @apply text-text text-[0.6875rem] font-semibold tracking-widest uppercase;
+    @apply text-text text-xs font-semibold tracking-widest uppercase;
   }
 
   .input-wrap {
