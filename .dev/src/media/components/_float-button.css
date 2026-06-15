@@ -2,22 +2,22 @@
   @apply fixed right-4 bottom-4 z-40 flex flex-col items-center max-md:right-3 max-md:bottom-3;
 
   .toolbar-list {
-    @apply visible mb-2 grid origin-bottom grid-rows-[1fr] opacity-100 transition-[grid-template-rows,transform,opacity,visibility] duration-300 ease-in-out max-md:mb-1.5;
+    @apply visible mb-2 grid origin-bottom grid-rows-[1fr] opacity-100 transition-[grid-template-rows,transform,opacity,visibility] duration-[250ms] ease-in-out max-md:mb-1.5;
 
     .toolbar-list-inner {
-      @apply border-border-subtle bg-glass-surface flex min-h-0 flex-col items-center gap-2 overflow-hidden rounded-full border p-1 shadow-sm max-md:gap-1.5 max-md:p-0.5;
+      @apply border-hairline bg-surface-overlay flex min-h-0 flex-col items-center gap-2 overflow-hidden rounded-full border p-1 shadow-sm max-md:gap-1.5 max-md:p-0.5;
     }
   }
 
   .toolbar-btn {
-    @apply flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full p-2 transition-[background-color,transform,opacity] duration-200 ease-in-out active:scale-95 max-md:h-9 max-md:w-9 max-md:p-1.5;
+    @apply flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full p-2 transition-[background-color,transform,opacity] duration-150 ease-in-out active:scale-95 max-md:h-9 max-md:w-9 max-md:p-1.5;
 
     .icon {
-      @apply h-5 w-5 shrink-0 transition-transform duration-300 ease-in-out max-md:h-4 max-md:w-4;
+      @apply h-5 w-5 shrink-0 transition-transform duration-150 ease-in-out max-md:h-4 max-md:w-4;
     }
 
     &:not(.toggle) {
-      @apply hover:bg-border-faint no-underline hover:scale-110;
+      @apply hover:bg-hover-faint no-underline hover:scale-110;
       .icon {
         @apply object-contain dark:invert;
       }
@@ -26,7 +26,7 @@
     &.toggle {
       @apply bg-surface border-0 shadow-sm;
       .icon {
-        @apply transition-transform duration-300 ease-out;
+        @apply transition-transform duration-150 ease-out;
       }
     }
   }

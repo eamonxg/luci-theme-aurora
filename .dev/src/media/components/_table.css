@@ -1,6 +1,6 @@
 table.table,
 .table {
-  @apply border-border-subtle max-md:bg-glass-raised mb-3 w-full border-separate border-spacing-0 overflow-visible rounded-2xl border max-md:mx-0 max-md:block max-md:w-full max-md:overflow-visible max-md:border-0 max-md:shadow-none;
+  @apply border-hairline max-md:bg-surface-overlay mb-3 w-full border border-separate border-spacing-0 overflow-visible rounded-2xl max-md:mx-0 max-md:block max-md:w-full max-md:overflow-visible max-md:border-0 max-md:shadow-none;
 
   &[width="100%"] {
     @apply w-full;
@@ -17,7 +17,7 @@ table.table,
   & .cbi-section-table-titles.named,
   & .cbi-section-table-descr.named,
   & .cbi-section-table-row[data-title] {
-    @apply before:border-border-subtle before:table-cell before:px-3 before:py-3 before:align-middle before:text-base before:font-semibold before:content-[attr(data-title)] before:max-md:flex before:max-md:flex-[0_0_100%] before:max-md:px-3 before:max-md:py-2.5 before:max-md:text-sm before:md:border-b;
+    @apply before:border-hairline before:table-cell before:px-3 before:py-3 before:align-middle before:text-base before:font-semibold before:content-[attr(data-title)] before:max-md:flex before:max-md:flex-[0_0_100%] before:max-md:px-3 before:max-md:py-2.5 before:max-md:text-sm before:md:border-b;
     &:not([data-title]),
     &:has(td.cbi-section-table-titles) {
       @apply before:content-none;
@@ -25,7 +25,7 @@ table.table,
   }
 
   & .cbi-section-table-titles.named {
-    @apply before:bg-table-header-bg before:max-md:bg-table-header-bg before:md:rounded-tl-2xl;
+    @apply before:text-text-subtle before:text-xs before:font-semibold before:tracking-wider before:uppercase;
   }
 
   & tbody,
@@ -35,30 +35,16 @@ table.table,
 
   & tr,
   & .tr {
-    @apply hover:bg-table-row-hover-bg transition-colors duration-200 max-md:border-border-subtle max-md:flex max-md:flex-wrap max-md:border-b max-md:px-2 max-md:py-2;
+    @apply max-md:border-hairline max-md:flex max-md:flex-wrap max-md:border-b max-md:px-2 max-md:py-2;
     @apply has-[.cbi-progressbar]:max-md:flex has-[.cbi-progressbar]:max-md:items-center has-[.cbi-progressbar]:max-md:justify-center;
-
-    &:first-child {
-      &:not([data-title]) {
-        & .th,
-        & .td {
-          @apply first:md:rounded-tl-2xl;
-        }
-      }
-
-      & .th,
-      & .td {
-        @apply last:md:rounded-tr-2xl;
-      }
-    }
 
     &:last-child {
       @apply max-md:rounded-b-2xl;
       &[data-title] {
-        @apply before:rounded-bl-2xl before:border-b-0;
+        @apply before:border-b-0;
       }
       .td {
-        @apply border-b-0 first:md:rounded-bl-2xl last:md:rounded-br-2xl;
+        @apply border-b-0;
       }
     }
 
@@ -79,12 +65,9 @@ table.table,
       @apply max-md:rounded-t-2xl;
     }
 
-    &.cbi-rowstyle-1 {
-      @apply bg-surface-raised;
-    }
-
+    &.cbi-rowstyle-1,
     &.cbi-rowstyle-2 {
-      @apply bg-table-row-alternate-bg;
+      @apply bg-transparent;
     }
 
     & > .col-1 {
@@ -130,7 +113,7 @@ table.table,
 
   & th,
   & .th {
-    @apply border-border-subtle bg-table-header-bg border-b px-3 py-3 text-left text-base font-medium max-md:flex-[1_1_50%] max-md:border-0 max-md:text-sm;
+    @apply border-hairline bg-surface-sunken text-text-subtle border-b px-3 py-3 text-left text-xs font-semibold tracking-wider uppercase first:rounded-tl-2xl last:rounded-tr-2xl max-md:flex-[1_1_50%] max-md:border-0 max-md:bg-transparent;
 
     #cbi-samba4 & {
       @apply px-0.5 py-1.5;
@@ -145,7 +128,7 @@ table.table,
     }
 
     &[data-sortable-row="true"] {
-      @apply hover:bg-table-row-hover-bg cursor-pointer select-none after:ml-0.5 after:text-xs;
+      @apply hover:bg-hover-faint cursor-pointer select-none after:ml-0.5 after:text-xs;
       &[data-sort-direction="asc"] {
         @apply after:content-['\25B2'];
       }
@@ -163,7 +146,7 @@ table.table,
 
   & td,
   & .td {
-    @apply border-border-subtle table-cell border-b px-3 py-3 align-middle text-base wrap-break-word whitespace-normal max-md:flex-[1_1_50%] max-md:border-0 max-md:px-1 max-md:py-1 max-md:text-sm;
+    @apply border-hairline table-cell border-b px-3 py-3 align-middle text-base wrap-break-word whitespace-normal max-md:flex-[1_1_50%] max-md:border-0 max-md:px-1 max-md:py-1 max-md:text-sm;
     @apply before:hidden before:content-[attr(data-title)] before:max-md:mb-1 before:max-md:block before:max-md:text-xs before:max-md:font-semibold before:max-md:tracking-wider;
 
     #cbi-samba4 & {

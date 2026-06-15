@@ -1,5 +1,5 @@
 .mobile-menu-overlay {
-  @apply max-md:invisible max-md:fixed max-md:inset-0 max-md:z-60 max-md:bg-(--header-bg)/45 max-md:opacity-0 max-md:backdrop-blur-2xl max-md:backdrop-saturate-200 max-md:transition-[visibility,opacity] max-md:duration-280 md:hidden;
+  @apply max-md:invisible max-md:fixed max-md:inset-0 max-md:z-60 max-md:bg-mega-menu-bg max-md:opacity-0 max-md:backdrop-blur-lg max-md:backdrop-saturate-150 max-md:transition-[visibility,opacity] max-md:duration-[250ms] md:hidden;
 
   &.mobile-menu-open {
     @apply max-md:visible max-md:opacity-100;
@@ -12,18 +12,18 @@
       @apply max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col max-md:px-5 max-md:pt-6;
 
       & .mobile-nav-label {
-        @apply max-md:text-content-muted max-md:mb-3 max-md:text-sm max-md:font-medium;
+        @apply max-md:text-text-muted max-md:mb-3 max-md:text-sm max-md:font-medium;
       }
     }
 
     & .mobile-nav-list {
-      @apply max-md:m-0 max-md:flex max-md:min-h-0 max-md:flex-1 max-md:-translate-y-2 max-md:list-none max-md:flex-col max-md:overflow-y-auto max-md:overscroll-contain max-md:p-0 max-md:pb-5 max-md:opacity-0 max-md:transition-[translate,opacity] max-md:duration-280 max-md:ease-out;
+      @apply max-md:m-0 max-md:flex max-md:min-h-0 max-md:flex-1 max-md:-translate-y-2 max-md:list-none max-md:flex-col max-md:overflow-y-auto max-md:overscroll-contain max-md:p-0 max-md:pb-5 max-md:opacity-0 max-md:transition-[translate,opacity] max-md:duration-[250ms] max-md:ease-out;
 
       & .mobile-nav-item {
         @apply max-md:shrink-0;
 
         & .mobile-nav-link {
-          @apply max-md:text-content max-md:hover:text-brand max-md:flex max-md:min-h-13 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2.5 max-md:text-left max-md:text-2xl max-md:leading-tight max-md:font-medium max-md:tracking-tight max-md:no-underline max-md:shadow-none max-md:transition-colors max-md:duration-200;
+          @apply max-md:text-text max-md:hover:text-brand max-md:flex max-md:min-h-13 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2.5 max-md:text-left max-md:text-2xl max-md:leading-tight max-md:font-medium max-md:tracking-tight max-md:no-underline max-md:shadow-none max-md:transition-colors max-md:duration-150;
 
           &.nav-link-active {
             @apply max-md:text-brand max-md:hover:text-brand;
@@ -31,7 +31,7 @@
         }
 
         &.has-submenu > .mobile-nav-link {
-          @apply max-md:after:size-4 max-md:after:shrink-0 max-md:after:bg-current max-md:after:opacity-55 max-md:after:transition-transform max-md:after:duration-200 max-md:after:content-[''] max-md:after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat];
+          @apply max-md:after:size-4 max-md:after:shrink-0 max-md:after:bg-current max-md:after:opacity-55 max-md:after:transition-transform max-md:after:duration-150 max-md:after:content-[''] max-md:after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat];
         }
 
         &.submenu-expanded > .mobile-nav-link {
@@ -39,15 +39,15 @@
         }
 
         & .mobile-nav-submenu {
-          @apply max-md:grid max-md:grid-rows-[0fr] max-md:opacity-0 max-md:transition-[grid-template-rows,opacity] max-md:duration-300 max-md:ease-in-out;
+          @apply max-md:grid max-md:grid-rows-[0fr] max-md:opacity-0 max-md:transition-[grid-template-rows,opacity] max-md:duration-[250ms] max-md:ease-in-out;
 
           & .mobile-nav-submenu-list {
-            @apply max-md:before:bg-border-subtle max-md:relative max-md:mx-0 max-md:mt-0 max-md:mb-2 max-md:min-h-0 max-md:list-none max-md:overflow-hidden max-md:py-1 max-md:pr-0 max-md:pl-4 max-md:before:absolute max-md:before:top-1 max-md:before:bottom-1 max-md:before:left-0 max-md:before:w-px max-md:before:origin-top max-md:before:scale-y-0 max-md:before:transition-transform max-md:before:duration-300 max-md:before:ease-out max-md:before:content-[''];
+            @apply max-md:before:bg-hairline max-md:relative max-md:mx-0 max-md:mt-0 max-md:mb-2 max-md:min-h-0 max-md:list-none max-md:overflow-hidden max-md:py-1 max-md:pr-0 max-md:pl-4 max-md:before:absolute max-md:before:top-1 max-md:before:bottom-1 max-md:before:left-0 max-md:before:w-px max-md:before:origin-top max-md:before:scale-y-0 max-md:before:transition-transform max-md:before:duration-[250ms] max-md:before:ease-out max-md:before:content-[''];
           }
 
           & .mobile-nav-subitem {
             & .mobile-nav-sublink {
-              @apply max-md:text-content max-md:hover:text-brand max-md:relative max-md:flex max-md:min-h-10 max-md:w-full max-md:items-center max-md:py-2 max-md:text-[0.9375rem] max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200;
+              @apply max-md:text-text max-md:hover:text-brand max-md:relative max-md:flex max-md:min-h-10 max-md:w-full max-md:items-center max-md:py-2 max-md:text-[0.9375rem] max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-150;
 
               &.nav-link-active {
                 @apply max-md:text-brand max-md:hover:text-brand max-md:font-semibold;
@@ -68,14 +68,14 @@
     }
 
     & .mobile-nav-footer {
-      @apply max-md:border-border-faint max-md:flex max-md:shrink-0 max-md:items-center max-md:justify-between max-md:border-t max-md:px-5 max-md:pt-4 max-md:pb-[max(1rem,env(safe-area-inset-bottom))];
+      @apply max-md:border-hairline max-md:flex max-md:shrink-0 max-md:items-center max-md:justify-between max-md:border-t max-md:px-5 max-md:pt-4 max-md:pb-[max(1rem,env(safe-area-inset-bottom))];
 
       & .mobile-nav-footer-action {
         @apply max-md:flex max-md:items-center;
       }
 
       & .mobile-nav-logout {
-        @apply max-md:text-content max-md:hover:text-brand max-md:text-sm max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-200;
+        @apply max-md:text-text max-md:hover:text-brand max-md:text-sm max-md:font-medium max-md:no-underline max-md:transition-colors max-md:duration-150;
       }
 
       & .theme-switcher {
@@ -97,10 +97,10 @@ body.mobile-navigation-open > header {
 
 [data-nav-type="mega-menu"] {
   & .desktop-menu-overlay {
-    @apply bg-scrim pointer-events-none fixed inset-0 z-50 opacity-0 transition-opacity duration-300 max-md:hidden;
+    @apply bg-scrim pointer-events-none fixed inset-0 z-50 opacity-0 transition-opacity duration-[250ms] max-md:hidden;
 
     &.active {
-      @apply pointer-events-auto opacity-100 backdrop-blur-sm;
+      @apply pointer-events-auto opacity-100 backdrop-blur-lg backdrop-saturate-150;
     }
   }
 }

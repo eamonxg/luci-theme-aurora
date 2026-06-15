@@ -1,122 +1,44 @@
 /**
- * luci-theme-aurora: design tokens
- * Copyright 2025 eamonxg <eamonxiong@gmail.com>
- * Licensed to the public under the Apache License 2.0.
- *
- * Shared between main.css and login.css.
- *
- * Layer 1 contains broad theme inputs. Layer 2 names semantic and component
- * responsibilities. Components consume named roles and never apply numeric
- * color opacity modifiers.
- *
- * ORDER MATTERS: [data-darkmode="true"] ties with :root on specificity, so
- * the dark block must remain after :root.
+ * luci-theme-aurora: design tokens -- GENERATED, DO NOT EDIT.
+ * Run `pnpm gen:tokens`. Source: tokens/spec.js + tokens/defaults.js
+ * All color values are flat; lightningcss adds legacy fallbacks.
+ * ORDER MATTERS: [data-darkmode="true"] must stay after :root.
  */
 
 :root {
-  /* Layer 1: theme inputs */
-  --canvas: oklch(0.968 0.007 247.896);
+  --bg: oklch(0.967 0.003 264);
   --surface: oklch(1 0 0);
-  --surface-raised: oklch(1 0 0);
-  --content: oklch(0.208 0.042 265.755);
+  --text: oklch(0.21 0.02 264);
   --brand: oklch(0.68 0.11 233);
   --on-brand: oklch(1 0 0);
   --link: oklch(0.74 0.238 322.16);
-  --info: oklch(0.35 0.08 240);
+  --info: oklch(0.43 0.2 255);
   --warning: oklch(0.35 0.08 60);
   --success: oklch(0.32 0.09 165);
   --danger: oklch(0.35 0.12 25);
+  --text-muted: oklch(49.77% 0.0135 264);
+  --text-subtle: oklch(60.36% 0.0112 264);
+  --surface-sunken: oklch(95.7% 0.003 264);
+  --surface-overlay: oklch(98.3% 0.003 264);
+  --hairline: oklch(21% 0.02 264 / 0.08);
+  --hover-faint: oklch(92.7% 0.003 264);
+  --brand-hover: oklch(62% 0.11 233);
+  --brand-subtle: oklch(93.26% 0.0155 238);
+  --brand-subtle-hover: oklch(89.26% 0.0155 238);
+  --focus-ring: oklch(68% 0.11 233 / 0.6);
+  --progress-start: oklch(77.7% 0.0724 233.4);
+  --progress-end: oklch(0.68 0.11 233);
+  --info-surface: oklch(94% 0.05 255);
+  --warning-surface: oklch(95% 0.05 60);
+  --success-surface: oklch(94% 0.05 165);
+  --danger-surface: oklch(94% 0.05 25);
+  --danger-surface-hover: oklch(90% 0.05 25);
+  --scrim: oklch(0% 0 0 / 0.6);
+  --mega-menu-bg: oklch(98.3% 0.003 264 / 0.66);
+  --app-shadow-sm: 0 1px 3px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04);
+  --app-shadow-md: 0 4px 16px oklch(0 0 0 / 0.08), 0 1px 3px oklch(0 0 0 / 0.04);
+  --app-shadow-lg: 0 12px 32px oklch(0 0 0 / 0.12);
 
-  /* Layer 2: semantic surface and content roles */
-  --surface-subtle: oklch(from var(--surface-raised) calc(l - 0.02) c h);
-  --surface-muted: oklch(from var(--surface-raised) calc(l - 0.05) c h);
-  --content-muted: oklch(0.446 0.043 257.281);
-  --content-subtle: color-mix(in oklab, var(--content) 52%, var(--surface-raised));
-
-  /* Layer 2: semantic brand roles */
-  --brand-faint: color-mix(in oklab, var(--brand) 8%, var(--surface-raised));
-  --brand-soft: color-mix(in oklab, var(--brand) 15%, var(--surface-raised));
-  --brand-emphasis: color-mix(in oklab, var(--brand) 25%, var(--surface-raised));
-  --brand-emphasis-hover: color-mix(
-    in oklab,
-    var(--brand) 30%,
-    var(--surface-raised)
-  );
-  --brand-hover: color-mix(in oklab, var(--brand) 90%, var(--surface-raised));
-  --focus-ring: var(--brand-emphasis);
-
-  /* Layer 2: semantic border and material roles */
-  --border-faint: color-mix(in oklab, var(--content) 8%, transparent);
-  --border-subtle: color-mix(in oklab, var(--content) 12%, transparent);
-  --border-strong: color-mix(in oklab, var(--content) 28%, transparent);
-  --glass-surface: color-mix(in oklab, var(--surface) 92%, transparent);
-  --glass-raised: color-mix(in oklab, var(--surface-raised) 96%, transparent);
-  --scrim: oklch(0 0 0 / 0.5);
-
-  /* Layer 2: semantic status families */
-  --info-surface: oklch(from var(--info) 0.94 0.05 h);
-  --info-content: var(--info);
-  --info-border: color-mix(in oklab, var(--info) 28%, var(--surface-raised));
-  --warning-surface: oklch(from var(--warning) 0.95 0.05 h);
-  --warning-content: var(--warning);
-  --warning-border: color-mix(in oklab, var(--warning) 28%, var(--surface-raised));
-  --success-surface: oklch(from var(--success) 0.94 0.05 h);
-  --success-content: var(--success);
-  --success-border: color-mix(in oklab, var(--success) 28%, var(--surface-raised));
-  --danger-surface: oklch(from var(--danger) 0.94 0.05 h);
-  --danger-content: var(--danger);
-  --danger-border: color-mix(in oklab, var(--danger) 28%, var(--surface-raised));
-
-  /* Layer 2: shell and navigation */
-  --header-bg: var(--canvas);
-  --header-interactive-bg: oklch(from var(--header-bg) calc(l - 0.12) c h);
-  --header-glass-bg: color-mix(in oklab, var(--header-bg) 40%, transparent);
-
-  /* Layer 2: focused component responsibilities */
-  --tooltip-bg: oklch(from var(--surface) calc(l - 0.015) c h);
-  --terminal-bg: oklch(0.24 0.02 260);
-  --terminal-content: oklch(1 0 0);
-  --progress-track-bg: oklch(0.929 0.013 255.508);
-  --progress-start: var(--brand);
-  --progress-end: oklch(from var(--brand) calc(l + 0.07) c calc(h - 35));
-  --input-bg: var(--surface);
-  --input-checked-content: oklch(1 0 0);
-
-  /* Layer 2: buttons and neutral status */
-  --button-secondary-bg: oklch(0.929 0.013 255.508);
-  --button-secondary-hover-bg: color-mix(
-    in oklab,
-    var(--button-secondary-bg) 90%,
-    var(--surface-raised)
-  );
-  --button-secondary-content: oklch(0.372 0.044 257.287);
-  --button-secondary-border: var(--button-secondary-bg);
-  --button-muted-bg: var(--surface-muted);
-  --button-muted-hover-bg: color-mix(
-    in oklab,
-    var(--button-muted-bg) 90%,
-    var(--surface-raised)
-  );
-  --button-muted-content: var(--content-muted);
-  --button-muted-border: var(--button-muted-bg);
-  --neutral-status-surface: oklch(0.97 0 0);
-  --neutral-status-content: oklch(0.205 0 0);
-  --neutral-status-border: var(--border-faint);
-
-  /* Layer 2: responsibilities formerly shared by label-surface */
-  --card-action-bg: var(--surface-subtle);
-  --interface-badge-bg: var(--surface-subtle);
-  --segmented-control-bg: var(--surface-subtle);
-  --ifacebox-header-bg: var(--surface-subtle);
-  --table-header-bg: var(--surface-subtle);
-  --table-row-hover-bg: var(--surface-subtle);
-  --table-row-alternate-bg: color-mix(
-    in oklab,
-    var(--table-row-hover-bg) 50%,
-    var(--surface-raised)
-  );
-
-  /* Structure */
   --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
   --spacing: 0.25rem;
@@ -125,52 +47,44 @@
 }
 
 [data-darkmode="true"] {
-  /* Layer 1: theme inputs */
-  --canvas: oklch(0.32 0.059 188.42);
-  --surface: oklch(0.21 0.034 264.665);
-  --surface-raised: oklch(0.279 0.041 260.031);
-  --content: oklch(0.968 0.007 247.896);
+  --bg: oklch(0.13 0.018 264);
+  --surface: oklch(0.21 0.02 264);
+  --text: oklch(0.985 0.002 264);
   --brand: oklch(0.6 0.13 188.745);
   --on-brand: oklch(1 0 0);
-  --link: oklch(0.702 0.183 293.541);
-  --info: oklch(0.88 0.06 230);
-  --warning: oklch(0.924 0.12 95.746);
-  --success: oklch(0.92 0.09 160);
-  --danger: oklch(0.88 0.14 25);
-
-  /* Mode-sensitive semantic roles */
-  --surface-subtle: oklch(from var(--surface-raised) calc(l + 0.04) c h);
-  --surface-muted: oklch(from var(--surface-raised) calc(l + 0.09) c h);
-  --content-muted: oklch(0.704 0.04 256.788);
-  --info-surface: oklch(from var(--info) 0.34 0.07 h);
-  --warning-surface: oklch(from var(--warning) 0.35 0.08 h);
-  --success-surface: oklch(from var(--success) 0.33 0.06 h);
-  --danger-surface: oklch(from var(--danger) 0.34 0.09 h);
-
-  /* Mode-sensitive component roles */
-  --header-bg: var(--surface);
-  --header-interactive-bg: oklch(from var(--header-bg) calc(l + 0.24) c h);
-  --header-glass-bg: color-mix(in oklab, var(--header-bg) 90%, transparent);
-  --tooltip-bg: oklch(from var(--surface) calc(l + 0.06) c h);
-  --terminal-bg: oklch(0.18 0.03 260);
-  --terminal-content: oklch(1 0 0);
-  --progress-track-bg: oklch(0.372 0.044 257.287);
-  --progress-start: oklch(0.4318 0.0865 166.91);
-  --progress-end: oklch(0.621 0.145 189.632);
-  --input-checked-content: oklch(1 0 0);
-  --button-secondary-bg: oklch(0.372 0.044 257.287);
-  --button-secondary-content: oklch(0.928 0.006 264.531);
-  --button-muted-content: oklch(0.704 0.04 256.788);
-  --neutral-status-surface: oklch(0.274 0.006 286.033);
-  --neutral-status-content: oklch(0.985 0.01 285.805);
+  --link: oklch(0.77 0.14 168);
+  --info: oklch(0.8 0.11 255);
+  --warning: oklch(0.82 0.13 80);
+  --success: oklch(0.72 0.13 158);
+  --danger: oklch(0.7 0.16 22);
+  --text-muted: oklch(66.01% 0.0081 264);
+  --text-subtle: oklch(48.91% 0.0113 264);
+  --surface-sunken: oklch(16.5% 0.02 264);
+  --surface-overlay: oklch(23% 0.02 264);
+  --hairline: oklch(98.5% 0.002 264 / 0.1);
+  --hover-faint: oklch(98.5% 0.002 264 / 0.05);
+  --brand-hover: oklch(55% 0.13 188.7);
+  --brand-subtle: oklch(20.52% 0.0287 219.4);
+  --brand-subtle-hover: oklch(24.52% 0.0287 219.4);
+  --focus-ring: oklch(60% 0.13 188.7 / 0.6);
+  --progress-start: oklch(43.18% 0.0865 166.9);
+  --progress-end: oklch(62.1% 0.145 189.6);
+  --info-surface: oklch(32% 0.05 255);
+  --warning-surface: oklch(33% 0.06 80);
+  --success-surface: oklch(30% 0.05 158);
+  --danger-surface: oklch(32% 0.08 22);
+  --danger-surface-hover: oklch(36% 0.08 22);
+  --scrim: oklch(0% 0 0 / 0.6);
+  --mega-menu-bg: oklch(23% 0.02 264 / 0.62);
+  --app-shadow-sm: 0 4px 12px oklch(0 0 0 / 0.3);
+  --app-shadow-md: 0 10px 28px oklch(0 0 0 / 0.42);
+  --app-shadow-lg: 0 20px 48px oklch(0 0 0 / 0.55);
 }
 
 @theme inline {
-  /* Layer 1 */
-  --color-canvas: var(--canvas);
+  --color-bg: var(--bg);
   --color-surface: var(--surface);
-  --color-surface-raised: var(--surface-raised);
-  --color-content: var(--content);
+  --color-text: var(--text);
   --color-brand: var(--brand);
   --color-on-brand: var(--on-brand);
   --color-link: var(--link);
@@ -178,72 +92,37 @@
   --color-warning: var(--warning);
   --color-success: var(--success);
   --color-danger: var(--danger);
-
-  /* Layer 2: semantic */
-  --color-surface-subtle: var(--surface-subtle);
-  --color-surface-muted: var(--surface-muted);
-  --color-content-muted: var(--content-muted);
-  --color-content-subtle: var(--content-subtle);
-  --color-brand-faint: var(--brand-faint);
-  --color-brand-soft: var(--brand-soft);
-  --color-brand-emphasis: var(--brand-emphasis);
-  --color-brand-emphasis-hover: var(--brand-emphasis-hover);
+  --color-text-muted: var(--text-muted);
+  --color-text-subtle: var(--text-subtle);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-hairline: var(--hairline);
+  --color-hover-faint: var(--hover-faint);
   --color-brand-hover: var(--brand-hover);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-subtle-hover: var(--brand-subtle-hover);
   --color-focus-ring: var(--focus-ring);
-  --color-border-faint: var(--border-faint);
-  --color-border-subtle: var(--border-subtle);
-  --color-border-strong: var(--border-strong);
-  --color-glass-surface: var(--glass-surface);
-  --color-glass-raised: var(--glass-raised);
-  --color-scrim: var(--scrim);
-  --color-info-surface: var(--info-surface);
-  --color-info-content: var(--info-content);
-  --color-info-border: var(--info-border);
-  --color-warning-surface: var(--warning-surface);
-  --color-warning-content: var(--warning-content);
-  --color-warning-border: var(--warning-border);
-  --color-success-surface: var(--success-surface);
-  --color-success-content: var(--success-content);
-  --color-success-border: var(--success-border);
-  --color-danger-surface: var(--danger-surface);
-  --color-danger-content: var(--danger-content);
-  --color-danger-border: var(--danger-border);
-
-  /* Layer 2: component */
-  --color-header-bg: var(--header-bg);
-  --color-header-interactive-bg: var(--header-interactive-bg);
-  --color-header-glass-bg: var(--header-glass-bg);
-  --color-tooltip-bg: var(--tooltip-bg);
-  --color-terminal-bg: var(--terminal-bg);
-  --color-terminal-content: var(--terminal-content);
-  --color-progress-track-bg: var(--progress-track-bg);
   --color-progress-start: var(--progress-start);
   --color-progress-end: var(--progress-end);
-  --color-input-bg: var(--input-bg);
-  --color-input-checked-content: var(--input-checked-content);
-  --color-button-secondary-bg: var(--button-secondary-bg);
-  --color-button-secondary-hover-bg: var(--button-secondary-hover-bg);
-  --color-button-secondary-content: var(--button-secondary-content);
-  --color-button-secondary-border: var(--button-secondary-border);
-  --color-button-muted-bg: var(--button-muted-bg);
-  --color-button-muted-hover-bg: var(--button-muted-hover-bg);
-  --color-button-muted-content: var(--button-muted-content);
-  --color-button-muted-border: var(--button-muted-border);
-  --color-neutral-status-surface: var(--neutral-status-surface);
-  --color-neutral-status-content: var(--neutral-status-content);
-  --color-neutral-status-border: var(--neutral-status-border);
-  --color-card-action-bg: var(--card-action-bg);
-  --color-interface-badge-bg: var(--interface-badge-bg);
-  --color-segmented-control-bg: var(--segmented-control-bg);
-  --color-ifacebox-header-bg: var(--ifacebox-header-bg);
-  --color-table-header-bg: var(--table-header-bg);
-  --color-table-row-hover-bg: var(--table-row-hover-bg);
-  --color-table-row-alternate-bg: var(--table-row-alternate-bg);
+  --color-info-surface: var(--info-surface);
+  --color-warning-surface: var(--warning-surface);
+  --color-success-surface: var(--success-surface);
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-surface-hover: var(--danger-surface-hover);
+  --color-scrim: var(--scrim);
+  --color-mega-menu-bg: var(--mega-menu-bg);
+
+  --shadow-sm: var(--app-shadow-sm);
+  --shadow-md: var(--app-shadow-md);
+  --shadow-lg: var(--app-shadow-md);
+  --shadow-xl: var(--app-shadow-lg);
+  --shadow-2xl: var(--app-shadow-lg);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --spacing: var(--spacing);
   --container-max-width: var(--container-max-width);
+
   --radius-sm: calc(var(--radius-base) * 0.25);
   --radius: calc(var(--radius-base) * 0.5);
   --radius-md: calc(var(--radius-base) * 0.75);

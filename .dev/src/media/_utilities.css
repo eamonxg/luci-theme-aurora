@@ -52,11 +52,11 @@
 }
 
 .fade-in {
-  @apply animate-in fade-in-0 fill-mode-backwards duration-400;
+  @apply animate-in fade-in-0 fill-mode-backwards duration-[250ms];
 }
 
 .fade-out {
-  @apply pointer-events-none opacity-0 transition-opacity duration-400;
+  @apply pointer-events-none opacity-0 transition-opacity duration-[250ms];
 }
 
 .spinning {

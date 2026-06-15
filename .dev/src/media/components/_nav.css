@@ -8,7 +8,7 @@
  */
 
 .nav-link {
-  @apply text-content hover:bg-header-interactive-bg block rounded-xl px-3 py-1.5 no-underline transition-all duration-150;
+  @apply text-text hover:bg-hover-faint block rounded-xl px-3 py-1.5 no-underline transition-all duration-150;
 }
 
 /* Mode-agnostic active state: brand text + weight only. The selected-pill
@@ -24,11 +24,11 @@
    appearance-none + border-0 + shadow-none strip the theme's global
    <button> chrome (_button.css), which would otherwise box every row. */
 .nav-category {
-  @apply text-content-muted hover:text-content focus-visible:ring-focus-ring flex w-full cursor-pointer appearance-none items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2 text-left text-lg font-semibold tracking-wide shadow-none transition-colors duration-150 select-none focus-visible:ring-2 focus-visible:outline-none;
+  @apply text-text-muted hover:text-text focus-visible:ring-focus-ring flex w-full cursor-pointer appearance-none items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2 text-left text-lg font-semibold tracking-wide shadow-none transition-colors duration-150 select-none focus-visible:ring-2 focus-visible:outline-none;
 
   /* Trailing chevron shares arrow-right.svg with the collapsible cards:
      points right when closed, rotates to point down when open. */
-  @apply after:size-3.5 after:shrink-0 after:bg-current after:opacity-55 after:transition-[transform,opacity] after:duration-200 after:content-[''] after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat] hover:after:opacity-100;
+  @apply after:size-3.5 after:shrink-0 after:bg-current after:opacity-55 after:transition-[transform,opacity] after:duration-150 after:content-[''] after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat] hover:after:opacity-100;
 }
 
 .nav-category-label {
@@ -38,14 +38,14 @@
 /* Open group: label darkens to foreground; the active child's pill is the
    sole location anchor, so no primary tint on the label itself. */
 .sidebar-group-open > .nav-category {
-  @apply text-content after:rotate-90;
+  @apply text-text after:rotate-90;
 }
 
 /* The desktop sidebar no longer uses previews; the mobile drawer is the
    sole consumer and sets its own px/text-size (_overlay.css), so the base
    only carries the mode-agnostic bits. */
 .nav-category-preview {
-  @apply text-content-subtle truncate pb-1;
+  @apply text-text-subtle truncate pb-1;
 
   & .nav-preview-current {
     @apply text-brand;

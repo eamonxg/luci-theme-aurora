@@ -1,10 +1,10 @@
 .cbi-progressbar {
-  @apply before:text-content bg-progress-track-bg relative h-3.5 w-full cursor-help overflow-hidden rounded-full before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-2xl before:text-xs before:whitespace-nowrap before:content-[attr(title)] max-md:h-4 max-md:rounded-2xl max-md:before:text-xs max-md:before:leading-normal;
+  @apply before:text-text bg-surface-sunken relative h-3.5 w-full cursor-help overflow-hidden rounded-full before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-2xl before:text-xs before:whitespace-nowrap before:content-[attr(title)] max-md:h-4 max-md:rounded-2xl max-md:before:text-xs max-md:before:leading-normal;
   [data-page="admin-system-package-manager"] & {
     @apply max-sm:before:text-[10px];
   }
 
   & > div {
-    @apply from-progress-start to-progress-end h-full bg-linear-to-r transition-[width] duration-300;
+    @apply from-progress-start to-progress-end h-full bg-linear-to-r transition-[width] duration-[250ms];
   }
 }

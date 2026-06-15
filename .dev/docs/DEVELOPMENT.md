@@ -87,7 +87,7 @@ This will be compiled to standard CSS that works in all browsers.
 
 The theme has two independent Tailwind CSS v4 entry points, both sourced from `.dev/src/media/`:
 
-- **`main.css`** — the LuCI admin UI. It contains no rules of its own; it's a pure import manifest that pulls in (in order) `_tokens.css` (OKLCH theme tokens, mapped via `@theme inline`), `_base.css`, `_layout.css`, every file in `components/` (one partial per UI component — buttons, cards, modals, tables, etc.), `_utilities.css`, and `_patches.css`.
+- **`main.css`** — the LuCI admin UI. It contains no rules of its own; it's a pure import manifest that pulls in (in order) `_tokens.css` (OKLCH theme tokens, mapped via `@theme inline`), `_base.css`, `_elements.css`, `_layout.css`, every file in `components/` (one partial per UI component — buttons, cards, modals, tables, etc.), `_utilities.css`, and `_patches.css`.
 - **`login.css`** — the standalone login page (`sysauth.ut`). Self-contained: imports Tailwind and `_tokens.css` directly.
 
 **Adding new styles:**
@@ -96,6 +96,21 @@ The theme has two independent Tailwind CSS v4 entry points, both sourced from `.
 - Compatibility fix for a third-party LuCI app/page → add a narrow, selector-scoped rule to `_patches.css` under a comment naming the app (e.g. `/* luci-app-openclash */`).
 
 All rules use `@apply` with Tailwind utilities and CSS Nesting — no raw CSS properties.
+
+### Design Tokens
+
+`src/media/_tokens.css` is **generated** — its header says "DO NOT EDIT". The source of truth is `.dev/tokens/`:
+
+- **`defaults.js`** — the 10 editable input colors (`bg`, `surface`, `text`, `brand`, `on_brand`, `link`, `info`, `warning`, `success`, `danger`) for light and dark mode, as OKLCH strings.
+- **`spec.js`** — `INPUTS` (the names above), `DERIVATIONS` (how every other token — `text_muted`, `surface_sunken`, `hairline`, `brand_hover`, `brand_subtle`, `focus_ring`, `progress_start`/`progress_end`, `*_surface`, `scrim`, `mega_menu_bg`, …) is computed from the inputs via `mix`/`shade`/`set`/`alpha`/`const` operators, and `FIXED` (mode-specific literals such as shadows that bypass derivation).
+- **`engine.js`** — the OKLCH/OKLAB color math behind those operators, via [colorjs.io](https://colorjs.io/).
+- **`resolve.js`** — `resolveMode(mode)` walks `DERIVATIONS` and returns a flat `{token: oklchString}` map with no `color-mix()`/`var()` left in it.
+
+**Changing a color:**
+
+1. Edit `tokens/defaults.js` (base input colors) and/or `tokens/spec.js` (derivation rules, fixed literals).
+2. Run `pnpm gen:tokens` (also runs automatically as part of `pnpm build`) to rewrite `src/media/_tokens.css` — it emits `:root` (light) and `[data-darkmode="true"]` (dark) blocks plus the `@theme inline` mapping, in that order.
+3. Run `pnpm test` to check the color-math operators and derived-token invariants (`tokens/*.test.js`) — e.g. hue families, lightness ordering between `bg`/`surface_sunken`/`surface`, and translucency of menu backgrounds.
 
 ### LuCI JavaScript API
 
@@ -174,10 +189,11 @@ htdocs/luci-static/
 
 **Build Process:**
 
-1. Vite builds the CSS entry points (`src/media/main.css` and `src/media/login.css`)
-2. Custom PostCSS plugin removes `@layer` at-rules for OpenWrt compatibility
-3. Custom Vite plugin (`luci-js-compress`) minifies JS files via Terser
-4. Static assets copied from `.dev/public/aurora/`
+1. `pnpm gen:tokens` regenerates `src/media/_tokens.css` from `tokens/` (see [Design Tokens](#design-tokens))
+2. Vite builds the CSS entry points (`src/media/main.css` and `src/media/login.css`)
+3. Custom PostCSS plugin removes `@layer` at-rules for OpenWrt compatibility
+4. Custom Vite plugin (`luci-js-compress`) minifies JS files via Terser
+5. Static assets copied from `.dev/public/aurora/`
 
 ## Package Compilation
 
@@ -219,20 +235,28 @@ luci-theme-aurora/
 │   │   ├── fonts/                  # Web fonts (Lato)
 │   │   └── images/                 # Theme images + PWA icons
 │   ├── scripts/                    # Build scripts
-│   │   └── clean.js                # Build cleanup utility
+│   │   ├── clean.js                # Build cleanup utility
+│   │   └── gen-tokens.js           # Regenerates src/media/_tokens.css from tokens/
 │   ├── src/                        # Source code
 │   │   ├── assets/icons/           # SVG icons
 │   │   ├── media/                  # CSS source (Tailwind CSS v4)
 │   │   │   ├── main.css            # Admin UI entry point (import manifest)
 │   │   │   ├── login.css           # Login page entry point
-│   │   │   ├── _tokens.css         # OKLCH theme tokens (@theme inline)
-│   │   │   ├── _base.css           # Base element styles
+│   │   │   ├── _tokens.css         # OKLCH theme tokens -- GENERATED, see tokens/
+│   │   │   ├── _base.css           # Document foundation (html/body viewport bg)
+│   │   │   ├── _elements.css       # Base element styles (headings, links, …)
 │   │   │   ├── _layout.css         # Page layout/structure
 │   │   │   ├── _utilities.css      # Custom utility classes
 │   │   │   ├── _patches.css        # Third-party LuCI app/page overrides
 │   │   │   └── components/         # One partial per UI component
 │   │   └── resource/               # JavaScript resources
 │   │       └── menu-aurora.js      # Menu logic
+│   ├── tokens/                     # Design token source (-> src/media/_tokens.css)
+│   │   ├── defaults.js             # 10 editable input colors (light/dark)
+│   │   ├── spec.js                 # Derivation rules (DERIVATIONS) + fixed literals
+│   │   ├── engine.js               # OKLCH/OKLAB color math (mix/shade/set/alpha)
+│   │   ├── resolve.js              # Resolves spec into a flat token map
+│   │   └── *.test.js               # Token tests (pnpm test)
 │   ├── .env.example                # Environment variables template
 │   ├── .prettierrc                 # Prettier configuration
 │   ├── package.json                # Node.js dependencies
@@ -270,6 +294,7 @@ luci-theme-aurora/
 - **[Vite](https://vitejs.dev/)** - Build tool and development server
 - **[pnpm](https://pnpm.io/)** - Fast, disk space efficient package manager
 - **[lightningcss](https://lightningcss.dev/)** - CSS minifier
+- **[colorjs.io](https://colorjs.io/)** - OKLCH/OKLAB color math for design token generation (`.dev/tokens/`)
 - **[Terser](https://terser.org/)** - JavaScript minifier
 - **[Prettier](https://prettier.io/)** - Code formatter
 - **[prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss)** - Tailwind class sorting

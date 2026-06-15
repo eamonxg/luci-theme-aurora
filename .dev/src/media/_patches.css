@@ -52,17 +52,17 @@
       &.tr {
         @apply rounded-none;
       }
-      @apply bg-glass-raised not-[.tr]:border-border-faint not-[.tr]:hover:border-border-subtle max-md:bg-glass-raised not-[.tr]:max-md:border-border-faint not-[.tr]:border not-[.tr]:shadow-lg not-[.tr]:hover:shadow-xl not-[.tr]:max-md:border;
+      @apply bg-surface-overlay not-[.tr]:border-hairline not-[.tr]:hover:border-hairline max-md:bg-surface-overlay not-[.tr]:max-md:border-hairline not-[.tr]:border not-[.tr]:shadow-lg not-[.tr]:hover:shadow-xl not-[.tr]:max-md:border;
 
       /* Dark mode: override custom.css hardcoded light-mode colors on all text nodes */
       & span {
-        @apply dark:text-content!;
+        @apply dark:text-text!;
       }
       & td {
-        @apply dark:text-content!;
+        @apply dark:text-text!;
       }
       & th {
-        @apply dark:text-content!;
+        @apply dark:text-text!;
       }
 
       img[src*=".svg"] {
@@ -94,7 +94,7 @@
 
     .title {
       h3 {
-        @apply text-content border-0 pb-4 max-md:mx-0 max-md:pb-2;
+        @apply text-text border-0 pb-4 max-md:mx-0 max-md:pb-2;
       }
     }
 

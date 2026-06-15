@@ -1,16 +1,16 @@
 .cbi-tooltip {
-  @apply bg-tooltip-bg text-content border-border-subtle absolute z-110 max-w-xs scale-95 rounded-xl border px-3 py-2 text-xs break-normal whitespace-normal opacity-0 shadow-lg transition-[visibility,opacity,scale] duration-150 ease-out;
+  @apply bg-surface-overlay text-text border-hairline absolute z-110 max-w-xs scale-95 rounded-xl border px-3 py-2 text-xs break-normal whitespace-normal opacity-0 shadow-xl transition-[visibility,opacity,scale] duration-150 ease-out;
   &.error {
-    @apply border-danger-border bg-danger-surface text-danger-content;
+    @apply border-hairline bg-danger-surface text-danger;
   }
   &.success {
-    @apply border-success-border bg-success-surface text-success-content;
+    @apply border-hairline bg-success-surface text-success;
   }
   &.info {
-    @apply border-info-border bg-info-surface text-info-content;
+    @apply border-hairline bg-info-surface text-info;
   }
   &.notice {
-    @apply border-warning-border bg-warning-surface text-warning-content;
+    @apply border-hairline bg-warning-surface text-warning;
   }
 }
 
