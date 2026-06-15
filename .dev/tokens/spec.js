@@ -1,16 +1,3 @@
-export const INPUTS = [
-  "bg",
-  "surface",
-  "text",
-  "brand",
-  "on_brand",
-  "link",
-  "info",
-  "warning",
-  "success",
-  "danger",
-];
-
 // Operators: ['mix',a,b,p] ['shade',a,dl] ['set',a,L,C]
 // ['alpha',a,p] ['const',str]
 export const DERIVATIONS = {
