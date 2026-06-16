@@ -1,16 +1,6 @@
 name: Claude PR Review Bot
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - master
-      - main
-    paths:
-      - '.dev/**'
-      - 'htdocs/**'
-      - 'ucode/**'
-      - 'root/**'
   issue_comment:
     types: [created]
   workflow_dispatch:
