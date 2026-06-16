@@ -166,6 +166,24 @@ test("mega-menu panels scroll within the viewport", () => {
   assertIncludesUtilities(panel, ["overflow-y-auto", "overscroll-contain"]);
 });
 
+test("mega-menu closing state keeps the panel above the curtain", () => {
+  const megaMenu = getBlock(layoutStyles, '[data-nav-type="mega-menu"] &');
+  const container = getBlock(megaMenu, "& .desktop-menu-container");
+  const headerLift = layoutStyles.match(
+    /When a category is open[\s\S]*?(\[data-nav-type="mega-menu"\][\s\S]*?)\n\s*\.brand/,
+  )?.[1];
+
+  assert.match(
+    container,
+    /&\.active,\s*&\.closing\s*\{[\s\S]*@apply[^;]*\bvisible\b/,
+  );
+  assert.match(
+    container,
+    /&\.active\s*\{[\s\S]*@apply[^;]*pointer-events-auto/,
+  );
+  assert.match(headerLift ?? "", /desktop-menu-container[\s\S]*closing/);
+});
+
 test("mega-menu category masks use Tailwind arbitrary utilities", () => {
   const title = getBlock(layoutStyles, "& .desktop-nav-title");
   const icon = getBlock(title, "&::before");

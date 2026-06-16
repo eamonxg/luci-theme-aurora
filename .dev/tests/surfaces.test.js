@@ -102,7 +102,7 @@ test("content dropdowns stay above the closed header and below the open mega-men
   const headerRule = layout.match(/^header\s*\{\s*@apply\s+([^;]+);/m)?.[1] ?? "";
   const activeHeaderRule =
     layout.match(
-      /\[data-nav-type="mega-menu"\] &:has\(\.desktop-menu-container\.active\)\s*\{\s*@apply\s+([^;]+);/,
+      /\[data-nav-type="mega-menu"\]\s*&:has\([\s\S]*?\.desktop-menu-container[\s\S]*?\.active[\s\S]*?\)\s*\{\s*@apply\s+([^;]+);/,
     )?.[1] ?? "";
   const dropdownRule = dropdown.match(/&\.dropdown\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
   const messageRule = message.match(/\.alert-message\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";

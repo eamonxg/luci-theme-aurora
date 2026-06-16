@@ -684,6 +684,7 @@ return baseclass.extend({
           if (container) {
             applyCanvasHeight();
             container.classList.add("active");
+            container.classList.remove("closing");
             overlay.classList.add("active");
           }
           nav.classList.add("active");
@@ -770,7 +771,13 @@ return baseclass.extend({
     document.querySelector(".desktop-menu-overlay")?.classList.remove("active");
 
     if (!container) return;
+    if (
+      !container.classList.contains("active") &&
+      !container.classList.contains("closing")
+    )
+      return;
 
+    container.classList.add("closing");
     container.classList.remove("active");
 
     // Retract the canvas: dropping --mega-menu-height lets the container's
@@ -780,6 +787,31 @@ return baseclass.extend({
     // -hidden clips the content as it goes; the end state is already h-0 so no
     // post-transition reset is needed.
     container.style.removeProperty("--mega-menu-height");
+
+    let closeFallback = null;
+    const finishClosing = (event) => {
+      if (event?.target && event.target !== container) return;
+      if (event?.propertyName && event.propertyName !== "height") return;
+
+      if (closeFallback !== null) {
+        clearTimeout(closeFallback);
+        closeFallback = null;
+      }
+
+      container.removeEventListener("transitionend", finishClosing);
+
+      if (!container.classList.contains("active")) {
+        container.classList.remove("closing");
+      }
+    };
+
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      finishClosing();
+      return;
+    }
+
+    container.addEventListener("transitionend", finishClosing);
+    closeFallback = setTimeout(finishClosing, 350);
   },
 
   renderModeMenu(tree) {

@@ -19,12 +19,18 @@ header {
        Fading the panel in left it half-transparent for the whole open, so the
        header brand/icons showed THROUGH it until opacity settled (the flash).
        Opaque-from-the-first-frame means the growing height wipes solidly down
-       over the header instead. */
+       over the header instead. The closing state keeps the panel visible and
+       above the curtain while height animates down, without re-enabling input. */
     & .desktop-menu-container {
       @apply border-hairline bg-mega-menu-bg pointer-events-none invisible absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden border-b shadow-xl transition-[height,visibility] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] [will-change:height] motion-reduce:transition-none max-md:hidden;
 
+      &.active,
+      &.closing {
+        @apply visible;
+      }
+
       &.active {
-        @apply pointer-events-auto visible;
+        @apply pointer-events-auto;
       }
 
       /* Category panels live inside the container, not the nav items: the
@@ -153,7 +159,8 @@ header {
   /* When a category is open the bar lifts to the panel's opened colour so the
      header and the mega-menu read as one continuous surface — no tonal seam
      where the bar (bg) meets the panel (mega-menu-bg). */
-  [data-nav-type="mega-menu"] &:has(.desktop-menu-container.active) {
+  [data-nav-type="mega-menu"]
+    &:has(.desktop-menu-container:is(.active, .closing)) {
     @apply bg-mega-menu-bg z-70;
   }
 
