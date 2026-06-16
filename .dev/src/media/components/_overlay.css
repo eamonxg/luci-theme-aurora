@@ -69,11 +69,18 @@ body.mobile-navigation-open > header {
 }
 
 [data-nav-type="mega-menu"] {
+  /* Apple's curtain technique: backdrop-filter is DECLARED here permanently and
+     never toggled. Gating the blur on `.active` snapped the page from blurred
+     to sharp the instant the menu closed, while the dim was still fading — the
+     flash. Instead opacity + visibility carry it: closing keeps the layer
+     visible (visibility flips only at the end of the transition) so the blur
+     fades out together with the dim; once hidden, visibility:hidden fully
+     disables the filter so an invisible full-screen blur costs nothing. */
   & .desktop-menu-overlay {
-    @apply bg-scrim pointer-events-none fixed inset-0 z-60 opacity-0 transition-opacity duration-[250ms] max-md:hidden;
+    @apply bg-mega-menu-scrim pointer-events-none invisible fixed inset-0 z-60 opacity-0 backdrop-blur-lg backdrop-saturate-150 transition-[opacity,visibility] delay-[80ms] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] max-md:hidden;
 
     &.active {
-      @apply pointer-events-auto opacity-100 backdrop-blur-lg backdrop-saturate-150;
+      @apply pointer-events-auto visible opacity-100;
     }
   }
 }

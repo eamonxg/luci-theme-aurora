@@ -39,11 +39,15 @@ test("scrim uses one 60% alpha value in both modes", () => {
   assert.equal(resolveMode("dark").scrim, "oklch(0% 0 0 / 0.6)");
 });
 
-test("menu backgrounds are translucent Gray glass (softer than 0.8)", () => {
+test("menu panel is fully opaque (frost lives on the curtain, not the panel)", () => {
   const l = resolveMode("light");
   const d = resolveMode("dark");
-  assert.ok(l.mega_menu_bg.includes("/ 0.66"), `light: ${l.mega_menu_bg}`);
-  assert.ok(d.mega_menu_bg.includes("/ 0.62"), `dark: ${d.mega_menu_bg}`);
+  // The panel animates height, so it carries no backdrop-filter; and it is
+  // fully opaque so the dimmed curtain never bleeds through to grey it off the
+  // header tone or leak page content. The header lifts to this same colour on
+  // open, so any alpha here would break the one-continuous-surface look.
+  assert.ok(!l.mega_menu_bg.includes("/"), `light opaque: ${l.mega_menu_bg}`);
+  assert.ok(!d.mega_menu_bg.includes("/"), `dark opaque: ${d.mega_menu_bg}`);
 });
 
 test("light bg is the Gray canvas; surface stays pure white", () => {
@@ -57,8 +61,9 @@ test("dark brand and progress colors match the mobile navigation design", () => 
 
   assert.equal(dark.brand, "oklch(0.6 0.13 188.745)");
   assert.equal(dark.on_brand, "oklch(1 0 0)");
-  assert.equal(dark.progress_start, "oklch(43.18% 0.0865 166.9)");
-  assert.equal(dark.progress_end, "oklch(62.1% 0.145 189.6)");
+  // Derived from brand like light: end aliases brand, start mixes toward sunken.
+  assert.equal(dark.progress_start, "oklch(44.78% 0.0865 193.2)");
+  assert.equal(dark.progress_end, dark.brand);
 });
 
 test("dark differs from light", () => {
