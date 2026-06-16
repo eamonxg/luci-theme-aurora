@@ -1,16 +1,36 @@
 header {
-  @apply bg-bg sticky top-0 z-40 mb-2;
+  @apply bg-bg sticky top-0 z-40 mb-2 transition-colors duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)];
 
   & .header-content {
     @apply relative flex h-14 items-center justify-between px-6 py-3 max-md:px-4 max-md:py-2;
   }
 
   [data-nav-type="mega-menu"] & {
+    /* Apple's layer split: the panel that animates GEOMETRY must not carry a
+       backdrop-filter, or every height frame re-rasterises the blur (the old
+       clip-path flicker). So this is a fully-opaque SOLID surface that retracts
+       via height — the drawer close — while the frost lives entirely on the
+       separate .desktop-menu-overlay curtain (opacity/visibility only). Height
+       is driven by --mega-menu-height (set on open, dropped on close in
+       menu-aurora.js); overflow-hidden clips the absolutely-positioned content
+       as the canvas grows and collapses.
+
+       Opacity is NOT animated — it's gated by `visibility` (like the curtain).
+       Fading the panel in left it half-transparent for the whole open, so the
+       header brand/icons showed THROUGH it until opacity settled (the flash).
+       Opaque-from-the-first-frame means the growing height wipes solidly down
+       over the header instead. The closing state keeps the panel visible and
+       above the curtain while height animates down, without re-enabling input. */
     & .desktop-menu-container {
-      @apply border-hairline bg-mega-menu-bg pointer-events-none absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden border-b opacity-0 shadow-xl backdrop-blur-lg backdrop-saturate-150 transition-[clip-path,opacity] duration-[250ms] ease-out [will-change:clip-path,opacity] [clip-path:inset(0_0_100%_0)] max-md:hidden;
+      @apply border-hairline bg-mega-menu-bg pointer-events-none invisible absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden border-b shadow-xl transition-[height,visibility] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] [will-change:height] motion-reduce:transition-none max-md:hidden;
+
+      &.active,
+      &.closing {
+        @apply visible;
+      }
 
       &.active {
-        @apply pointer-events-auto opacity-100 [clip-path:inset(0)];
+        @apply pointer-events-auto;
       }
 
       /* Category panels live inside the container, not the nav items: the
@@ -31,7 +51,7 @@ header {
            is a pure cross-fade. Below lg the side tracks drop and only the
            links column remains (tablet → just the submenu). The panel scrolls
            internally when its content exceeds the viewport below the header. */
-        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-h-[calc(100dvh-3.5rem)] max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 overflow-y-auto overscroll-contain px-10 pt-7 pb-8 opacity-0 transition-[opacity,transform] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
+        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-h-[calc(100dvh-3.5rem)] max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 overflow-y-auto overscroll-contain px-10 pt-13 pb-8 opacity-0 transition-[opacity,transform] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
 
         &.active {
           @apply pointer-events-auto translate-y-0 opacity-100;
@@ -136,8 +156,12 @@ header {
     }
   }
 
-  [data-nav-type="mega-menu"] &:has(.desktop-menu-container.active) {
-    @apply z-70;
+  /* When a category is open the bar lifts to the panel's opened colour so the
+     header and the mega-menu read as one continuous surface — no tonal seam
+     where the bar (bg) meets the panel (mega-menu-bg). */
+  [data-nav-type="mega-menu"]
+    &:has(.desktop-menu-container:is(.active, .closing)) {
+    @apply bg-mega-menu-bg z-70;
   }
 
   .brand {

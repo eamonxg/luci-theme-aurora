@@ -20,7 +20,19 @@ export const DERIVATIONS = {
     danger_surface: ["set", "danger", 0.94, 0.05],
     danger_surface_hover: ["shade", "danger_surface", -0.04],
     scrim: ["const", "oklch(0 0 0 / 0.6)"],
-    mega_menu_bg: ["alpha", "surface_overlay", 0.66],
+    // Fully opaque: a clean solid panel (Apple's #fafafc). Any translucency let
+    // the dimmed curtain bleed through, greying the panel off the header tone
+    // and leaking faint blurred page content into the empty columns. The header
+    // lifts to this same colour when the menu opens (see _layout.css) so bar and
+    // panel read as one continuous surface.
+    mega_menu_bg: ["alpha", "surface_overlay", 1],
+    // Mega-menu curtain: a real dimming layer. A near-page-light grey (the
+    // earlier #e8e8ed attempt) only blurred without darkening, so the mask read
+    // as absent. Black at a modest alpha actually dims the page; the now-opaque
+    // panel + its shadow give a clean edge, so this no longer bands the way the
+    // old translucent panel over a heavy scrim did. Lighter than the 0.6 modal
+    // scrim — it's a menu backdrop, not a dialog.
+    mega_menu_scrim: ["const", "oklch(0 0 0 / 0.32)"],
   },
   dark: {
     text_muted: ["mix", "text", "bg", 0.62],
@@ -33,15 +45,24 @@ export const DERIVATIONS = {
     brand_subtle: ["mix", "brand", "bg", 0.16],
     brand_subtle_hover: ["shade", "brand_subtle", 0.04],
     focus_ring: ["alpha", "brand", 0.6],
-    progress_start: ["const", "oklch(0.4318 0.0865 166.91)"],
-    progress_end: ["const", "oklch(0.621 0.145 189.632)"],
+    // Derived from brand like light — not hardcoded — so the bar tracks the
+    // active brand colour instead of a frozen teal.
+    progress_start: ["mix", "brand", "surface_sunken", 0.65],
+    progress_end: ["const", "var:brand"],
     info_surface: ["set", "info", 0.32, 0.05],
     warning_surface: ["set", "warning", 0.33, 0.06],
     success_surface: ["set", "success", 0.3, 0.05],
     danger_surface: ["set", "danger", 0.32, 0.08],
     danger_surface_hover: ["shade", "danger_surface", 0.04],
     scrim: ["const", "oklch(0 0 0 / 0.6)"],
-    mega_menu_bg: ["alpha", "surface_overlay", 0.62],
+    // Deeper than surface_overlay (23%): surface_sunken (16.5%) tracks Apple's
+    // opened-panel #161617 (~18.5%). Fully opaque — a clean solid panel with no
+    // curtain bleed; the header lifts to this colour on open (see _layout.css)
+    // so bar and panel are one continuous surface.
+    mega_menu_bg: ["alpha", "surface_sunken", 1],
+    // Dark curtain stays a near-black dim (Apple's rgba(0,0,0,.4)); the dark
+    // panel and dark page already share a tone, so this only needs to deepen.
+    mega_menu_scrim: ["const", "oklch(0 0 0 / 0.5)"],
   },
 };
 

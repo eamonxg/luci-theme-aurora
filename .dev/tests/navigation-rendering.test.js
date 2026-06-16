@@ -94,6 +94,12 @@ class FakeElement {
     this.listeners.set(type, listeners);
   }
 
+  dispatchEvent(event) {
+    for (const listener of this.listeners.get(event.type) ?? []) {
+      listener(event);
+    }
+  }
+
   closest(selector) {
     let current = this;
 
@@ -167,6 +173,15 @@ class FakeElement {
   removeAttribute(name) {
     this.attributes.delete(name);
     if (name === "class") this.classList.replace("");
+  }
+
+  removeEventListener(type, listener) {
+    const listeners = this.listeners.get(type) ?? [];
+
+    this.listeners.set(
+      type,
+      listeners.filter((item) => item !== listener),
+    );
   }
 
   setAttribute(name, value) {
@@ -751,4 +766,37 @@ test("renders an active group expanded when an open mobile list was initially em
   assert.equal(toggle.getAttribute("aria-expanded"), "true");
   assert.equal(region.getAttribute("aria-hidden"), "false");
   assert.equal(region.hasAttribute("inert"), false);
+});
+
+test("keeps mega-menu stacking state while the close height transition runs", () => {
+  const container = new FakeElement("div", {
+    class: "desktop-menu-container active",
+  });
+  const overlay = new FakeElement("div", {
+    class: "desktop-menu-overlay active",
+  });
+  const document = createFakeDocument({
+    elements: {
+      ".desktop-menu-container": container,
+      ".desktop-menu-overlay": overlay,
+    },
+  });
+  const menu = loadMenuModule({ document });
+
+  container.style.setProperty("--mega-menu-height", "320px");
+
+  menu.hideDesktopNav();
+
+  assert.equal(overlay.classList.contains("active"), false);
+  assert.equal(container.classList.contains("active"), false);
+  assert.equal(container.classList.contains("closing"), true);
+  assert.equal(container.style.properties.has("--mega-menu-height"), false);
+
+  container.dispatchEvent({
+    type: "transitionend",
+    target: container,
+    propertyName: "height",
+  });
+
+  assert.equal(container.classList.contains("closing"), false);
 });

@@ -34,7 +34,8 @@
   --danger-surface: oklch(94% 0.05 25);
   --danger-surface-hover: oklch(90% 0.05 25);
   --scrim: oklch(0% 0 0 / 0.6);
-  --mega-menu-bg: oklch(98.3% 0.003 264 / 0.66);
+  --mega-menu-bg: oklch(98.3% 0.003 264);
+  --mega-menu-scrim: oklch(0% 0 0 / 0.32);
   --app-shadow-sm: 0 1px 3px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04);
   --app-shadow-md: 0 4px 16px oklch(0 0 0 / 0.08), 0 1px 3px oklch(0 0 0 / 0.04);
   --app-shadow-lg: 0 12px 32px oklch(0 0 0 / 0.12);
@@ -67,15 +68,16 @@
   --brand-subtle: oklch(20.52% 0.0287 219.4);
   --brand-subtle-hover: oklch(24.52% 0.0287 219.4);
   --focus-ring: oklch(60% 0.13 188.7 / 0.6);
-  --progress-start: oklch(43.18% 0.0865 166.9);
-  --progress-end: oklch(62.1% 0.145 189.6);
+  --progress-start: oklch(44.78% 0.0865 193.2);
+  --progress-end: oklch(0.6 0.13 188.745);
   --info-surface: oklch(32% 0.05 255);
   --warning-surface: oklch(33% 0.06 80);
   --success-surface: oklch(30% 0.05 158);
   --danger-surface: oklch(32% 0.08 22);
   --danger-surface-hover: oklch(36% 0.08 22);
   --scrim: oklch(0% 0 0 / 0.6);
-  --mega-menu-bg: oklch(23% 0.02 264 / 0.62);
+  --mega-menu-bg: oklch(16.5% 0.02 264);
+  --mega-menu-scrim: oklch(0% 0 0 / 0.5);
   --app-shadow-sm: 0 4px 12px oklch(0 0 0 / 0.3);
   --app-shadow-md: 0 10px 28px oklch(0 0 0 / 0.42);
   --app-shadow-lg: 0 20px 48px oklch(0 0 0 / 0.55);
@@ -111,6 +113,7 @@
   --color-danger-surface-hover: var(--danger-surface-hover);
   --color-scrim: var(--scrim);
   --color-mega-menu-bg: var(--mega-menu-bg);
+  --color-mega-menu-scrim: var(--mega-menu-scrim);
 
   --shadow-sm: var(--app-shadow-sm);
   --shadow-md: var(--app-shadow-md);
