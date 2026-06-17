@@ -16,7 +16,7 @@
 	const boardinfo = ubus.call('system', 'board');
 	const uci = cursor();
 	const tokens = uci.get_all('aurora', 'theme') || {};
-	const nav_submenu_type = tokens.nav_submenu_type || 'mega-menu';
+	const nav_type = tokens.nav_type || 'mega-menu';
 	const toolbar_enabled = tokens.toolbar_enabled ? tokens.toolbar_enabled == '1' : true;
 	const icon_cache_version = tokens.icon_cache_version || '0';
 	const logo_svg = tokens.logo_svg || 'logo.svg';
@@ -182,7 +182,7 @@
 		{% endif %}
 	</head>
 
-	<body class="lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}" data-nav-type="{{ nav_submenu_type }}">
+	<body class="lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}" data-nav-type="{{ nav_type }}">
 		{% if (!blank_page): %}
 		<header>
 			<div class="header-content">
@@ -197,13 +197,13 @@
 				</div>
 				<a class="brand" href="/">{{ striptags(boardinfo.hostname ?? '?') }}</a>
 				<ul class="nav" id="topmenu" style="display:none"></ul>
-				{% if (nav_submenu_type == 'sidebar'): %}
+				{% if (nav_type == 'sidebar'): %}
 				<ol class="header-crumb" id="header-crumb"></ol>
 				{% endif %}
 				<div id="indicators" class="pull-right"></div>
 		</div>
 
-		{% if (nav_submenu_type == 'mega-menu'): %}
+		{% if (nav_type == 'mega-menu'): %}
 			{%
 				/* boardinfo fields are not guaranteed on every platform; the
 				   summary tolerates a missing model/firmware line (hostname is
@@ -233,7 +233,7 @@
 		</header>
 		{% endif %}
 
-		{% if (nav_submenu_type == 'sidebar'): %}
+		{% if (nav_type == 'sidebar'): %}
 		<aside class="sidebar-panel" id="sidebar-panel" aria-label="{{ _('Navigation') }}">
 			<nav class="sidebar-panel-inner">
 				<ul class="sidebar-list" id="sidebar-list"></ul>

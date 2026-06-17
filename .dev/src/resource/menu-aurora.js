@@ -249,7 +249,7 @@ return baseclass.extend({
       if (navType === "mega-menu") {
         this.initMegaMenu(children, url, ul);
       } else {
-        this.initBoxedDropdown(children, url, ul);
+        this.initDropdown(children, url, ul);
       }
     } else {
       if (!children.length) return E([]);
@@ -493,7 +493,7 @@ return baseclass.extend({
   },
 
   // Shared scaffolding for the two desktop dropdown modes (mega-menu and
-  // boxed-dropdown): builds the top-level `.menu` link + its `.desktop-nav`
+  // dropdown): builds the top-level `.menu` link + its `.desktop-nav`
   // panel. Hover/activation behaviour differs per mode and is wired by the
   // caller on the returned nodes.
   buildDropdownItem(child, url, ul) {
@@ -723,7 +723,7 @@ return baseclass.extend({
     overlay.addEventListener("click", () => this.hideDesktopNav());
   },
 
-  initBoxedDropdown(children, url, ul) {
+  initDropdown(children, url, ul) {
     children.forEach((child) => {
       const { li, nav, menuLink, hasSubmenu } = this.buildDropdownItem(
         child,
@@ -762,7 +762,7 @@ return baseclass.extend({
     });
   },
 
-  // Only ever called from mega-menu mode (the boxed dropdown closes itself
+  // Only ever called from mega-menu mode (the dropdown closes itself
   // per-item on mouseleave), so it always performs the mega-menu cleanup.
   hideDesktopNav() {
     this.deactivateDesktopNavExcept(null, null);

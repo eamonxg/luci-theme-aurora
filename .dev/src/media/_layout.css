@@ -184,11 +184,11 @@ header {
         }
       }
 
-      /* Boxed-dropdown panels only — mega-menu panels are reparented into
+      /* Dropdown panels only — mega-menu panels are reparented into
          .desktop-menu-container (see above). */
       & .desktop-nav {
         @apply pointer-events-none left-0 z-40 px-0 pt-0 opacity-0 transition-opacity duration-150;
-        [data-nav-type="boxed-dropdown"] & {
+        [data-nav-type="dropdown"] & {
           @apply absolute top-full mt-2 min-w-48;
         }
         &.active {
@@ -196,7 +196,7 @@ header {
         }
 
         & .desktop-nav-list {
-          [data-nav-type="boxed-dropdown"] & {
+          [data-nav-type="dropdown"] & {
             @apply border-hairline bg-surface-overlay flex flex-col gap-y-1 rounded-3xl border py-2 shadow-lg backdrop-blur-md backdrop-saturate-150;
           }
           & > li {
@@ -205,7 +205,7 @@ header {
             & > a {
               @apply text-text block whitespace-nowrap no-underline;
 
-              [data-nav-type="boxed-dropdown"] & {
+              [data-nav-type="dropdown"] & {
                 @apply hover:bg-hover-faint mx-2 rounded-xl px-4 py-2 transition-colors duration-150;
               }
 

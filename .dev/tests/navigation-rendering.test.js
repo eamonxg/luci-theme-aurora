@@ -552,9 +552,9 @@ test("measures mega-menu canvas from the viewport-bounded panel height", () => {
   assert.doesNotMatch(initMegaMenu, /nav\.scrollHeight/);
 });
 
-test("skips boxed-dropdown initialization when the top menu is missing", () => {
+test("skips dropdown initialization when the top menu is missing", () => {
   const menu = loadMenuModule({
-    document: createFakeDocument({ navType: "boxed-dropdown" }),
+    document: createFakeDocument({ navType: "dropdown" }),
   });
   const tree = {
     children: {
@@ -564,7 +564,7 @@ test("skips boxed-dropdown initialization when the top menu is missing", () => {
   let calls = 0;
   let result;
 
-  menu.initBoxedDropdown = () => {
+  menu.initDropdown = () => {
     calls += 1;
   };
 
