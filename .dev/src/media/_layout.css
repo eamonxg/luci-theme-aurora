@@ -83,7 +83,7 @@ header {
             @apply [--menu-icon:url('@assets/icons/apps.svg')];
           }
           & .desktop-nav-title[data-section="nas"] {
-            @apply [--menu-icon:url('@assets/icons/server-2.svg')];
+            @apply [--menu-icon:url('@assets/icons/server.svg')];
           }
           & .desktop-nav-title[data-section="control"] {
             @apply [--menu-icon:url('@assets/icons/adjustments.svg')];
