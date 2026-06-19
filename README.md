@@ -24,8 +24,9 @@
 - **Modern**: Modern, content-first UI design with a clean layout and elegant animations.
 - **Mobile-friendly**: Optimized for mobile interactions and display, supporting both smartphones and tablets.
 - **Theme Switcher**: Built-in theme switcher with seamless switching between Auto (system), Light, and Dark modes.
-- **Floating Toolbar**: Clickable button icons for quick access to frequently used pages
-- **Customizable**: The [luci-app-aurora-config](https://github.com/eamonxg/luci-app-aurora-config) plugin includes multiple built‑in theme presets you can switch between, and lets you customize colors, the navigation style, the theme logo, and the floating toolbar (add or edit frequently used pages).
+- **Floating Toolbar**: Clickable button icons for quick access to frequently used pages.
+- **Installable (PWA)**: Ships a web app manifest and app icons, so LuCI can be installed to your home screen and launched like a native app.
+- **Customizable**: The [luci-app-aurora-config](https://github.com/eamonxg/luci-app-aurora-config) plugin includes multiple built‑in theme presets you can switch between, and lets you customize Light/Dark color tokens, the navigation layout (Mega Menu, Dropdown, Sidebar), layout density, typography, branding (logo, favicons, login background), and the floating toolbar (add or edit frequently used pages).
 
 ## Preview
 
@@ -59,12 +60,12 @@ OpenWrt 25.12+ and snapshots use `apk`; other versions use `opkg`:
 - **opkg** (OpenWrt < 25.12):
 
   ```sh
-  cd /tmp && uclient-fetch -O luci-theme-aurora.ipk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora_0.12.0-r20260531_all.ipk && opkg install luci-theme-aurora.ipk
+  cd /tmp && uclient-fetch -O luci-theme-aurora.ipk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora_1.0.0-r20260619_all.ipk && opkg install luci-theme-aurora.ipk
   ```
 
 - **apk** (OpenWrt 25.12+ and snapshots):
   ```sh
-  cd /tmp && uclient-fetch -O luci-theme-aurora.apk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora-0.12.0-r20260531.apk && apk add --allow-untrusted luci-theme-aurora.apk
+  cd /tmp && uclient-fetch -O luci-theme-aurora.apk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora-1.0.0-r20260619.apk && apk add --allow-untrusted luci-theme-aurora.apk
   ```
 
 ## Contributing
