@@ -51,7 +51,7 @@
   - **Safari 16.4+** _(2023 年 3 月发布)_
   - **Firefox 128+** _(2024 年 7 月发布)_
 
-## 安装
+## 安装预编译包
 
 OpenWrt 25.12+ 和 Snapshot 版本使用 `apk`；其他版本使用 `opkg`：
 
@@ -68,6 +68,46 @@ OpenWrt 25.12+ 和 Snapshot 版本使用 `apk`；其他版本使用 `opkg`：
   ```sh
   cd /tmp && uclient-fetch -O luci-theme-aurora.apk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora-1.0.0-r20260619.apk && apk add --allow-untrusted luci-theme-aurora.apk
   ```
+
+## 从源码构建
+
+使用 OpenWrt 构建系统自行编译。主机前置条件见 [Build system setup](https://openwrt.org/docs/guide-developer/toolchain/install-buildsystem)。产物位于 `bin/packages/<arch>/base/`（例如 `bin/packages/x86_64/base/luci-theme-aurora_*_all.ipk`），拷贝到路由器后按上文方式安装即可。
+
+### 通过 OpenWrt buildroot
+
+```sh
+# 克隆 OpenWrt——openwrt-24.10 分支构建 .ipk，main 分支构建 .apk
+git clone https://github.com/openwrt/openwrt.git
+cd openwrt
+git checkout openwrt-24.10       # 省略则停留在 main（snapshot → .apk）
+
+# 加入本软件包并安装 feeds（提供 luci-base）
+git clone https://github.com/eamonxg/luci-theme-aurora.git package/luci-theme-aurora
+./scripts/feeds update -a
+./scripts/feeds install -a
+
+# 在 menuconfig 中勾选主题：LuCI → Themes → luci-theme-aurora
+make menuconfig
+
+# 先编译主机工具与工具链，再编译本软件包
+make tools/install -j$(nproc)
+make toolchain/install -j$(nproc)
+make package/luci-theme-aurora/compile -j$(nproc) V=s
+```
+
+### 通过预编译 SDK（更快）
+
+[OpenWrt SDK](https://openwrt.org/docs/guide-developer/toolchain/using_the_sdk) 自带预编译工具链，可省去 `tools/install` / `toolchain/install` 步骤。从 [downloads.openwrt.org](https://downloads.openwrt.org) 下载与目标匹配的 SDK（release SDK 构建 `.ipk`，snapshot SDK 构建 `.apk`）并解压，然后在 SDK 目录中执行：
+
+```sh
+git clone https://github.com/eamonxg/luci-theme-aurora.git package/luci-theme-aurora
+./scripts/feeds update -a
+./scripts/feeds install -a
+
+# 在 menuconfig 中勾选主题：LuCI → Themes → luci-theme-aurora
+make menuconfig
+make package/luci-theme-aurora/compile -j$(nproc) V=s
+```
 
 ## 加入贡献
 
