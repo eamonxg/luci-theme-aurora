@@ -1,6 +1,6 @@
 table.table,
 .table {
-  @apply border-hairline max-md:bg-surface-overlay mb-3 w-full border border-separate border-spacing-0 overflow-visible rounded-2xl max-md:mx-0 max-md:block max-md:w-full max-md:overflow-visible max-md:border-0 max-md:shadow-none;
+  @apply border-hairline mb-3 w-full border border-separate border-spacing-0 overflow-visible rounded-2xl max-md:mx-0 max-md:block max-md:w-full max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:shadow-none;
 
   &[width="100%"] {
     @apply w-full;
@@ -39,7 +39,7 @@ table.table,
     @apply has-[.cbi-progressbar]:max-md:flex has-[.cbi-progressbar]:max-md:items-center has-[.cbi-progressbar]:max-md:justify-center;
 
     &:last-child {
-      @apply max-md:rounded-b-2xl;
+      @apply max-md:border-b-0;
       &[data-title] {
         @apply before:border-b-0;
       }
@@ -52,17 +52,6 @@ table.table,
     &.cbi-section-table-titles,
     &.cbi-section-table-descr {
       @apply max-md:hidden;
-    }
-
-    &:first-child:not(
-        .table-titles,
-        .cbi-section-table-titles,
-        .cbi-section-table-descr
-      ),
-    &.table-titles + .tr,
-    &.cbi-section-table-titles + .tr,
-    &.cbi-section-table-descr + .tr {
-      @apply max-md:rounded-t-2xl;
     }
 
     &.cbi-rowstyle-1,
