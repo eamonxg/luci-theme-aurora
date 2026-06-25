@@ -432,14 +432,15 @@ body[data-nav-type="sidebar"] {
   }
 
   .zone-forwards {
-    @apply flex items-start gap-3 leading-relaxed;
+    @apply flex flex-nowrap items-stretch gap-2 leading-relaxed;
 
     & > span {
-      @apply text-text-muted mt-1.5;
+      @apply text-text-muted flex shrink-0 basis-8 items-center justify-center self-center;
     }
 
+    .zone-src,
     .zone-dest {
-      @apply flex flex-col items-start gap-2;
+      @apply flex flex-1 flex-col gap-1.5;
     }
   }
 

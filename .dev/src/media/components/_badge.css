@@ -19,32 +19,41 @@
 }
 
 .zonebadge {
-  @apply border-hairline bg-surface-sunken text-text inline-flex items-center gap-1.5 overflow-visible rounded-full border px-1 py-1.5 text-sm font-medium shadow-sm transition-[box-shadow] duration-150 hover:shadow-md max-md:gap-1 max-md:text-xs;
+  @apply border-hairline bg-surface-sunken text-text inline-flex items-center gap-1.5 overflow-visible rounded-lg border px-2 py-1 align-middle text-sm font-semibold leading-normal max-md:gap-1 max-md:px-1.5 max-md:text-xs;
 
   &[style*="--zone-color-rgb"] {
-    @apply bg-[rgb(var(--zone-color-rgb),.7)]!;
+    @apply border-transparent bg-[rgb(var(--zone-color-rgb),.7)]!;
 
     & em {
       @apply text-text;
     }
   }
 
+  &.zonebadge-empty {
+    @apply border-dashed bg-transparent text-text-muted font-normal italic;
+  }
+
   .cbi-dropdown & {
-    @apply rounded-xl px-1 py-0.5;
+    @apply px-1.5 py-0.5;
   }
 }
 
 .ifacebadge {
   @apply border-hairline bg-surface-sunken text-text hover:border-hairline hover:bg-surface-sunken inline-flex cursor-default flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-normal shadow-sm transition-[box-shadow,border-color,background-color] duration-150 hover:shadow-md max-md:gap-1.5 max-md:px-2.5 max-md:py-1.5 max-md:text-xs;
 
-  .cbi-dropdown &,
   .cbi-tooltip & {
     @apply flex-nowrap;
   }
 
-  .zonebadge > &,
+  .zonebadge > & {
+    @apply flex-nowrap rounded-2xl px-1.5 py-0;
+    & img {
+      @apply mr-1 w-4;
+    }
+  }
+
   .cbi-dropdown & {
-    @apply rounded-2xl px-1.5 py-0;
+    @apply flex-nowrap gap-1 rounded-lg px-1.5 py-0.5 shadow-none hover:shadow-none;
     & img {
       @apply mr-1 w-4;
     }
