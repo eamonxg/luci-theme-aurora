@@ -45,6 +45,45 @@
   @apply dark:hue-rotate-150 dark:invert;
 }
 
+/* luci-app-modemdata */
+[data-page="admin-modem-modemdata-modempreview"] {
+  & div[style*="grid-template-columns"] {
+    @apply items-stretch;
+  }
+
+  & .ifacebox {
+    @apply m-1 flex h-full w-full min-w-0 flex-col shadow-md;
+  }
+
+  & .ifacebox-head {
+    @apply shrink-0 px-2! py-2! text-left text-sm;
+  }
+
+  & .ifacebox-body {
+    @apply flex flex-1 flex-col items-stretch justify-start gap-0 p-2! text-left;
+
+    & > div {
+      @apply block w-full flex-nowrap space-y-0;
+    }
+
+    & > div > span:last-child {
+      @apply flex shrink-0 items-center justify-end;
+    }
+
+    & .ifacebadge {
+      @apply inline-flex w-auto! max-w-full flex-none flex-nowrap items-center gap-1 px-1.5 py-0.5 text-xs leading-tight shadow-none;
+
+      & > img {
+        @apply m-0 w-auto shrink-0 self-center;
+      }
+
+      & normal {
+        @apply ml-1! inline-block max-w-none! align-middle whitespace-nowrap;
+      }
+    }
+  }
+}
+
 /* luci-mod-dashboard */
 .Dashboard {
   & > .section-content {
