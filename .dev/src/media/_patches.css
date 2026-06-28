@@ -45,6 +45,18 @@
   @apply dark:hue-rotate-150 dark:invert;
 }
 
+/* luci-app-modemdata */
+[data-page="admin-modem-modemdata-modempreview"] {
+
+  & .ifacebox-body {
+
+    & .ifacebadge {
+      @apply w-auto!;
+
+    }
+  }
+}
+
 /* luci-mod-dashboard */
 .Dashboard {
   & > .section-content {
