@@ -93,12 +93,20 @@
   }
 
   & .ifacebox-body {
-    @apply text-text flex w-full flex-1 flex-col items-center justify-around gap-2 rounded-b-2xl p-4 text-center max-md:rounded-b-3xl;
+    /* Flex column base: `items-stretch` lets label/value rows span full width
+       (e.g. luci-app-modemdata) while `justify-center` keeps rows tight together
+       and balanced instead of spread apart. Icon-only cards (switch ports, the
+       interfaces list) centre horizontally via `text-center`/`mx-auto`. The
+       interfaces overview layers its richer layout under `.network-status-table`. */
+    @apply text-text flex w-full flex-1 flex-col items-stretch justify-center gap-1 rounded-b-2xl p-4 text-center max-md:rounded-b-3xl;
 
     td & {
-      @apply max-md:flex-row max-md:rounded-r-3xl max-md:rounded-bl-none max-md:py-2 max-md:pr-2 max-md:pl-4;
+      @apply max-md:flex-row max-md:items-center max-md:rounded-r-3xl max-md:rounded-bl-none max-md:py-2 max-md:pr-2 max-md:pl-4;
     }
 
+    & > img {
+      @apply mx-auto;
+    }
     & > span {
       @apply text-text space-y-1.5 max-md:space-y-1 max-md:text-sm max-md:leading-5;
 
@@ -128,12 +136,9 @@
     }
 
     & > div {
-      @apply flex w-full flex-wrap space-y-2.5 max-md:space-y-1.5;
+      @apply block w-full space-y-0;
       td & {
         @apply max-md:w-auto max-md:flex-1 max-md:space-y-1;
-      }
-      & .ifacebadge {
-        @apply flex-1;
       }
     }
 
@@ -155,5 +160,23 @@
         @apply max-md:mt-0;
       }
     }
+  }
+}
+
+/*
+  Network interfaces overview (admin/network) — the page `.ifacebox` was designed
+  for. The rich equal-height card layout is scoped here (not on the base) so
+  third-party pages keep the plain, tolerant defaults above. Mirrors the
+  base-vs-`.network-status-table` split in luci-theme-bootstrap.
+*/
+.network-status-table .ifacebox-body {
+  @apply flex h-full flex-1 flex-col items-center justify-around gap-2;
+
+  & > div {
+    @apply flex flex-wrap;
+  }
+
+  & .ifacebadge {
+    @apply flex-1;
   }
 }
