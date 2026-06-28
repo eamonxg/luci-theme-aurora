@@ -1,0 +1,93 @@
+name: Update contributors
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Tunables ---------------------------------------------------------------
+#   PINNED   : usernames to always include (e.g. co-authors the contributors
+#              API does not surface).
+#   EXCLUDED : usernames to always drop (bot accounts that show up as Users).
+#   GitHub bots (type === "Bot") are dropped automatically.
+env:
+  IMAGE_SIZE: "80"
+  COLUMNS: "7"
+  PINNED: "chillykidd"
+  EXCLUDED: "aurora-assistant"
+
+jobs:
+  update-contributors:
+    runs-on: ubuntu-latest
+    name: Update README contributors list
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Render contributors into both READMEs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const SIZE = Number(process.env.IMAGE_SIZE);
+            const COLS = Number(process.env.COLUMNS);
+            const PINNED = process.env.PINNED.split(',').map(s => s.trim()).filter(Boolean);
+            const EXCLUDED = new Set(
+              process.env.EXCLUDED.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+            );
+
+            // All repo contributors, minus GitHub bots and excluded accounts.
+            const raw = await github.paginate(github.rest.repos.listContributors, {
+              owner, repo, per_page: 100,
+            });
+            const users = raw
+              .filter(u => u.login && u.type !== 'Bot' && !EXCLUDED.has(u.login.toLowerCase()))
+              .map(u => ({ login: u.login, avatar: u.avatar_url, url: u.html_url }));
+
+            // Pin extra users (e.g. co-authors the API never returns).
+            const seen = new Set(users.map(u => u.login.toLowerCase()));
+            for (const login of PINNED) {
+              if (seen.has(login.toLowerCase())) continue;
+              const { data } = await github.rest.users.getByUsername({ username: login });
+              users.push({ login: data.login, avatar: data.avatar_url, url: data.html_url });
+              seen.add(login.toLowerCase());
+            }
+
+            const width = (100 / COLS).toFixed(2);
+            const cell = u =>
+              `<td align="center" valign="top" width="${width}%"><a href="${u.url}">` +
+              `<img src="${u.avatar}&s=${SIZE * 2}" width="${SIZE}px;" alt="${u.login}"/>` +
+              `<br /><sub><b>${u.login}</b></sub></a></td>`;
+            let rows = '';
+            for (let i = 0; i < users.length; i += COLS) {
+              rows += '    <tr>\n' +
+                users.slice(i, i + COLS).map(u => '      ' + cell(u)).join('\n') +
+                '\n    </tr>\n';
+            }
+            const table = `<table>\n  <tbody>\n${rows}  </tbody>\n</table>`;
+
+            const START = '<!-- contributors:start -->';
+            const END = '<!-- contributors:end -->';
+            const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const block = new RegExp(`${esc(START)}[\\s\\S]*?${esc(END)}`);
+            for (const file of ['README.md', 'README_zh.md']) {
+              const before = fs.readFileSync(file, 'utf8');
+              const after = before.replace(block, `${START}\n${table}\n${END}`);
+              if (after !== before) fs.writeFileSync(file, after);
+            }
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- README.md README_zh.md; then
+            echo "No contributor changes."
+          else
+            git add README.md README_zh.md
+            git commit -m "docs: update contributors list"
+            git push
+          fi
