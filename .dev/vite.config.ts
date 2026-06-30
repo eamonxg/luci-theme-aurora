@@ -6,7 +6,7 @@
 import tailwindcss from "@tailwindcss/vite";
 import browserslist from "browserslist";
 import { exec } from "child_process";
-import { watch as fsWatch } from "fs";
+import { watch as fsWatch, readdirSync } from "fs";
 import { mkdir, readdir, readFile, writeFile } from "fs/promises";
 import { browserslistToTargets } from "lightningcss";
 import { basename, dirname, join, relative, resolve } from "path";
@@ -415,6 +415,17 @@ export default defineConfig(({ mode }) => {
         input: {
           main: resolve(CURRENT_DIR, "src/media/main.css"),
           login: resolve(CURRENT_DIR, "src/media/login.css"),
+          // On-demand third-party patches: one entry per page, output to
+          // aurora/patches/<page>.css (the `patches/` key prefix lands them there
+          // via assetFileNames below). header.ut links the matching one per page.
+          ...Object.fromEntries(
+            readdirSync(resolve(CURRENT_DIR, "src/media/patches"))
+              .filter((f) => f.endsWith(".css"))
+              .map((f) => [
+                `patches/${f.slice(0, -4)}`,
+                resolve(CURRENT_DIR, "src/media/patches", f),
+              ]),
+          ),
         },
         output: {
           assetFileNames: "aurora/[name].[ext]",

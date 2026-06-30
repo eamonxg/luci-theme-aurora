@@ -16,6 +16,23 @@
 	const boardinfo = ubus.call('system', 'board');
 	const uci = cursor();
 	const tokens = uci.get_all('aurora', 'theme') || {};
+
+	// On-demand third-party patches. Each entry is a <body data-page> value that has a
+	// matching aurora/patches/<page>.css file; header.ut links only the current page's
+	// patch. Listing them here (instead of probing the filesystem) avoids a hard `fs`
+	// dependency and avoids 404s on the ~95% of pages that have no patch.
+	// KEEP IN SYNC with .dev/src/media/patches/*.css.
+	const PATCH_PAGES = [
+		'admin-network-network',
+		'admin-system-filemanager',
+		'admin-services-openclash-config',
+		'admin-services-openclash-settings',
+		'admin-statistics-graphs',
+		'admin-modem-modemdata-modempreview',
+		'admin-dashboard',
+	];
+	const patch_page = join('-', ctx?.request_path || []);
+	const has_patch = patch_page in PATCH_PAGES;
 	const nav_type = tokens.nav_type || 'mega-menu';
 	const toolbar_enabled = tokens.toolbar_enabled ? tokens.toolbar_enabled == '1' : true;
 	const icon_cache_version = tokens.icon_cache_version || '0';
@@ -138,6 +155,9 @@
 		<link rel="stylesheet" href="{{ media }}/login.css">
 		{% else %}
 		<link rel="stylesheet" href="{{ media }}/main.css">
+		{% if (has_patch): %}
+		<link rel="stylesheet" href="{{ media }}/patches/{{ patch_page }}.css">
+		{% endif %}
 		{% endif %}
 		<link rel="stylesheet" href="{{ media }}/fonts/aurora-font.css?v={{ icon_cache_version }}">
 		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any" type="image/svg+xml">

@@ -1,0 +1,20 @@
+/*
+  PATCH: admin-services-openclash-settings (luci-app-openclash)
+  Loaded on-demand by header.ut only when data-page matches this filename.
+  @reference makes @apply / theme utilities resolvable without re-emitting main.css.
+*/
+@reference "../main.css";
+
+[data-page="admin-services-openclash-settings"] {
+  .cbi-value-field {
+    & .cbi-input-select {
+      @apply max-md:w-full!;
+    }
+  }
+  .diag-style {
+    @apply max-md:grid max-md:grid-cols-1 max-md:gap-4;
+    & > div {
+      @apply flex flex-col items-center gap-2 max-md:w-full! max-md:gap-1;
+    }
+  }
+}
