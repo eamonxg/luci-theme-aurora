@@ -1,0 +1,74 @@
+/*
+  PATCH: admin-dashboard (luci-mod-dashboard)
+  Loaded on-demand by header.ut only when data-page matches this filename.
+  @reference makes @apply / theme utilities resolvable without re-emitting main.css.
+*/
+@reference "../main.css";
+
+[data-page="admin-dashboard"] {
+  .Dashboard {
+    & > .section-content {
+      & .dashboard-bg {
+        &.tr {
+          @apply rounded-none;
+        }
+        @apply bg-surface-overlay not-[.tr]:border-hairline not-[.tr]:hover:border-hairline max-md:bg-surface-overlay not-[.tr]:max-md:border-hairline not-[.tr]:border not-[.tr]:shadow-lg not-[.tr]:hover:shadow-xl not-[.tr]:max-md:border;
+
+        /* Dark mode: override custom.css hardcoded light-mode colors on all text nodes */
+        & span {
+          @apply dark:text-text!;
+        }
+        & td {
+          @apply dark:text-text!;
+        }
+        & th {
+          @apply dark:text-text!;
+        }
+
+        img[src*=".svg"] {
+          @apply dark:invert;
+        }
+
+        /* Compact spacing for assoclist cells (carry .td/.th classes) */
+        & .td {
+          @apply py-2 max-md:py-1;
+        }
+        & .th {
+          @apply py-2;
+        }
+
+        /* Inline info tables (e.g. DNS): strip card decoration, restore table layout */
+        & .table:not(.assoclist) {
+          @apply mb-0 rounded-none border-0 bg-transparent shadow-none;
+          & tr {
+            @apply hover:bg-transparent max-md:table-row max-md:border-0 max-md:px-0 max-md:py-0;
+          }
+          & td {
+            @apply border-0 px-0 py-0.5 max-md:table-cell;
+            &:first-child {
+              @apply pr-2 whitespace-nowrap opacity-70;
+            }
+          }
+        }
+      }
+
+      .title {
+        h3 {
+          @apply text-text border-0 pb-4 max-md:mx-0 max-md:pb-2;
+        }
+      }
+
+      .router-status-wifi {
+        .wifi-info {
+          .devices-info {
+            .tr {
+              .td {
+                @apply nth-3:relative nth-3:top-0 nth-3:w-full nth-3:px-0 max-md:flex-[1_1_50%];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

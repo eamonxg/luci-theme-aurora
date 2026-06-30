@@ -40,6 +40,5 @@
 @import "./components/_tab.css";
 
 @import "./_utilities.css";
-@import "./_patches.css";
 @import "./_reduced-motion.css";
 @import "./_reduced-transparency.css";

@@ -1,0 +1,2 @@
+/*! tailwindcss v4.1.18 | MIT License | https://tailwindcss.com */
+@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-border-style:solid}}[data-page=admin-system-filemanager] #file-manager-container{overflow:auto}[data-page=admin-system-filemanager] #file-manager-container #status-bar{border-style:var(--tw-border-style);background-color:var(--surface);border-width:0}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}

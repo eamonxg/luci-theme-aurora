@@ -4,9 +4,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"build": "npm run clean && npm run gen:tokens && vite build",
+		"build": "npm run clean && npm run gen:tokens && npm run gen:patch-pages && vite build",
 		"clean": "node scripts/clean.js",
 		"gen:tokens": "node scripts/gen-tokens.js",
+		"gen:patch-pages": "node scripts/gen-patch-pages.js",
 		"test": "node --test tests/*.test.js"
 	},
 	"devDependencies": {

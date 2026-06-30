@@ -87,15 +87,47 @@ This will be compiled to standard CSS that works in all browsers.
 
 The theme has two independent Tailwind CSS v4 entry points, both sourced from `.dev/src/media/`:
 
-- **`main.css`** — the LuCI admin UI. It contains no rules of its own; it's a pure import manifest that pulls in (in order) `_tokens.css` (OKLCH theme tokens, mapped via `@theme inline`), `_base.css`, `_elements.css`, `_layout.css`, every file in `components/` (one partial per UI component — buttons, cards, modals, tables, etc.), `_utilities.css`, and `_patches.css`.
+- **`main.css`** — the LuCI admin UI. It contains no rules of its own; it's a pure import manifest that pulls in (in order) `_tokens.css` (OKLCH theme tokens, mapped via `@theme inline`), `_base.css`, `_elements.css`, `_layout.css`, every file in `components/` (one partial per UI component — buttons, cards, modals, tables, etc.), and `_utilities.css`.
 - **`login.css`** — the standalone login page (`sysauth.ut`). Self-contained: imports Tailwind and `_tokens.css` directly.
+
+Third-party compatibility patches are **not** bundled into `main.css` — they are split into per-page files under `media/patches/` and loaded on demand (see [On-Demand Third-Party Patches](#on-demand-third-party-patches) below).
 
 **Adding new styles:**
 
 - New UI component → create `components/_<name>.css` and add an `@import` line to `main.css`. Each file is its own organizational unit — no `@layer` wrappers needed (any that remain are stripped by PostCSS).
-- Compatibility fix for a third-party LuCI app/page → add a narrow, selector-scoped rule to `_patches.css` under a comment naming the app (e.g. `/* luci-app-openclash */`).
+- Compatibility fix for a third-party LuCI app/page → add a new file under `media/patches/` (see below).
 
 All rules use `@apply` with Tailwind utilities and CSS Nesting — no raw CSS properties.
+
+### On-Demand Third-Party Patches
+
+Some third-party LuCI apps ship markup that doesn't adapt to the theme and needs a narrow compatibility override. Instead of bundling every such patch into `main.css` (which would ship them to **every** page), each patch is a standalone CSS file loaded **only on the page it targets**.
+
+**How it works:**
+
+1. **One file per page, named by `data-page`.** Each patch lives at `media/patches/<page>.css`, where `<page>` is the value of `<body data-page="…">` for the target page — i.e. the request path segments joined by `-` (e.g. `admin-services-openclash-config`). `header.ut` computes the same string at render time from `ctx.request_path`, falling back to `ctx.path` when `request_path` is empty (`join('-', length(ctx.request_path) ? ctx.request_path : ctx.path)`) so default landings reached without an explicit path still resolve their patch.
+2. **Build splits, not bundles.** `vite.config.ts` adds every `media/patches/*.css` as its own Rollup entry, so each compiles to `htdocs/luci-static/aurora/patches/<page>.css`. They are no longer part of `main.css`.
+3. **`@reference`, not `@import`.** Every patch file starts with `@reference "../main.css";`. This loads the theme context (tokens, custom utilities like `bg-surface`, the `dark:` variant) so `@apply` resolves — **without** re-emitting `main.css` into the patch output. Using `@import` here would inline all of `main.css` into every patch (hundreds of KB); `@reference` keeps each patch to just its own rules.
+4. **`header.ut` links exactly one patch.** A static allow-list `PATCH_PAGES` in `header.ut` lists which pages have a patch file. When the current page is in the list, header emits a single `<link>` to its patch file, right after `main.css` (so patches can override base styles). Pages not in the list get nothing — no extra request, no 404. A static list is used (rather than probing the filesystem) to avoid a hard `fs` dependency in the template and to avoid 404s on the ~95% of pages with no patch.
+
+**Adding a patch:**
+
+1. Open the target page in the browser and read `document.body.dataset.page` — that exact string is your filename.
+2. Create `media/patches/<that-string>.css`:
+   ```css
+   /* PATCH: <page> (luci-app-foo) */
+   @reference "../main.css";
+
+   [data-page="<page>"] {
+     /* narrow, selector-scoped overrides using @apply + CSS Nesting */
+   }
+   ```
+3. Run `pnpm build` (or just `pnpm gen:patch-pages`). The `PATCH_PAGES` allow-list in `header.ut` is **auto-generated** from the `patches/` directory by `scripts/gen-patch-pages.js` — no manual editing. It rewrites the region between the `//#patch-pages-start` / `//#patch-pages-end` markers; don't hand-edit inside them.
+4. Verify `htdocs/luci-static/aurora/patches/<page>.css` is small (just your rules, not a copy of `main.css`).
+
+> Removing a patch is symmetric: delete the file and rebuild — it drops out of `PATCH_PAGES` automatically.
+
+> **Naming notes:** match the page exactly — granularity is per page, not per app. An app with several pages (e.g. openclash `…-config` and `…-settings`) gets one file per page. The filename has no `_` prefix (unlike the `_`-prefixed partials, which are `@import`-only fragments); patch files are real build entries that ship to `htdocs/`.
 
 ### Design Tokens
 
@@ -247,8 +279,8 @@ luci-theme-aurora/
 │   │   │   ├── _elements.css       # Base element styles (headings, links, …)
 │   │   │   ├── _layout.css         # Page layout/structure
 │   │   │   ├── _utilities.css      # Custom utility classes
-│   │   │   ├── _patches.css        # Third-party LuCI app/page overrides
-│   │   │   └── components/         # One partial per UI component
+│   │   │   ├── components/         # One partial per UI component
+│   │   │   └── patches/            # Per-page third-party patches (on-demand, one file per data-page)
 │   │   └── resource/               # JavaScript resources
 │   │       └── menu-aurora.js      # Menu logic
 │   ├── tokens/                     # Design token source (-> src/media/_tokens.css)
@@ -278,7 +310,8 @@ luci-theme-aurora/
 │   │   ├── fonts/                  # Built font files
 │   │   ├── images/                 # Built images + PWA icons
 │   │   ├── main.css                # Compiled admin UI CSS
-│   │   └── login.css               # Compiled login page CSS
+│   │   ├── login.css               # Compiled login page CSS
+│   │   └── patches/                # Compiled per-page patches (linked on demand by header.ut)
 │   └── resources/                  # Built JavaScript modules
 │       └── menu-aurora.js          # Minified menu logic
 ├── root/etc/uci-defaults/          # OpenWrt system integration
