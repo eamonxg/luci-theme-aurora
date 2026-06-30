@@ -122,8 +122,10 @@ Some third-party LuCI apps ship markup that doesn't adapt to the theme and needs
      /* narrow, selector-scoped overrides using @apply + CSS Nesting */
    }
    ```
-3. Add `'<page>'` to the `PATCH_PAGES` array in `ucode/template/themes/aurora/header.ut`. **This list must stay in sync with the `patches/` directory** — a file without a matching entry is never loaded; an entry without a file produces a 404.
-4. Run `pnpm build` and verify `htdocs/luci-static/aurora/patches/<page>.css` is small (just your rules, not a copy of `main.css`).
+3. Run `pnpm build` (or just `pnpm gen:patch-pages`). The `PATCH_PAGES` allow-list in `header.ut` is **auto-generated** from the `patches/` directory by `scripts/gen-patch-pages.js` — no manual editing. It rewrites the region between the `//#patch-pages-start` / `//#patch-pages-end` markers; don't hand-edit inside them.
+4. Verify `htdocs/luci-static/aurora/patches/<page>.css` is small (just your rules, not a copy of `main.css`).
+
+> Removing a patch is symmetric: delete the file and rebuild — it drops out of `PATCH_PAGES` automatically.
 
 > **Naming notes:** match the page exactly — granularity is per page, not per app. An app with several pages (e.g. openclash `…-config` and `…-settings`) gets one file per page. The filename has no `_` prefix (unlike the `_`-prefixed partials, which are `@import`-only fragments); patch files are real build entries that ship to `htdocs/`.
 
