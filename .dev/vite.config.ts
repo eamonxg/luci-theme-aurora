@@ -96,12 +96,26 @@ interface ResourceConfig {
   js: RouteConfig;
 }
 
+// On-demand third-party patches: serve each src/media/patches/<page>.css at
+// /luci-static/aurora/patches/<page>.css in dev. Without this, header.ut's patch
+// <link> falls through to the OpenWrt proxy (404 / stale router asset) and patch
+// edits don't trigger HMR. Mirrors the build entries derived from the same dir.
+function patchCssRoutes(): Record<string, string> {
+  const dir = resolve(CURRENT_DIR, "src/media/patches");
+  return Object.fromEntries(
+    readdirSync(dir)
+      .filter((f) => f.endsWith(".css"))
+      .map((f) => [`/luci-static/aurora/patches/${f}`, `/src/media/patches/${f}`]),
+  );
+}
+
 function createLocalServePlugin(): Plugin {
   const resourceConfig: ResourceConfig = {
     css: {
       routes: {
         "/luci-static/aurora/main.css": "/src/media/main.css",
         "/luci-static/aurora/login.css": "/src/media/login.css",
+        ...patchCssRoutes(),
       },
       shouldRewrite: true,
       hmrMessage: "CSS file changed",
