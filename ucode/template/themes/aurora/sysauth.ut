@@ -9,7 +9,7 @@
 
 {%
 import { cursor } from 'uci';
-const boardinfo = ubus.call('system', 'board');
+const boardinfo = ubus.call('system', 'board') ?? {};
 const themeTokens = cursor().get_all('aurora', 'theme') || {};
 const loginLogoSvg = themeTokens.logo_svg || 'logo.svg';
 const loginIconVer = themeTokens.icon_cache_version || '0';
