@@ -64,7 +64,7 @@ header {
          of a position:fixed panel and shrink the canvas to the menu's width.
          Each panel is the same centered three-column grid (max-width fixed),
          so switching categories is a pure cross-fade with no width shift.
-         The entering panel floats up 6px — transform + opacity only. */
+         The entering panel floats up 6px — translate + opacity only. */
       /* The server-rendered board is only a template that menu-aurora.js
          clones into each panel's right column — the original stays hidden. */
       & > .desktop-menu-board {
@@ -77,7 +77,11 @@ header {
            is a pure cross-fade. Below lg the side tracks drop and only the
            links column remains (tablet → just the submenu). The panel scrolls
            internally when its content exceeds the viewport below the header. */
-        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-h-[calc(100dvh-3.5rem)] max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 overflow-y-auto overscroll-contain px-10 pt-13 pb-8 opacity-0 transition-[opacity,transform] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
+        /* Tailwind v4 translate-* utilities emit the native `translate`
+           property, so that is what must be transitioned — transitioning
+           `transform` here left the 6px entrance float snapping instead of
+           animating (only the opacity ever faded). */
+        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-h-[calc(100dvh-3.5rem)] max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 overflow-y-auto overscroll-contain px-10 pt-13 pb-8 opacity-0 transition-[opacity,translate] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
 
         &.active {
           @apply pointer-events-auto translate-y-0 opacity-100;
