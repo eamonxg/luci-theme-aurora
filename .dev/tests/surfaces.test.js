@@ -58,14 +58,13 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
   // pays main-thread layout + repaint per frame (the low-end hover jank).
   const sheet = layout.split("\n").find((l) => l.includes("bg-mega-menu-bg"));
   assert.ok(!sheet?.includes("backdrop-blur"), `sheet must not blur: ${sheet}`);
-  // The sheet sits below the bar (top-14) so its own height IS the visible
-  // travel: ±100% endpoints wipe from the bar's bottom edge and collapse
-  // back into it, never past it to the viewport top.
+  // The sheet's own height IS the visible travel: ±100% endpoints wipe from
+  // the bar's bottom edge and retract back behind it.
   assert.ok(
     sheet?.includes("transition-[translate]") &&
-      sheet?.includes("top-14") &&
+      sheet?.includes("h-(--mega-menu-height,0)") &&
       sheet?.includes("-translate-y-full"),
-    `sheet must slide from the bar edge, not resize: ${sheet}`,
+    `sheet must slide by its own travel-sized height: ${sheet}`,
   );
   const containerRule =
     layout.match(/& \.desktop-menu-container\s*\{\s*@apply\s+([^;]+);/)?.[1] ??
@@ -74,6 +73,13 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
     !containerRule.includes("transition") &&
       !containerRule.includes("will-change"),
     `container is a static frame, it must not animate: ${containerRule}`,
+  );
+  // A translated sheet MOVES — without the container clip below the bar
+  // (top-14 + overflow-clip) its body rides up over the bar during the
+  // retract and flashes away at the top when visibility cuts.
+  assert.ok(
+    containerRule.includes("top-14") && containerRule.includes("overflow-clip"),
+    `container must clip the retract behind the bar: ${containerRule}`,
   );
   // The counter-transformed canvas must mirror the sheet's endpoints and
   // timing exactly or the content drifts during the wipe; both take the

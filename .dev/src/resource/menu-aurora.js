@@ -580,29 +580,30 @@ return baseclass.extend({
     let hideTimer = null;
 
     // Constant canvas: every category opens at the same height — the
-    // tallest submenu wins. Pre-measured at idle (after fonts settle) so the
-    // first hover pays no synchronous reflow, and cached, so switching
-    // categories is a pure cross-fade with zero layout work. The height
-    // stays set across open/close — it is the sheet's translate reference,
-    // not the animated property. A resize invalidates the cache.
+    // tallest submenu wins. --mega-menu-height is that panel height alone
+    // (the visible travel; the bar is not part of the wipe distance).
+    // Pre-measured at idle (after fonts settle) so the first hover pays no
+    // synchronous reflow, and cached, so switching categories is a pure
+    // cross-fade with zero layout work. The height stays set across
+    // open/close — it is the sheet's translate reference, not the animated
+    // property. A resize invalidates the cache.
     let canvasHeight = 0;
     let revealDuration = 300;
 
     const applyCanvasHeight = () => {
       if (!canvasHeight) {
-        const headerHeight =
-          header.querySelector(".header-content")?.offsetHeight || 56;
-        let maxPanel = 0;
         header
           .querySelectorAll(".desktop-nav")
-          .forEach((nav) => (maxPanel = Math.max(maxPanel, nav.offsetHeight)));
-        canvasHeight = headerHeight + maxPanel;
-        // apple.com's flyout pacing: a constant 2px/ms over the VISIBLE
-        // travel (the wipe starts at the header's bottom edge — see the
-        // endpoint calc in _layout.css — so the header height is not
-        // distance), clamped to 240–480ms. Short panels open snappily, tall
+          .forEach(
+            (nav) => (canvasHeight = Math.max(canvasHeight, nav.offsetHeight)),
+          );
+        // apple.com's flyout pacing: a constant 2px/ms over the visible
+        // travel, clamped to 240–480ms. Short panels open snappily, tall
         // ones don't blink.
-        revealDuration = Math.min(480, Math.max(240, Math.round(maxPanel / 2)));
+        revealDuration = Math.min(
+          480,
+          Math.max(240, Math.round(canvasHeight / 2)),
+        );
       }
       // Both vars live on the header, not the container: the container
       // inherits the height, and the header's own transition-colors reads
