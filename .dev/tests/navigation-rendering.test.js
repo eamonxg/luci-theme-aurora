@@ -768,12 +768,15 @@ test("renders an active group expanded when an open mobile list was initially em
   assert.equal(region.hasAttribute("inert"), false);
 });
 
-test("keeps mega-menu stacking state while the close height transition runs", () => {
-  const container = new FakeElement("div", {
-    class: "desktop-menu-container active",
-  });
+test("keeps mega-menu stacking state while the sheet retract transition runs", () => {
+  const sheet = new FakeElement("div", { class: "desktop-menu-sheet" });
+  const container = new FakeElement(
+    "div",
+    { class: "desktop-menu-container active" },
+    [sheet],
+  );
   const overlay = new FakeElement("div", {
-    class: "desktop-menu-overlay active",
+    class: "desktop-menu-overlay active settled",
   });
   const document = createFakeDocument({
     elements: {
@@ -788,14 +791,19 @@ test("keeps mega-menu stacking state while the close height transition runs", ()
   menu.hideDesktopNav();
 
   assert.equal(overlay.classList.contains("active"), false);
+  // The frost outlives the close: it fades with the dim and is retired by
+  // the overlay's own transitionend, never snapped off at close start.
+  assert.equal(overlay.classList.contains("settled"), true);
   assert.equal(container.classList.contains("active"), false);
   assert.equal(container.classList.contains("closing"), true);
-  assert.equal(container.style.properties.has("--mega-menu-height"), false);
+  // The canvas height is the sheet's translate reference, not the animated
+  // property — it must survive the close for the retract to have a distance.
+  assert.equal(container.style.properties.get("--mega-menu-height"), "320px");
 
-  container.dispatchEvent({
+  sheet.dispatchEvent({
     type: "transitionend",
-    target: container,
-    propertyName: "height",
+    target: sheet,
+    propertyName: "translate",
   });
 
   assert.equal(container.classList.contains("closing"), false);

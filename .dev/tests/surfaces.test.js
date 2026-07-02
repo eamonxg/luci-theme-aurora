@@ -49,25 +49,54 @@ test("dark layering: page < card, sunken between page and card", () => {
   assert.ok(sunk >= bg && sunk < surf, `sunken not between page and card: ${d.surface_sunken}`);
 });
 
-test("mega-menu frost lives on the curtain, not the height-animating panel", () => {
+test("mega-menu reveal is compositor-only and the frost never overlaps it", () => {
   const layout = read("../src/media/_layout.css");
   const overlay = read("../src/media/components/_overlay.css");
-  // The panel animates geometry (height) for the drawer open/close, so it must
-  // carry NO backdrop-filter — blurring a resizing box re-rasterises every
-  // frame (the old clip-path flicker). The frost moved entirely to the curtain.
-  const panel = layout.split("\n").find((l) => l.includes("bg-mega-menu-bg"));
-  assert.ok(!panel?.includes("backdrop-blur"), `panel must not blur: ${panel}`);
+  // The sheet is the moving surface, so it must carry NO backdrop-filter —
+  // blurring an animating box re-rasterises every frame (the old clip-path
+  // flicker) — and must animate translate, not height: a height transition
+  // pays main-thread layout + repaint per frame (the low-end hover jank).
+  const sheet = layout.split("\n").find((l) => l.includes("bg-mega-menu-bg"));
+  assert.ok(!sheet?.includes("backdrop-blur"), `sheet must not blur: ${sheet}`);
   assert.ok(
-    panel?.includes("transition-[height,visibility]"),
-    `panel animates height: ${panel}`,
+    sheet?.includes("transition-[translate]") &&
+      sheet?.includes("-translate-y-full"),
+    `sheet must slide, not resize: ${sheet}`,
   );
-  // The curtain carries the blur permanently (Apple's globalnav-curtain) and
-  // fades it with opacity/visibility, never snapping it on/off via .active.
+  const containerRule =
+    layout.match(/& \.desktop-menu-container\s*\{\s*@apply\s+([^;]+);/)?.[1] ??
+    "";
+  assert.ok(
+    !containerRule.includes("transition") &&
+      !containerRule.includes("will-change"),
+    `container is a static frame, it must not animate: ${containerRule}`,
+  );
+  // The counter-transformed canvas must mirror the sheet's timing exactly or
+  // the content drifts during the wipe.
+  const canvasRule =
+    layout.match(/& \.desktop-menu-canvas\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
+  for (const token of [
+    "translate-y-full",
+    "transition-[translate]",
+    "duration-[300ms]",
+  ]) {
+    assert.ok(canvasRule.includes(token), `canvas missing ${token}: ${canvasRule}`);
+  }
+  // The curtain fades only its cheap rgba scrim during the animation; the
+  // blur lands via `.settled` once the sheet stops (Apple's curtain
+  // lifecycle: no full-viewport blur re-rasterising mid-animation).
   assert.ok(overlay.includes("max-md:backdrop-blur-lg"), "mobile overlay blur");
   const curtain = overlay
     .split("\n")
     .find((l) => l.includes("bg-mega-menu-scrim"));
-  assert.ok(curtain?.includes("backdrop-blur-lg"), `desktop curtain blur: ${curtain}`);
+  assert.ok(
+    !curtain?.includes("backdrop-blur"),
+    `curtain must not blur while animating: ${curtain}`,
+  );
+  assert.ok(
+    /&\.settled\s*\{\s*@apply\s+backdrop-blur-lg/.test(overlay),
+    "settled frost missing",
+  );
 });
 
 test("maincontent cards use a hairline border, not heavy shadow", () => {

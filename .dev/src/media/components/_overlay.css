@@ -69,18 +69,29 @@ body.mobile-navigation-open > header {
 }
 
 [data-nav-type="mega-menu"] {
-  /* Apple's curtain technique: backdrop-filter is DECLARED here permanently and
-     never toggled. Gating the blur on `.active` snapped the page from blurred
-     to sharp the instant the menu closed, while the dim was still fading — the
-     flash. Instead opacity + visibility carry it: closing keeps the layer
-     visible (visibility flips only at the end of the transition) so the blur
-     fades out together with the dim; once hidden, visibility:hidden fully
-     disables the filter so an invisible full-screen blur costs nothing. */
+  /* Apple's curtain lifecycle: a full-viewport backdrop blur re-rasterises on
+     every frame of a concurrent animation, so the frost must never overlap the
+     open transition — during the open only the cheap rgba scrim fades in, and
+     menu-aurora.js adds `.settled` on the sheet's transitionend so the blur is
+     computed ONCE against a static backdrop (apple.com does the inverse of the
+     same split: blur only while .globalnav-animating).
+
+     On close `.settled` stays: dropping the blur at close start snapped the
+     page from blurred to sharp while the dim was still fading — the flash this
+     comment block has guarded against since the `.active`-gated era. Keeping
+     it lets opacity + visibility carry the blur out with the dim (visibility
+     flips only at the end of the transition); menu-aurora.js removes .settled
+     on the overlay's own transitionend, once visibility:hidden has already
+     made the filter free, so the next open starts frost-less again. */
   & .desktop-menu-overlay {
-    @apply bg-mega-menu-scrim pointer-events-none invisible fixed inset-0 z-60 opacity-0 backdrop-blur-lg backdrop-saturate-150 transition-[opacity,visibility] delay-[80ms] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] max-md:hidden;
+    @apply bg-mega-menu-scrim pointer-events-none invisible fixed inset-0 z-60 opacity-0 transition-[opacity,visibility] delay-[80ms] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] max-md:hidden;
 
     &.active {
       @apply pointer-events-auto visible opacity-100;
+    }
+
+    &.settled {
+      @apply backdrop-blur-lg backdrop-saturate-150;
     }
   }
 }

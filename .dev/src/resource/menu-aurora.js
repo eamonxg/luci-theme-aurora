@@ -570,6 +570,8 @@ return baseclass.extend({
 
   initMegaMenu(children, url, ul) {
     const container = document.querySelector(".desktop-menu-container");
+    const sheet = container?.querySelector(".desktop-menu-sheet");
+    const canvas = container?.querySelector(".desktop-menu-canvas");
     const overlay = document.querySelector(".desktop-menu-overlay");
     const header = document.querySelector("header");
 
@@ -579,9 +581,11 @@ return baseclass.extend({
     let hideTimer = null;
 
     // Constant canvas: every category opens at the same height — the
-    // tallest submenu wins. Measured lazily on first open (after fonts
-    // settle) and cached, so switching categories is a pure cross-fade
-    // with zero layout work. A resize invalidates the cache.
+    // tallest submenu wins. Pre-measured at idle (after fonts settle) so the
+    // first hover pays no synchronous reflow, and cached, so switching
+    // categories is a pure cross-fade with zero layout work. The height
+    // stays set across open/close — it is the sheet's translate reference,
+    // not the animated property. A resize invalidates the cache.
     let canvasHeight = 0;
 
     const applyCanvasHeight = () => {
@@ -597,10 +601,28 @@ return baseclass.extend({
       container?.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
     };
 
+    // The curtain frost is deferred until the open transition settles — a
+    // full-viewport backdrop blur re-rasterises every frame it overlaps an
+    // animation (see _overlay.css). transitionend on the sheet marks settle;
+    // the overlay's own transitionend (fade-out finished, visibility already
+    // hidden) retires it for the next open.
+    sheet?.addEventListener("transitionend", (event) => {
+      if (event.target !== sheet) return;
+      if (container.classList.contains("active")) {
+        overlay.classList.add("settled");
+      }
+    });
+    overlay.addEventListener("transitionend", (event) => {
+      if (event.target === overlay && !overlay.classList.contains("active")) {
+        overlay.classList.remove("settled");
+      }
+    });
+
+    // Re-measure on resize even while closed — leaving the cache cold would
+    // push the reflow back onto the next hover's open path.
     let resizeTimer = null;
     window.addEventListener("resize", () => {
       canvasHeight = 0;
-      if (!container?.classList.contains("active")) return;
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(applyCanvasHeight, 150);
     });
@@ -651,12 +673,12 @@ return baseclass.extend({
       );
       if (!hasSubmenu) return;
 
-      // Reparent the panel into the canvas container: the transformed
-      // #topmenu would otherwise become the containing block of the
-      // absolutely-positioned panel and shrink the canvas to the menu's
-      // width. Inside the container the panel is also clipped by the same
-      // clip-path reveal as the rest of the canvas.
-      if (container) container.appendChild(nav);
+      // Reparent the panel into the counter-transformed canvas: the
+      // transformed #topmenu would otherwise become the containing block of
+      // the absolutely-positioned panel and shrink the canvas to the menu's
+      // width. Inside the canvas the panel rides the sheet's compositor
+      // reveal (and is clipped by the sheet's overflow) for free.
+      if (canvas) canvas.appendChild(nav);
 
       li.addEventListener("mouseenter", () => {
         if (hideTimer) {
@@ -686,6 +708,14 @@ return baseclass.extend({
             container.classList.add("active");
             container.classList.remove("closing");
             overlay.classList.add("active");
+
+            // No sheet transition fires under reduced motion, so the frost
+            // (which reduced-transparency may still allow) lands directly.
+            if (
+              window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+            ) {
+              overlay.classList.add("settled");
+            }
           }
           nav.classList.add("active");
         }, delay);
@@ -698,6 +728,16 @@ return baseclass.extend({
         }
       });
     });
+
+    // Pre-measure the canvas off the interaction path: fonts change panel
+    // heights, so wait for them, then measure when the main thread is idle.
+    // A hover that beats this still falls back to the lazy measure above.
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1));
+    (document.fonts?.ready || Promise.resolve()).then(() =>
+      idle(() => {
+        if (!canvasHeight) applyCanvasHeight();
+      }),
+    );
 
     const hideMenu = () => {
       if (showTimer) {
@@ -768,6 +808,10 @@ return baseclass.extend({
     this.deactivateDesktopNavExcept(null, null);
 
     const container = document.querySelector(".desktop-menu-container");
+    // `.settled` (the curtain frost) deliberately survives the close: the
+    // blur fades out WITH the dim and is retired by the overlay's own
+    // transitionend (see initMegaMenu) — dropping it here snapped the page
+    // sharp while the dim was still fading.
     document.querySelector(".desktop-menu-overlay")?.classList.remove("active");
 
     if (!container) return;
@@ -777,40 +821,41 @@ return baseclass.extend({
     )
       return;
 
+    // Retract the curtain: removing `.active` sends the sheet back to
+    // translateY(-100%) and the canvas to its counter-position — the drawer
+    // close, run entirely on the compositor. --mega-menu-height stays put;
+    // it is the translate reference, not the animated property. `.closing`
+    // keeps the container visible until the sheet's transition ends.
     container.classList.add("closing");
     container.classList.remove("active");
 
-    // Retract the canvas: dropping --mega-menu-height lets the container's
-    // height fall to its 0 fallback, and because the container transitions
-    // height (see _layout.css) it animates the collapse — the drawer close —
-    // instead of the height vanishing in one frame after the fade. overflow
-    // -hidden clips the content as it goes; the end state is already h-0 so no
-    // post-transition reset is needed.
-    container.style.removeProperty("--mega-menu-height");
+    const sheet = container.querySelector(".desktop-menu-sheet");
 
     let closeFallback = null;
     const finishClosing = (event) => {
-      if (event?.target && event.target !== container) return;
-      if (event?.propertyName && event.propertyName !== "height") return;
+      if (event?.target && event.target !== sheet) return;
 
       if (closeFallback !== null) {
         clearTimeout(closeFallback);
         closeFallback = null;
       }
 
-      container.removeEventListener("transitionend", finishClosing);
+      sheet?.removeEventListener("transitionend", finishClosing);
 
       if (!container.classList.contains("active")) {
         container.classList.remove("closing");
       }
     };
 
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    if (
+      !sheet ||
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
       finishClosing();
       return;
     }
 
-    container.addEventListener("transitionend", finishClosing);
+    sheet.addEventListener("transitionend", finishClosing);
     closeFallback = setTimeout(finishClosing, 350);
   },
 

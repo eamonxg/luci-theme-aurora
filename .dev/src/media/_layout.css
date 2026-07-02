@@ -6,23 +6,34 @@ header {
   }
 
   [data-nav-type="mega-menu"] & {
-    /* Apple's layer split: the panel that animates GEOMETRY must not carry a
-       backdrop-filter, or every height frame re-rasterises the blur (the old
-       clip-path flicker). So this is a fully-opaque SOLID surface that retracts
-       via height — the drawer close — while the frost lives entirely on the
-       separate .desktop-menu-overlay curtain (opacity/visibility only). Height
-       is driven by --mega-menu-height (set on open, dropped on close in
-       menu-aurora.js); overflow-hidden clips the absolutely-positioned content
-       as the canvas grows and collapses.
+    /* Compositor-only curtain (supersedes the height transition, which paid
+       main-thread layout + repaint on every frame and janked low-end devices):
+       the container is a STATIC clip-less positioning frame at full canvas
+       height (--mega-menu-height, measured once in menu-aurora.js and kept
+       across open/close), and the reveal is a pair of opposite translateY
+       transitions — .desktop-menu-sheet (the opaque surface, overflow-hidden)
+       slides down from -100% while .desktop-menu-canvas inside it
+       counter-slides from +100%, so the content nets to a fixed position and
+       the sheet's bottom edge wipes it in, visually identical to the old
+       drawer but animated entirely on the compositor thread.
+
+       Apple's layer split still applies: the surface that animates must not
+       carry a backdrop-filter, or every frame re-rasterises the blur. The
+       sheet is fully opaque; the frost lives on the separate
+       .desktop-menu-overlay curtain, and even there only after the open
+       transition settles (see _overlay.css).
 
        Opacity is NOT animated — it's gated by `visibility` (like the curtain).
        Fading the panel in left it half-transparent for the whole open, so the
        header brand/icons showed THROUGH it until opacity settled (the flash).
-       Opaque-from-the-first-frame means the growing height wipes solidly down
-       over the header instead. The closing state keeps the panel visible and
-       above the curtain while height animates down, without re-enabling input. */
+       Opaque-from-the-first-frame means the descending sheet wipes solidly
+       down over the header instead. The closing state keeps the panel visible
+       and above the curtain while the sheet retracts, without re-enabling
+       input. The sheet's shadow/border ride its moving bottom edge; the part
+       of the sheet above the header is off-viewport, so the container needs
+       no overflow clipping of its own. */
     & .desktop-menu-container {
-      @apply border-hairline bg-mega-menu-bg pointer-events-none invisible absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden border-b shadow-xl transition-[height,visibility] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] [will-change:height] motion-reduce:transition-none max-md:hidden;
+      @apply pointer-events-none invisible absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full max-md:hidden;
 
       &.active,
       &.closing {
@@ -33,9 +44,24 @@ header {
         @apply pointer-events-auto;
       }
 
-      /* Category panels live inside the container, not the nav items: the
-         transformed #topmenu would otherwise become the containing block of
-         a position:fixed panel and shrink the canvas to the menu's width.
+      & .desktop-menu-sheet {
+        @apply border-hairline bg-mega-menu-bg absolute inset-0 -translate-y-full overflow-hidden border-b shadow-xl transition-[translate] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+      }
+
+      /* The counter-transform must mirror the sheet's timing exactly or the
+         content drifts during the wipe — keep duration/easing in lockstep. */
+      & .desktop-menu-canvas {
+        @apply absolute inset-0 translate-y-full transition-[translate] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+      }
+
+      &.active .desktop-menu-sheet,
+      &.active .desktop-menu-canvas {
+        @apply translate-y-0;
+      }
+
+      /* Category panels live inside .desktop-menu-canvas, not the nav items:
+         the transformed #topmenu would otherwise become the containing block
+         of a position:fixed panel and shrink the canvas to the menu's width.
          Each panel is the same centered three-column grid (max-width fixed),
          so switching categories is a pure cross-fade with no width shift.
          The entering panel floats up 6px — transform + opacity only. */
