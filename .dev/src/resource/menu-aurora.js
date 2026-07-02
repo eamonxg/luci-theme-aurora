@@ -705,6 +705,18 @@ return baseclass.extend({
 
           if (container) {
             applyCanvasHeight();
+
+            // An interrupted close can leave the previous open's frost on
+            // the curtain (`.settled` deliberately outlives hideDesktopNav
+            // so the blur fades out with the dim). A fresh reveal must start
+            // frost-less or the sheet animates under a live full-viewport
+            // blur again — the sheet's transitionend re-adds it. Category
+            // switches (container already active) keep the frost: the menu
+            // is at rest, and dropping it would flash the page sharp.
+            if (!container.classList.contains("active")) {
+              overlay.classList.remove("settled");
+            }
+
             container.classList.add("active");
             container.classList.remove("closing");
             overlay.classList.add("active");

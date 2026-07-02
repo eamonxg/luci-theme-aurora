@@ -228,6 +228,7 @@ const loadMenuModule = ({
   getChildren = getMenuChildren,
   requestpath = [],
   translate = (value) => value,
+  window = {},
 } = {}) => {
   const baseclass = {
     extend(module) {
@@ -250,7 +251,7 @@ const loadMenuModule = ({
     "window",
     "localStorage",
     source,
-  )(baseclass, ui, E, L, translate, document, {}, {});
+  )(baseclass, ui, E, L, translate, document, window, {});
 };
 
 const textContent = (element) =>
@@ -807,4 +808,84 @@ test("keeps mega-menu stacking state while the sheet retract transition runs", (
   });
 
   assert.equal(container.classList.contains("closing"), false);
+});
+
+test("a reopen before the overlay fade-out finishes restarts frost-less", async () => {
+  const sheetEnd = (sheet) =>
+    sheet.dispatchEvent({
+      type: "transitionend",
+      target: sheet,
+      propertyName: "translate",
+    });
+  // The first-open dwell is 100ms; category switches on an open menu fire
+  // with no dwell but still through a timer.
+  const openDwell = () => new Promise((resolve) => setTimeout(resolve, 120));
+
+  const canvas = new FakeElement("div", { class: "desktop-menu-canvas" });
+  const sheet = new FakeElement("div", { class: "desktop-menu-sheet" }, [
+    canvas,
+  ]);
+  const container = new FakeElement(
+    "div",
+    { class: "desktop-menu-container" },
+    [sheet],
+  );
+  const overlay = new FakeElement("div", { class: "desktop-menu-overlay" });
+  const header = new FakeElement("header", {}, [
+    new FakeElement("div", { class: "header-content" }),
+    container,
+  ]);
+  const document = createFakeDocument({
+    elements: {
+      header,
+      ".desktop-menu-container": container,
+      ".desktop-menu-overlay": overlay,
+    },
+  });
+  const ul = E("ul", { id: "topmenu" });
+  // deactivateDesktopNavExcept sweeps document-wide; give the fake document
+  // a real tree to sweep or stale `.active` panels trip the wasActive guard.
+  const root = new FakeElement("html", {}, [header, ul]);
+  document.querySelectorAll = (selector) => root.querySelectorAll(selector);
+  const menu = loadMenuModule({
+    document,
+    window: { addEventListener() {} },
+  });
+
+  menu.initMegaMenu(
+    [
+      { name: "network", title: "Network", children: { wifi: {} } },
+      { name: "system", title: "System", children: { admin: {} } },
+    ],
+    "admin",
+    ul,
+  );
+
+  const [firstItem, secondItem] = ul.children;
+
+  // First open: the frost lands only once the sheet's reveal settles.
+  firstItem.dispatchEvent({ type: "mouseenter" });
+  await openDwell();
+  assert.equal(container.classList.contains("active"), true);
+  assert.equal(overlay.classList.contains("settled"), false);
+  sheetEnd(sheet);
+  assert.equal(overlay.classList.contains("settled"), true);
+
+  // Switching categories on the open menu keeps the frost — the menu is at
+  // rest, and dropping the blur there would flash the page sharp.
+  secondItem.dispatchEvent({ type: "mouseenter" });
+  await openDwell();
+  assert.equal(overlay.classList.contains("settled"), true);
+
+  // Close, then reopen BEFORE the overlay's fade-out transitionend retires
+  // the frost: the fresh reveal must clear `.settled`, or the sheet would
+  // animate under a live full-viewport blur again.
+  menu.hideDesktopNav();
+  assert.equal(overlay.classList.contains("settled"), true);
+  firstItem.dispatchEvent({ type: "mouseenter" });
+  await openDwell();
+  assert.equal(container.classList.contains("active"), true);
+  assert.equal(overlay.classList.contains("settled"), false);
+  sheetEnd(sheet);
+  assert.equal(overlay.classList.contains("settled"), true);
 });
