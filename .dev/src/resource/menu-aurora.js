@@ -529,8 +529,9 @@ return baseclass.extend({
           Math.max(6, Math.ceil(submenu.length / 4)),
         );
         // data-section keys the first-level icon off the node name (stable,
-        // language-independent) — see _layout.css. Unmapped names fall back
-        // to the default icon via var(--menu-icon, …).
+        // language-independent) — see the .desktop-nav-title[data-section]
+        // map in _nav.css. Unmapped names fall back to the default icon via
+        // var(--menu-icon, …).
         children.unshift(
           E("div", { class: "desktop-nav-anchor" }, [
             E(

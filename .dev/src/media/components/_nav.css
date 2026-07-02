@@ -78,3 +78,47 @@
     @apply text-brand;
   }
 }
+
+/* ── First-level section icons ──
+   The name → icon map, consumed by the mega-menu title (_layout.css).
+   Keyed on the LuCI node name (data-section, set by menu-aurora.js) —
+   stable and language-independent. Scoped to .desktop-nav-title so the
+   selector can't accidentally match unrelated data-section usage elsewhere.
+   The only maintenance point: add new first-level sections here; anything
+   unmapped falls back to the default icon at the consumer. */
+.desktop-nav-title[data-section="status"] {
+  @apply [--menu-icon:url('@assets/icons/activity.svg')];
+}
+.desktop-nav-title[data-section="statistics"] {
+  @apply [--menu-icon:url('@assets/icons/chart-bar.svg')];
+}
+.desktop-nav-title[data-section="nlbw"] {
+  @apply [--menu-icon:url('@assets/icons/gauge.svg')];
+}
+.desktop-nav-title[data-section="system"] {
+  @apply [--menu-icon:url('@assets/icons/settings.svg')];
+}
+.desktop-nav-title[data-section="services"] {
+  @apply [--menu-icon:url('@assets/icons/apps.svg')];
+}
+.desktop-nav-title[data-section="nas"] {
+  @apply [--menu-icon:url('@assets/icons/server.svg')];
+}
+.desktop-nav-title[data-section="control"] {
+  @apply [--menu-icon:url('@assets/icons/adjustments.svg')];
+}
+.desktop-nav-title[data-section="network"] {
+  @apply [--menu-icon:url('@assets/icons/world.svg')];
+}
+.desktop-nav-title[data-section="vpn"] {
+  @apply [--menu-icon:url('@assets/icons/shield.svg')];
+}
+.desktop-nav-title[data-section="docker"] {
+  @apply [--menu-icon:url('@assets/icons/box.svg')];
+}
+/* "asterisk" covers VoIP/PBX apps (e.g. luci-app-asterisk forks) — no
+   official OpenWrt package registers a verified menu.d node under this
+   name, so this is a best-effort key. */
+.desktop-nav-title[data-section="asterisk"] {
+  @apply [--menu-icon:url('@assets/icons/phone.svg')];
+}
