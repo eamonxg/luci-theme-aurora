@@ -1,28 +1,39 @@
 header {
-  @apply bg-bg sticky top-0 z-40 mb-2 transition-colors duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)];
+  @apply bg-bg sticky top-0 z-40 mb-2 transition-colors duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)];
 
   & .header-content {
-    @apply relative flex h-14 items-center justify-between px-6 py-3 max-md:px-4 max-md:py-2;
+    @apply relative z-10 flex h-14 items-center justify-between px-6 py-3 max-md:px-4 max-md:py-2;
   }
 
   [data-nav-type="mega-menu"] & {
-    /* Apple's layer split: the panel that animates GEOMETRY must not carry a
-       backdrop-filter, or every height frame re-rasterises the blur (the old
-       clip-path flicker). So this is a fully-opaque SOLID surface that retracts
-       via height — the drawer close — while the frost lives entirely on the
-       separate .desktop-menu-overlay curtain (opacity/visibility only). Height
-       is driven by --mega-menu-height (set on open, dropped on close in
-       menu-aurora.js); overflow-hidden clips the absolutely-positioned content
-       as the canvas grows and collapses.
+    /* Compositor-only curtain (supersedes the height transition, which paid
+       main-thread layout + repaint on every frame and janked low-end devices):
+       the container is a STATIC clip frame rooted at the bar, sized by
+       --mega-menu-height (the tallest panel, measured once in menu-aurora.js
+       and kept across open/close), and the reveal is a pair of opposite
+       translateY transitions — .desktop-menu-sheet (the opaque panel surface,
+       overflow-hidden) slides down from behind the bar while
+       .desktop-menu-canvas inside it counter-slides by the same distance, so
+       the content nets to a fixed position and the sheet's bottom edge wipes
+       it in, visually identical to the old drawer but animated entirely on
+       the compositor thread.
 
-       Opacity is NOT animated — it's gated by `visibility` (like the curtain).
-       Fading the panel in left it half-transparent for the whole open, so the
-       header brand/icons showed THROUGH it until opacity settled (the flash).
-       Opaque-from-the-first-frame means the growing height wipes solidly down
-       over the header instead. The closing state keeps the panel visible and
-       above the curtain while height animates down, without re-enabling input. */
+       Apple's layer split still applies: the surface that animates must not
+       carry a backdrop-filter, or every frame re-rasterises the blur. The
+       sheet is fully opaque; the frost lives on the separate
+       .desktop-menu-overlay curtain.
+
+       Opacity is not animated on open — visibility gates the panel so the
+       descending sheet is opaque from the first visible frame. Closing is the
+       opposite: the whole menu surface fades out immediately while the sheet
+       retracts, so the frost, scrim and menu colour do not disappear in
+       separate stages. */
+    /* Apple-style clip frame: the opened surface starts at the top of the
+       header, not below it. The header content floats above this layer. The
+       header-height band is part of the moving sheet, so open and close share
+       the same page-top origin. */
     & .desktop-menu-container {
-      @apply border-hairline bg-mega-menu-bg pointer-events-none invisible absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full overflow-hidden border-b shadow-xl transition-[height,visibility] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] [will-change:height] motion-reduce:transition-none max-md:hidden;
+      @apply pointer-events-none invisible absolute inset-x-0 top-0 z-0 h-[calc(var(--mega-menu-height,0px)+3.5rem+3rem)] w-full overflow-clip max-md:hidden;
 
       &.active,
       &.closing {
@@ -33,12 +44,46 @@ header {
         @apply pointer-events-auto;
       }
 
-      /* Category panels live inside the container, not the nav items: the
-         transformed #topmenu would otherwise become the containing block of
-         a position:fixed panel and shrink the canvas to the menu's width.
+      &.closing {
+        @apply opacity-0 transition-opacity duration-[220ms] ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+      }
+
+      /* The sheet is the whole opened surface, including the header-height
+         band. Its closed bottom edge is page top (not the header bottom), so
+         the close stops at the same origin that the reveal starts from. The
+         canvas counter-translates by the same travel distance so the menu
+         content remains visually fixed.
+
+         Duration is distance-adaptive via --mega-menu-duration, set on the
+         header by menu-aurora.js from apple.com's flyout pacing (2px/ms over
+         the visible travel, clamped to 240–480ms). */
+      & .desktop-menu-sheet {
+        @apply bg-mega-menu-bg absolute inset-x-0 top-0 h-[calc(var(--mega-menu-height,0px)+3.5rem)] -translate-y-full overflow-hidden transition-[translate] duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+        @apply after:border-hairline after:pointer-events-none after:absolute after:inset-0 after:border-b after:shadow-xl after:transition-opacity after:duration-(--mega-menu-duration,300ms) after:content-[''] motion-reduce:after:transition-none;
+      }
+
+      /* The counter-transform must mirror the sheet's endpoints and timing
+         exactly or the content drifts during the wipe — keep both in
+         lockstep. */
+      & .desktop-menu-canvas {
+        @apply absolute inset-0 translate-y-full transition-[translate] duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+      }
+
+      &.active .desktop-menu-sheet,
+      &.active .desktop-menu-canvas {
+        @apply translate-y-0;
+      }
+
+      &.closing .desktop-menu-sheet {
+        @apply after:opacity-0;
+      }
+
+      /* Category panels live inside .desktop-menu-canvas, not the nav items:
+         the transformed #topmenu would otherwise become the containing block
+         of a position:fixed panel and shrink the canvas to the menu's width.
          Each panel is the same centered three-column grid (max-width fixed),
          so switching categories is a pure cross-fade with no width shift.
-         The entering panel floats up 6px — transform + opacity only. */
+         The entering panel floats up 6px — translate + opacity only. */
       /* The server-rendered board is only a template that menu-aurora.js
          clones into each panel's right column — the original stays hidden. */
       & > .desktop-menu-board {
@@ -51,7 +96,11 @@ header {
            is a pure cross-fade. Below lg the side tracks drop and only the
            links column remains (tablet → just the submenu). The panel scrolls
            internally when its content exceeds the viewport below the header. */
-        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-h-[calc(100dvh-3.5rem)] max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 overflow-y-auto overscroll-contain px-10 pt-13 pb-8 opacity-0 transition-[opacity,transform] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
+        /* Tailwind v4 translate-* utilities emit the native `translate`
+           property, so that is what must be transitioned — transitioning
+           `transform` here left the 6px entrance float snapping instead of
+           animating (only the opacity ever faded). */
+        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-h-[calc(100dvh-3.5rem)] max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 overflow-y-auto overscroll-contain px-10 pt-13 pb-8 opacity-0 transition-[opacity,translate] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
 
         &.active {
           @apply pointer-events-auto translate-y-0 opacity-100;
@@ -156,12 +205,11 @@ header {
     }
   }
 
-  /* When a category is open the bar lifts to the panel's opened colour so the
-     header and the mega-menu read as one continuous surface — no tonal seam
-     where the bar (bg) meets the panel (mega-menu-bg). */
+  /* The bar must sit above the z-60 curtain for the whole open AND the
+     whole retract, or the scrim would dim the closing panel. */
   [data-nav-type="mega-menu"]
     &:has(.desktop-menu-container:is(.active, .closing)) {
-    @apply bg-mega-menu-bg z-70;
+    @apply z-70;
   }
 
   .brand {

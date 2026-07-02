@@ -166,22 +166,50 @@ test("mega-menu panels scroll within the viewport", () => {
   assertIncludesUtilities(panel, ["overflow-y-auto", "overscroll-contain"]);
 });
 
-test("mega-menu closing state keeps the panel above the curtain", () => {
+test("mega-menu reveal and retract share the page-top origin", () => {
   const megaMenu = getBlock(layoutStyles, '[data-nav-type="mega-menu"] &');
+  const headerContent = getBlock(layoutStyles, "& .header-content");
   const container = getBlock(megaMenu, "& .desktop-menu-container");
+  const sheet = getBlock(container, "& .desktop-menu-sheet");
+  const canvas = getBlock(container, "& .desktop-menu-canvas");
+  const panel = getBlock(megaMenu, "& .desktop-nav");
   const headerLift = layoutStyles.match(
-    /When a category is open[\s\S]*?(\[data-nav-type="mega-menu"\][\s\S]*?)\n\s*\.brand/,
+    /The bar must sit above[\s\S]*?(\[data-nav-type="mega-menu"\][\s\S]*?)\n\s*\.brand/,
   )?.[1];
 
+  assertIncludesUtilities(headerContent, ["z-10"]);
+  assertIncludesUtilities(container, ["top-0", "z-0"]);
+  assert.doesNotMatch(
+    container,
+    /@apply bg-mega-menu-bg pointer-events-none absolute inset-x-0 top-0 h-14/,
+  );
   assert.match(
     container,
     /&\.active,\s*&\.closing\s*\{[\s\S]*@apply[^;]*\bvisible\b/,
   );
   assert.match(
     container,
+    /&\.closing\s*\{[\s\S]*@apply[^;]*\bopacity-0\b[^;]*\btransition-opacity\b[^;]*\bduration-\[220ms\]/,
+  );
+  assert.match(
+    container,
     /&\.active\s*\{[\s\S]*@apply[^;]*pointer-events-auto/,
   );
-  assert.match(headerLift ?? "", /desktop-menu-container[\s\S]*closing/);
+  assertIncludesUtilities(sheet, ["top-0", "-translate-y-full"]);
+  assert.match(
+    sheet,
+    /h-\[calc\(var\(--mega-menu-height,0px\)\+3\.5rem\)\]/,
+  );
+  assertIncludesUtilities(canvas, ["translate-y-full"]);
+  assertIncludesUtilities(panel, ["top-14"]);
+  // z-70 must span the retract too (or the curtain dims the closing panel).
+  assert.match(
+    headerLift ?? "",
+    /desktop-menu-container:is\(\.active, \.closing\)\)\s*\{\s*@apply[^;]*z-70/,
+  );
+  // The bar no longer performs its own background transition. The flyout sheet
+  // owns the opened surface and retracts fully to page top before hiding.
+  assert.doesNotMatch(headerLift ?? "", /bg-mega-menu-bg/);
 });
 
 test("mega-menu category masks use Tailwind arbitrary utilities", () => {

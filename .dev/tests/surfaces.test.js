@@ -49,25 +49,84 @@ test("dark layering: page < card, sunken between page and card", () => {
   assert.ok(sunk >= bg && sunk < surf, `sunken not between page and card: ${d.surface_sunken}`);
 });
 
-test("mega-menu frost lives on the curtain, not the height-animating panel", () => {
+test("mega-menu reveal is compositor-only and the frost never overlaps it", () => {
   const layout = read("../src/media/_layout.css");
   const overlay = read("../src/media/components/_overlay.css");
-  // The panel animates geometry (height) for the drawer open/close, so it must
-  // carry NO backdrop-filter — blurring a resizing box re-rasterises every
-  // frame (the old clip-path flicker). The frost moved entirely to the curtain.
-  const panel = layout.split("\n").find((l) => l.includes("bg-mega-menu-bg"));
-  assert.ok(!panel?.includes("backdrop-blur"), `panel must not blur: ${panel}`);
+  // The sheet is the moving surface, so it must carry NO backdrop-filter —
+  // blurring an animating box re-rasterises every frame (the old clip-path
+  // flicker) — and must animate translate, not height: a height transition
+  // pays main-thread layout + repaint per frame (the low-end hover jank).
+  const sheet =
+    layout.match(/& \.desktop-menu-sheet\s*\{([\s\S]*?)\n\s*\}/)?.[1] ?? "";
+  assert.ok(!sheet?.includes("backdrop-blur"), `sheet must not blur: ${sheet}`);
   assert.ok(
-    panel?.includes("transition-[height,visibility]"),
-    `panel animates height: ${panel}`,
+    !layout.includes(
+      "@apply bg-mega-menu-bg pointer-events-none absolute inset-x-0 top-0 h-14",
+    ),
+    "header band must not be static",
+  );
+  // Apple-style geometry: the sheet is the whole opened surface, including the
+  // header-height band. Its closed bottom edge is page top, matching the
+  // reveal origin.
+  assert.ok(
+    sheet?.includes("transition-[translate]") &&
+      sheet?.includes("top-0") &&
+      sheet?.includes("h-[calc(var(--mega-menu-height,0px)+3.5rem)]") &&
+      sheet?.includes("-translate-y-full"),
+    `sheet must move from and to page top: ${sheet}`,
+  );
+  const containerRule =
+    layout.match(/& \.desktop-menu-container\s*\{\s*@apply\s+([^;]+);/)?.[1] ??
+    "";
+  assert.ok(
+    !containerRule.includes("transition") &&
+      !containerRule.includes("will-change"),
+    `container is a static frame, it must not animate: ${containerRule}`,
+  );
+  // A translated sheet moves inside a static clip frame rooted at the page top.
+  // The container adds shadow slack below the travel but does not move itself.
+  assert.ok(
+    containerRule.includes("top-0") &&
+      containerRule.includes("h-[calc(var(--mega-menu-height,0px)+3.5rem+3rem)]") &&
+      containerRule.includes("overflow-clip"),
+    `container must clip the page-top retract: ${containerRule}`,
+  );
+  assert.match(
+    layout,
+    /&\.closing\s*\{[\s\S]*?@apply[^;]*opacity-0[^;]*transition-opacity[^;]*duration-\[220ms\]/,
+  );
+  // The counter-transformed canvas must mirror the sheet's endpoints and
+  // timing exactly or the content drifts during the wipe; both take the
+  // distance-adaptive duration from the same variable.
+  const canvasRule =
+    layout.match(/& \.desktop-menu-canvas\s*\{([\s\S]*?)\n\s*\}/)?.[1] ?? "";
+  for (const token of [
+    "transition-[translate]",
+    "duration-(--mega-menu-duration,300ms)",
+    "translate-y-full",
+  ]) {
+    assert.ok(canvasRule.includes(token), `canvas missing ${token}: ${canvasRule}`);
+  }
+  assert.ok(
+    sheet?.includes("duration-(--mega-menu-duration,300ms)"),
+    `sheet must share the adaptive duration: ${sheet}`,
   );
   // The curtain carries the blur permanently (Apple's globalnav-curtain) and
-  // fades it with opacity/visibility, never snapping it on/off via .active.
+  // fades it with opacity/visibility. Close must start that fade immediately;
+  // delaying the curtain left blur visible after the sheet had collapsed.
   assert.ok(overlay.includes("max-md:backdrop-blur-lg"), "mobile overlay blur");
   const curtain = overlay
     .split("\n")
     .find((l) => l.includes("bg-mega-menu-scrim"));
-  assert.ok(curtain?.includes("backdrop-blur-lg"), `desktop curtain blur: ${curtain}`);
+  assert.ok(
+    curtain?.includes("backdrop-blur-lg"),
+    `desktop curtain blur: ${curtain}`,
+  );
+  assert.ok(
+    curtain?.includes("duration-[220ms]") && !curtain.includes("delay-"),
+    `desktop curtain exit must be immediate: ${curtain}`,
+  );
+  assert.ok(!overlay.includes(".settled"), "settle-gated frost must stay gone");
 });
 
 test("maincontent cards use a hairline border, not heavy shadow", () => {

@@ -570,6 +570,7 @@ return baseclass.extend({
 
   initMegaMenu(children, url, ul) {
     const container = document.querySelector(".desktop-menu-container");
+    const canvas = container?.querySelector(".desktop-menu-canvas");
     const overlay = document.querySelector(".desktop-menu-overlay");
     const header = document.querySelector("header");
 
@@ -579,28 +580,43 @@ return baseclass.extend({
     let hideTimer = null;
 
     // Constant canvas: every category opens at the same height — the
-    // tallest submenu wins. Measured lazily on first open (after fonts
-    // settle) and cached, so switching categories is a pure cross-fade
-    // with zero layout work. A resize invalidates the cache.
+    // tallest submenu wins. --mega-menu-height is that panel height alone
+    // (the visible travel; the bar is not part of the wipe distance).
+    // Pre-measured at idle (after fonts settle) so the first hover pays no
+    // synchronous reflow, and cached, so switching categories is a pure
+    // cross-fade with zero layout work. The height stays set across
+    // open/close — it is the sheet's translate reference, not the animated
+    // property. A resize invalidates the cache.
     let canvasHeight = 0;
+    let revealDuration = 300;
 
     const applyCanvasHeight = () => {
       if (!canvasHeight) {
-        const headerHeight =
-          header.querySelector(".header-content")?.offsetHeight || 56;
-        let maxPanel = 0;
         header
           .querySelectorAll(".desktop-nav")
-          .forEach((nav) => (maxPanel = Math.max(maxPanel, nav.offsetHeight)));
-        canvasHeight = headerHeight + maxPanel;
+          .forEach(
+            (nav) => (canvasHeight = Math.max(canvasHeight, nav.offsetHeight)),
+          );
+        // apple.com's flyout pacing: a constant 2px/ms over the visible
+        // travel, clamped to 240–480ms. Short panels open snappily, tall
+        // ones don't blink.
+        revealDuration = Math.min(
+          480,
+          Math.max(240, Math.round(canvasHeight / 2)),
+        );
       }
-      container?.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
+      // Both vars live on the header, not the container: the container
+      // inherits the height, and the header's own transition-colors reads
+      // the duration so the bar colour fades in lockstep with the wipe.
+      header.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
+      header.style.setProperty("--mega-menu-duration", `${revealDuration}ms`);
     };
 
+    // Re-measure on resize even while closed — leaving the cache cold would
+    // push the reflow back onto the next hover's open path.
     let resizeTimer = null;
     window.addEventListener("resize", () => {
       canvasHeight = 0;
-      if (!container?.classList.contains("active")) return;
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(applyCanvasHeight, 150);
     });
@@ -651,12 +667,12 @@ return baseclass.extend({
       );
       if (!hasSubmenu) return;
 
-      // Reparent the panel into the canvas container: the transformed
-      // #topmenu would otherwise become the containing block of the
-      // absolutely-positioned panel and shrink the canvas to the menu's
-      // width. Inside the container the panel is also clipped by the same
-      // clip-path reveal as the rest of the canvas.
-      if (container) container.appendChild(nav);
+      // Reparent the panel into the counter-transformed canvas: the
+      // transformed #topmenu would otherwise become the containing block of
+      // the absolutely-positioned panel and shrink the canvas to the menu's
+      // width. Inside the canvas the panel rides the sheet's compositor
+      // reveal (and is clipped by the sheet's overflow) for free.
+      if (canvas) canvas.appendChild(nav);
 
       li.addEventListener("mouseenter", () => {
         if (hideTimer) {
@@ -683,6 +699,7 @@ return baseclass.extend({
 
           if (container) {
             applyCanvasHeight();
+            container.dataset.closeToken = "";
             container.classList.add("active");
             container.classList.remove("closing");
             overlay.classList.add("active");
@@ -698,6 +715,16 @@ return baseclass.extend({
         }
       });
     });
+
+    // Pre-measure the canvas off the interaction path: fonts change panel
+    // heights, so wait for them, then measure when the main thread is idle.
+    // A hover that beats this still falls back to the lazy measure above.
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1));
+    (document.fonts?.ready || Promise.resolve()).then(() =>
+      idle(() => {
+        if (!canvasHeight) applyCanvasHeight();
+      }),
+    );
 
     const hideMenu = () => {
       if (showTimer) {
@@ -777,41 +804,61 @@ return baseclass.extend({
     )
       return;
 
+    // Retract the curtain: removing `.active` sends the sheet back to
+    // translateY(-100%) and the canvas to its counter-position — the drawer
+    // close, run entirely on the compositor. --mega-menu-height stays put;
+    // it is the translate reference, not the animated property. `.closing`
+    // keeps the container in the tree only while its opacity fades out and
+    // the sheet returns to the closed translate position.
     container.classList.add("closing");
     container.classList.remove("active");
 
-    // Retract the canvas: dropping --mega-menu-height lets the container's
-    // height fall to its 0 fallback, and because the container transitions
-    // height (see _layout.css) it animates the collapse — the drawer close —
-    // instead of the height vanishing in one frame after the fade. overflow
-    // -hidden clips the content as it goes; the end state is already h-0 so no
-    // post-transition reset is needed.
-    container.style.removeProperty("--mega-menu-height");
+    const sheet = container.querySelector(".desktop-menu-sheet");
+    const closeToken = `${Date.now()}-${Math.random()}`;
+    container.dataset.closeToken = closeToken;
 
     let closeFallback = null;
     const finishClosing = (event) => {
-      if (event?.target && event.target !== container) return;
-      if (event?.propertyName && event.propertyName !== "height") return;
-
+      if (event?.target && event.target !== sheet) return;
+      if (container.dataset.closeToken !== closeToken) {
+        if (closeFallback !== null) {
+          clearTimeout(closeFallback);
+          closeFallback = null;
+        }
+        sheet?.removeEventListener("transitionend", finishClosing);
+        return;
+      }
       if (closeFallback !== null) {
         clearTimeout(closeFallback);
         closeFallback = null;
       }
 
-      container.removeEventListener("transitionend", finishClosing);
+      sheet?.removeEventListener("transitionend", finishClosing);
 
       if (!container.classList.contains("active")) {
         container.classList.remove("closing");
+        delete container.dataset.closeToken;
       }
     };
 
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    if (
+      !sheet ||
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
       finishClosing();
       return;
     }
 
-    container.addEventListener("transitionend", finishClosing);
-    closeFallback = setTimeout(finishClosing, 350);
+    sheet.addEventListener("transitionend", finishClosing);
+    // The retract duration is distance-adaptive (see applyCanvasHeight);
+    // read it back so the safety net always outlasts the real transition.
+    const duration =
+      parseInt(
+        document
+          .querySelector("header")
+          ?.style.getPropertyValue("--mega-menu-duration"),
+      ) || 300;
+    closeFallback = setTimeout(finishClosing, duration + 50);
   },
 
   renderModeMenu(tree) {

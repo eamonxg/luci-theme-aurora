@@ -69,15 +69,26 @@ body.mobile-navigation-open > header {
 }
 
 [data-nav-type="mega-menu"] {
-  /* Apple's curtain technique: backdrop-filter is DECLARED here permanently and
-     never toggled. Gating the blur on `.active` snapped the page from blurred
-     to sharp the instant the menu closed, while the dim was still fading — the
-     flash. Instead opacity + visibility carry it: closing keeps the layer
-     visible (visibility flips only at the end of the transition) so the blur
-     fades out together with the dim; once hidden, visibility:hidden fully
-     disables the filter so an invisible full-screen blur costs nothing. */
+  /* Apple's curtain: the frost is DECLARED here permanently and never
+     toggled — it fades in and out WITH the dim, so the page blurs
+     progressively as the sheet descends (apple.com's globalnav curtain runs
+     its blur exactly like this while the flyout animates). Gating the blur
+     on a post-transition "settled" state was tried and rejected: the frost
+     popped in only after the menu landed, visibly off-design.
+
+     The cost is per-frame blur re-compositing for the 300ms of fade — but it
+     is now the ONLY per-frame work: the reveal itself runs entirely on the
+     compositor (see _layout.css). What janked low-end devices was the old
+     overlap of main-thread height layout + live blur, not the blur alone.
+     If the fade still janks a device, reduce the radius or rely on
+     _reduced-transparency.css, which strips the filter outright.
+
+     Closing starts immediately and uses the same 220ms exit as the menu
+     surface. Delaying the opacity transition left the page frosted after the
+     sheet had already collapsed into the header, which read as a flash. Once
+     hidden, visibility:hidden makes the invisible filter cost nothing. */
   & .desktop-menu-overlay {
-    @apply bg-mega-menu-scrim pointer-events-none invisible fixed inset-0 z-60 opacity-0 backdrop-blur-lg backdrop-saturate-150 transition-[opacity,visibility] delay-[80ms] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] max-md:hidden;
+    @apply bg-mega-menu-scrim pointer-events-none invisible fixed inset-0 z-60 opacity-0 backdrop-blur-lg backdrop-saturate-150 transition-[opacity,visibility] duration-[220ms] ease-[cubic-bezier(0.4,0,0.6,1)] max-md:hidden;
 
     &.active {
       @apply pointer-events-auto visible opacity-100;

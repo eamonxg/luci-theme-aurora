@@ -71,6 +71,7 @@ class FakeElement {
     this.style = {
       display: "",
       properties: new Map(),
+      getPropertyValue: (name) => this.style.properties.get(name) ?? "",
       removeProperty: (name) => this.style.properties.delete(name),
       setProperty: (name, value) => this.style.properties.set(name, value),
     };
@@ -228,6 +229,7 @@ const loadMenuModule = ({
   getChildren = getMenuChildren,
   requestpath = [],
   translate = (value) => value,
+  window = {},
 } = {}) => {
   const baseclass = {
     extend(module) {
@@ -250,7 +252,7 @@ const loadMenuModule = ({
     "window",
     "localStorage",
     source,
-  )(baseclass, ui, E, L, translate, document, {}, {});
+  )(baseclass, ui, E, L, translate, document, window, {});
 };
 
 const textContent = (element) =>
@@ -768,15 +770,20 @@ test("renders an active group expanded when an open mobile list was initially em
   assert.equal(region.hasAttribute("inert"), false);
 });
 
-test("keeps mega-menu stacking state while the close height transition runs", () => {
-  const container = new FakeElement("div", {
-    class: "desktop-menu-container active",
-  });
+test("starts the mega-menu overlay and surface exit together", () => {
+  const sheet = new FakeElement("div", { class: "desktop-menu-sheet" });
+  const container = new FakeElement(
+    "div",
+    { class: "desktop-menu-container active" },
+    [sheet],
+  );
   const overlay = new FakeElement("div", {
     class: "desktop-menu-overlay active",
   });
+  const header = new FakeElement("header");
   const document = createFakeDocument({
     elements: {
+      header,
       ".desktop-menu-container": container,
       ".desktop-menu-overlay": overlay,
     },
@@ -784,19 +791,142 @@ test("keeps mega-menu stacking state while the close height transition runs", ()
   const menu = loadMenuModule({ document });
 
   container.style.setProperty("--mega-menu-height", "320px");
+  header.style.setProperty("--mega-menu-duration", "1ms");
 
   menu.hideDesktopNav();
 
+  // Removing .active starts the scrim/blur fade immediately. The container
+  // remains in .closing so its own opacity can fade while the sheet retracts.
   assert.equal(overlay.classList.contains("active"), false);
   assert.equal(container.classList.contains("active"), false);
   assert.equal(container.classList.contains("closing"), true);
-  assert.equal(container.style.properties.has("--mega-menu-height"), false);
+  // The canvas height is the sheet's translate reference, not the animated
+  // property — it must survive the close for the retract to have a distance.
+  assert.equal(container.style.properties.get("--mega-menu-height"), "320px");
 
-  container.dispatchEvent({
+  sheet.dispatchEvent({
     type: "transitionend",
-    target: container,
-    propertyName: "height",
+    target: sheet,
+    propertyName: "translate",
   });
 
   assert.equal(container.classList.contains("closing"), false);
+});
+
+test("ignores stale mega-menu close timers after reopen and second close", async () => {
+  const sheet = new FakeElement("div", { class: "desktop-menu-sheet" });
+  const container = new FakeElement(
+    "div",
+    { class: "desktop-menu-container active" },
+    [sheet],
+  );
+  const overlay = new FakeElement("div", {
+    class: "desktop-menu-overlay active",
+  });
+  const header = new FakeElement("header");
+  const document = createFakeDocument({
+    elements: {
+      header,
+      ".desktop-menu-container": container,
+      ".desktop-menu-overlay": overlay,
+    },
+  });
+  const menu = loadMenuModule({ document });
+
+  header.style.setProperty("--mega-menu-duration", "300ms");
+
+  menu.hideDesktopNav();
+
+  await new Promise((resolve) => setTimeout(resolve, 120));
+
+  container.classList.add("active");
+  container.classList.remove("closing");
+  overlay.classList.add("active");
+
+  menu.hideDesktopNav();
+
+  await new Promise((resolve) => setTimeout(resolve, 260));
+
+  assert.equal(container.classList.contains("closing"), true);
+
+  await new Promise((resolve) => setTimeout(resolve, 120));
+
+  assert.equal(container.classList.contains("closing"), false);
+});
+
+test("the hover path opens, switches, closes and reopens the mega-menu", async () => {
+  // The first-open dwell is 100ms; category switches on an open menu fire
+  // with no dwell but still through a timer.
+  const openDwell = () => new Promise((resolve) => setTimeout(resolve, 120));
+
+  const canvas = new FakeElement("div", { class: "desktop-menu-canvas" });
+  const sheet = new FakeElement("div", { class: "desktop-menu-sheet" }, [
+    canvas,
+  ]);
+  const container = new FakeElement(
+    "div",
+    { class: "desktop-menu-container" },
+    [sheet],
+  );
+  const overlay = new FakeElement("div", { class: "desktop-menu-overlay" });
+  const header = new FakeElement("header", {}, [
+    new FakeElement("div", { class: "header-content" }),
+    container,
+  ]);
+  const document = createFakeDocument({
+    elements: {
+      header,
+      ".desktop-menu-container": container,
+      ".desktop-menu-overlay": overlay,
+    },
+  });
+  const ul = E("ul", { id: "topmenu" });
+  // deactivateDesktopNavExcept sweeps document-wide; give the fake document
+  // a real tree to sweep or stale `.active` panels trip the wasActive guard.
+  const root = new FakeElement("html", {}, [header, ul]);
+  document.querySelectorAll = (selector) => root.querySelectorAll(selector);
+  const menu = loadMenuModule({
+    document,
+    window: { addEventListener() {} },
+  });
+
+  menu.initMegaMenu(
+    [
+      { name: "network", title: "Network", children: { wifi: {} } },
+      { name: "system", title: "System", children: { admin: {} } },
+    ],
+    "admin",
+    ul,
+  );
+
+  const [firstItem, secondItem] = ul.children;
+  const navFor = (item) => item.querySelector(".desktop-nav");
+
+  // First open: hover dwell activates the container, the overlay and the
+  // hovered category's panel together.
+  firstItem.dispatchEvent({ type: "mouseenter" });
+  await openDwell();
+  assert.equal(container.classList.contains("active"), true);
+  assert.equal(overlay.classList.contains("active"), true);
+  assert.equal(navFor(firstItem).classList.contains("active"), true);
+
+  // Switching categories on the open menu swaps the active panel without
+  // dropping the container out of its open state.
+  secondItem.dispatchEvent({ type: "mouseenter" });
+  await openDwell();
+  assert.equal(container.classList.contains("active"), true);
+  assert.equal(navFor(firstItem).classList.contains("active"), false);
+  assert.equal(navFor(secondItem).classList.contains("active"), true);
+
+  // Close, then reopen BEFORE the retract finishes: the interrupted close
+  // must not leave a stale `.active` panel that trips the wasActive guard
+  // and blocks the container from re-activating.
+  menu.hideDesktopNav();
+  assert.equal(container.classList.contains("active"), false);
+  assert.equal(container.classList.contains("closing"), true);
+  firstItem.dispatchEvent({ type: "mouseenter" });
+  await openDwell();
+  assert.equal(container.classList.contains("active"), true);
+  assert.equal(container.classList.contains("closing"), false);
+  assert.equal(navFor(firstItem).classList.contains("active"), true);
 });

@@ -232,6 +232,14 @@
 					trim(`${boardinfo.release?.distribution ?? ''} ${boardinfo.release?.version ?? ''}`);
 			-%}
 			<div class="desktop-menu-container">
+				{#
+					Curtain-reveal layer pair: .desktop-menu-sheet is the opaque
+					surface that slides down (translateY -100% → 0) and clips its
+					content; .desktop-menu-canvas counter-translates (100% → 0) so
+					the panels menu-aurora.js reparents into it appear static while
+					the sheet edge wipes over them — see _layout.css.
+				#}
+				<div class="desktop-menu-sheet"><div class="desktop-menu-canvas"></div></div>
 				<div class="desktop-menu-board" aria-hidden="true"><span class="board-label">{{ _('Device') }}</span>
 					<span class="board-line board-line-host" title="{{ entityencode(striptags(boardinfo.hostname ?? '?'), true) }}"><span class="board-text">{{ striptags(boardinfo.hostname ?? '?') }}</span></span>
 					{% if (board_model): %}
