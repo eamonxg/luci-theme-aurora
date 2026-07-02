@@ -113,32 +113,11 @@ header {
             @apply text-text flex items-center gap-2.5 text-2xl font-semibold tracking-tight;
 
             /* First-level icon: mask + currentColor so it follows the theme.
-               --menu-icon is set per node name below; unmapped → default. */
+               --menu-icon comes from the shared name → icon map in
+               components/_nav.css; unmapped → default. */
             &::before {
               @apply size-6 shrink-0 bg-current content-[''] [mask:var(--menu-icon,url('@assets/icons/category.svg'))_center/contain_no-repeat];
             }
-          }
-
-          /* name → icon map (the only maintenance point). Keyed on the LuCI
-             node name, not the translated title. Add new first-level
-             sections here; anything unmapped keeps the default icon. */
-          & .desktop-nav-title[data-section="status"] {
-            @apply [--menu-icon:url('@assets/icons/activity.svg')];
-          }
-          & .desktop-nav-title[data-section="system"] {
-            @apply [--menu-icon:url('@assets/icons/settings.svg')];
-          }
-          & .desktop-nav-title[data-section="services"] {
-            @apply [--menu-icon:url('@assets/icons/apps.svg')];
-          }
-          & .desktop-nav-title[data-section="nas"] {
-            @apply [--menu-icon:url('@assets/icons/server.svg')];
-          }
-          & .desktop-nav-title[data-section="control"] {
-            @apply [--menu-icon:url('@assets/icons/adjustments.svg')];
-          }
-          & .desktop-nav-title[data-section="network"] {
-            @apply [--menu-icon:url('@assets/icons/world.svg')];
           }
         }
 
