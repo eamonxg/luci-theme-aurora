@@ -69,31 +69,29 @@ body.mobile-navigation-open > header {
 }
 
 [data-nav-type="mega-menu"] {
-  /* Apple's curtain lifecycle: a full-viewport backdrop blur re-rasterises on
-     every frame of a concurrent animation, so the frost must never overlap the
-     open transition — during the open only the cheap rgba scrim fades in, and
-     menu-aurora.js adds `.settled` on the overlay's OWN transitionend — the
-     last of the concurrent fades, outliving the sheet's reveal by this rule's
-     80ms delay — so the blur is computed ONCE against a fully static backdrop
-     (apple.com does the inverse of the same split: blur only while
-     .globalnav-animating).
+  /* Apple's curtain: the frost is DECLARED here permanently and never
+     toggled — it fades in and out WITH the dim, so the page blurs
+     progressively as the sheet descends (apple.com's globalnav curtain runs
+     its blur exactly like this while the flyout animates). Gating the blur
+     on a post-transition "settled" state was tried and rejected: the frost
+     popped in only after the menu landed, visibly off-design.
 
-     On close `.settled` stays: dropping the blur at close start snapped the
-     page from blurred to sharp while the dim was still fading — the flash this
-     comment block has guarded against since the `.active`-gated era. Keeping
-     it lets opacity + visibility carry the blur out with the dim (visibility
-     flips only at the end of the transition); menu-aurora.js removes .settled
-     on the overlay's own transitionend, once visibility:hidden has already
-     made the filter free, so the next open starts frost-less again. */
+     The cost is per-frame blur re-compositing for the 300ms of fade — but it
+     is now the ONLY per-frame work: the reveal itself runs entirely on the
+     compositor (see _layout.css). What janked low-end devices was the old
+     overlap of main-thread height layout + live blur, not the blur alone.
+     If the fade still janks a device, reduce the radius or rely on
+     _reduced-transparency.css, which strips the filter outright.
+
+     Closing keeps the layer visible (visibility flips only at the end of
+     the transition) so the blur fades out together with the dim — dropping
+     it at close start snapped the page sharp while the dim was still fading.
+     Once hidden, visibility:hidden makes the invisible filter cost nothing. */
   & .desktop-menu-overlay {
-    @apply bg-mega-menu-scrim pointer-events-none invisible fixed inset-0 z-60 opacity-0 transition-[opacity,visibility] delay-[80ms] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] max-md:hidden;
+    @apply bg-mega-menu-scrim pointer-events-none invisible fixed inset-0 z-60 opacity-0 backdrop-blur-lg backdrop-saturate-150 transition-[opacity,visibility] delay-[80ms] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] max-md:hidden;
 
     &.active {
       @apply pointer-events-auto visible opacity-100;
-    }
-
-    &.settled {
-      @apply backdrop-blur-lg backdrop-saturate-150;
     }
   }
 }

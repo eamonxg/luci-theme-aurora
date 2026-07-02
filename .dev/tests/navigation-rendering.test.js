@@ -777,7 +777,7 @@ test("keeps mega-menu stacking state while the sheet retract transition runs", (
     [sheet],
   );
   const overlay = new FakeElement("div", {
-    class: "desktop-menu-overlay active settled",
+    class: "desktop-menu-overlay active",
   });
   const document = createFakeDocument({
     elements: {
@@ -792,9 +792,6 @@ test("keeps mega-menu stacking state while the sheet retract transition runs", (
   menu.hideDesktopNav();
 
   assert.equal(overlay.classList.contains("active"), false);
-  // The frost outlives the close: it fades with the dim and is retired by
-  // the overlay's own transitionend, never snapped off at close start.
-  assert.equal(overlay.classList.contains("settled"), true);
   assert.equal(container.classList.contains("active"), false);
   assert.equal(container.classList.contains("closing"), true);
   // The canvas height is the sheet's translate reference, not the animated
@@ -810,19 +807,7 @@ test("keeps mega-menu stacking state while the sheet retract transition runs", (
   assert.equal(container.classList.contains("closing"), false);
 });
 
-test("a reopen before the overlay fade-out finishes restarts frost-less", async () => {
-  const sheetEnd = (sheet) =>
-    sheet.dispatchEvent({
-      type: "transitionend",
-      target: sheet,
-      propertyName: "translate",
-    });
-  const overlayEnd = (overlay) =>
-    overlay.dispatchEvent({
-      type: "transitionend",
-      target: overlay,
-      propertyName: "opacity",
-    });
+test("the hover path opens, switches, closes and reopens the mega-menu", async () => {
   // The first-open dwell is 100ms; category switches on an open menu fire
   // with no dwell but still through a timer.
   const openDwell = () => new Promise((resolve) => setTimeout(resolve, 120));
@@ -868,38 +853,33 @@ test("a reopen before the overlay fade-out finishes restarts frost-less", async 
   );
 
   const [firstItem, secondItem] = ul.children;
+  const navFor = (item) => item.querySelector(".desktop-nav");
 
-  // First open: the frost lands only once the LAST concurrent fade settles —
-  // the overlay's own (80ms delay + 300ms), not the sheet's reveal (300ms).
+  // First open: hover dwell activates the container, the overlay and the
+  // hovered category's panel together.
   firstItem.dispatchEvent({ type: "mouseenter" });
   await openDwell();
   assert.equal(container.classList.contains("active"), true);
-  assert.equal(overlay.classList.contains("settled"), false);
-  sheetEnd(sheet);
-  assert.equal(overlay.classList.contains("settled"), false);
-  overlayEnd(overlay);
-  assert.equal(overlay.classList.contains("settled"), true);
+  assert.equal(overlay.classList.contains("active"), true);
+  assert.equal(navFor(firstItem).classList.contains("active"), true);
 
-  // Switching categories on the open menu keeps the frost — the menu is at
-  // rest, and dropping the blur there would flash the page sharp.
+  // Switching categories on the open menu swaps the active panel without
+  // dropping the container out of its open state.
   secondItem.dispatchEvent({ type: "mouseenter" });
   await openDwell();
-  assert.equal(overlay.classList.contains("settled"), true);
+  assert.equal(container.classList.contains("active"), true);
+  assert.equal(navFor(firstItem).classList.contains("active"), false);
+  assert.equal(navFor(secondItem).classList.contains("active"), true);
 
-  // Close, then reopen BEFORE the overlay's fade-out transitionend retires
-  // the frost: the fresh reveal must clear `.settled`, or the sheet would
-  // animate under a live full-viewport blur again.
+  // Close, then reopen BEFORE the retract finishes: the interrupted close
+  // must not leave a stale `.active` panel that trips the wasActive guard
+  // and blocks the container from re-activating.
   menu.hideDesktopNav();
-  assert.equal(overlay.classList.contains("settled"), true);
+  assert.equal(container.classList.contains("active"), false);
+  assert.equal(container.classList.contains("closing"), true);
   firstItem.dispatchEvent({ type: "mouseenter" });
   await openDwell();
   assert.equal(container.classList.contains("active"), true);
-  assert.equal(overlay.classList.contains("settled"), false);
-  overlayEnd(overlay);
-  assert.equal(overlay.classList.contains("settled"), true);
-
-  // A completed close retires the frost so the next open starts frost-less.
-  menu.hideDesktopNav();
-  overlayEnd(overlay);
-  assert.equal(overlay.classList.contains("settled"), false);
+  assert.equal(container.classList.contains("closing"), false);
+  assert.equal(navFor(firstItem).classList.contains("active"), true);
 });

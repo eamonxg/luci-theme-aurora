@@ -600,23 +600,6 @@ return baseclass.extend({
       container?.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
     };
 
-    // The curtain frost is deferred until EVERY concurrent fade is done — a
-    // full-viewport backdrop blur re-rasterises every frame it overlaps an
-    // animation (see _overlay.css), and the overlay's own fade outlives the
-    // sheet's reveal (80ms delay + 300ms vs 300ms), so the overlay's
-    // transitionend — not the sheet's — marks true settle. The same event
-    // with `.active` gone is the fade-out finishing (visibility:hidden has
-    // already made the filter free): retire the frost for the next open.
-    //
-    // Every fresh open is guaranteed a completing transition to fire this:
-    // the 100ms hover dwell outlasts the overlay's 80ms transition delay,
-    // so an interrupted close has always started moving opacity before a
-    // reopen can land — revisit if either constant changes.
-    overlay.addEventListener("transitionend", (event) => {
-      if (event.target !== overlay) return;
-      overlay.classList.toggle("settled", overlay.classList.contains("active"));
-    });
-
     // Re-measure on resize even while closed — leaving the cache cold would
     // push the reflow back onto the next hover's open path.
     let resizeTimer = null;
@@ -704,29 +687,9 @@ return baseclass.extend({
 
           if (container) {
             applyCanvasHeight();
-
-            // An interrupted close can leave the previous open's frost on
-            // the curtain (`.settled` deliberately outlives hideDesktopNav
-            // so the blur fades out with the dim). A fresh reveal must start
-            // frost-less or the sheet animates under a live full-viewport
-            // blur again — the sheet's transitionend re-adds it. Category
-            // switches (container already active) keep the frost: the menu
-            // is at rest, and dropping it would flash the page sharp.
-            if (!container.classList.contains("active")) {
-              overlay.classList.remove("settled");
-            }
-
             container.classList.add("active");
             container.classList.remove("closing");
             overlay.classList.add("active");
-
-            // No sheet transition fires under reduced motion, so the frost
-            // (which reduced-transparency may still allow) lands directly.
-            if (
-              window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-            ) {
-              overlay.classList.add("settled");
-            }
           }
           nav.classList.add("active");
         }, delay);
@@ -819,10 +782,6 @@ return baseclass.extend({
     this.deactivateDesktopNavExcept(null, null);
 
     const container = document.querySelector(".desktop-menu-container");
-    // `.settled` (the curtain frost) deliberately survives the close: the
-    // blur fades out WITH the dim and is retired by the overlay's own
-    // transitionend (see initMegaMenu) — dropping it here snapped the page
-    // sharp while the dim was still fading.
     document.querySelector(".desktop-menu-overlay")?.classList.remove("active");
 
     if (!container) return;

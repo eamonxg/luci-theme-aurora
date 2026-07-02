@@ -82,21 +82,19 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
   ]) {
     assert.ok(canvasRule.includes(token), `canvas missing ${token}: ${canvasRule}`);
   }
-  // The curtain fades only its cheap rgba scrim during the animation; the
-  // blur lands via `.settled` once the sheet stops (Apple's curtain
-  // lifecycle: no full-viewport blur re-rasterising mid-animation).
+  // The curtain carries the blur permanently (Apple's globalnav-curtain) and
+  // fades it with opacity/visibility so the page frosts progressively WITH
+  // the reveal — gating it on a settle state made the frost pop in late and
+  // was rejected as off-design. Never snap it on/off via .active.
   assert.ok(overlay.includes("max-md:backdrop-blur-lg"), "mobile overlay blur");
   const curtain = overlay
     .split("\n")
     .find((l) => l.includes("bg-mega-menu-scrim"));
   assert.ok(
-    !curtain?.includes("backdrop-blur"),
-    `curtain must not blur while animating: ${curtain}`,
+    curtain?.includes("backdrop-blur-lg"),
+    `desktop curtain blur: ${curtain}`,
   );
-  assert.ok(
-    /&\.settled\s*\{\s*@apply\s+backdrop-blur-lg/.test(overlay),
-    "settled frost missing",
-  );
+  assert.ok(!overlay.includes(".settled"), "settle-gated frost must stay gone");
 });
 
 test("maincontent cards use a hairline border, not heavy shadow", () => {
