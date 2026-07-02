@@ -215,8 +215,10 @@ function buildSshArgs(cfg: ScpConfig): string {
   return args.join(" ");
 }
 
+// Stream the file over ssh stdin instead of scp: OpenSSH 9+ scp defaults to
+// the SFTP protocol, which Dropbear on OpenWrt does not ship a server for.
 function buildScpCommand(localPath: string, remotePath: string, cfg: ScpConfig): string {
-  return `scp ${buildSshArgs(cfg)} "${localPath}" "${cfg.host}:${remotePath}"`;
+  return `ssh ${buildSshArgs(cfg)} "${cfg.host}" "cat > '${remotePath}'" < "${localPath}"`;
 }
 
 function parseHost(sshHost: string): string {
