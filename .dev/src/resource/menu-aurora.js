@@ -586,6 +586,7 @@ return baseclass.extend({
     // stays set across open/close — it is the sheet's translate reference,
     // not the animated property. A resize invalidates the cache.
     let canvasHeight = 0;
+    let revealDuration = 300;
 
     const applyCanvasHeight = () => {
       if (!canvasHeight) {
@@ -596,8 +597,18 @@ return baseclass.extend({
           .querySelectorAll(".desktop-nav")
           .forEach((nav) => (maxPanel = Math.max(maxPanel, nav.offsetHeight)));
         canvasHeight = headerHeight + maxPanel;
+        // apple.com's flyout pacing: a constant 2px/ms over the VISIBLE
+        // travel (the wipe starts at the header's bottom edge — see the
+        // endpoint calc in _layout.css — so the header height is not
+        // distance), clamped to 240–480ms. Short panels open snappily, tall
+        // ones don't blink.
+        revealDuration = Math.min(480, Math.max(240, Math.round(maxPanel / 2)));
       }
       container?.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
+      container?.style.setProperty(
+        "--mega-menu-duration",
+        `${revealDuration}ms`,
+      );
     };
 
     // Re-measure on resize even while closed — leaving the cache cold would
@@ -826,7 +837,11 @@ return baseclass.extend({
     }
 
     sheet.addEventListener("transitionend", finishClosing);
-    closeFallback = setTimeout(finishClosing, 350);
+    // The retract duration is distance-adaptive (see applyCanvasHeight);
+    // read it back so the safety net always outlasts the real transition.
+    const duration =
+      parseInt(container.style.getPropertyValue("--mega-menu-duration")) || 300;
+    closeFallback = setTimeout(finishClosing, duration + 50);
   },
 
   renderModeMenu(tree) {

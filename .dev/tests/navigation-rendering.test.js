@@ -71,6 +71,7 @@ class FakeElement {
     this.style = {
       display: "",
       properties: new Map(),
+      getPropertyValue: (name) => this.style.properties.get(name) ?? "",
       removeProperty: (name) => this.style.properties.delete(name),
       setProperty: (name, value) => this.style.properties.set(name, value),
     };

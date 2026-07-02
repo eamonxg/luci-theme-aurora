@@ -12,10 +12,11 @@ header {
        height (--mega-menu-height, measured once in menu-aurora.js and kept
        across open/close), and the reveal is a pair of opposite translateY
        transitions — .desktop-menu-sheet (the opaque surface, overflow-hidden)
-       slides down from -100% while .desktop-menu-canvas inside it
-       counter-slides from +100%, so the content nets to a fixed position and
-       the sheet's bottom edge wipes it in, visually identical to the old
-       drawer but animated entirely on the compositor thread.
+       slides down from its header-edge rest position while
+       .desktop-menu-canvas inside it counter-slides by the same distance, so
+       the content nets to a fixed position and the sheet's bottom edge wipes
+       it in, visually identical to the old drawer but animated entirely on
+       the compositor thread.
 
        Apple's layer split still applies: the surface that animates must not
        carry a backdrop-filter, or every frame re-rasterises the blur. The
@@ -44,19 +45,41 @@ header {
         @apply pointer-events-auto;
       }
 
+      /* The closed endpoint stops 3.5rem (the header height, h-14) short of
+         a full retract: travel past the header's bottom edge is dead
+         distance — the sheet is the same colour as the lifted header bar, so
+         nothing visible moves there, it only adds an invisible wind-up to
+         the open and a crawling easing tail to the close (the wipe must
+         start at and return to the header's edge, like apple.com's flyout
+         collapsing to the bar, not to the viewport top).
+
+         Duration is distance-adaptive via --mega-menu-duration, set by
+         menu-aurora.js from apple.com's flyout pacing (2px/ms over the
+         visible travel, clamped to 240–480ms).
+
+         The bottom hairline + shadow live on ::after, not the sheet box:
+         `.closing` fades them out (compositor opacity) so nothing contrasty
+         is left to vanish in one frame when visibility cuts at the end of
+         the retract — the flash the border/shadow used to make. */
       & .desktop-menu-sheet {
-        @apply border-hairline bg-mega-menu-bg absolute inset-0 -translate-y-full overflow-hidden border-b shadow-xl transition-[translate] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+        @apply bg-mega-menu-bg absolute inset-0 translate-y-[calc(-100%+3.5rem)] overflow-hidden transition-[translate] duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+        @apply after:border-hairline after:pointer-events-none after:absolute after:inset-0 after:border-b after:shadow-xl after:transition-opacity after:duration-(--mega-menu-duration,300ms) after:content-[''] motion-reduce:after:transition-none;
       }
 
-      /* The counter-transform must mirror the sheet's timing exactly or the
-         content drifts during the wipe — keep duration/easing in lockstep. */
+      /* The counter-transform must mirror the sheet's endpoints and timing
+         exactly or the content drifts during the wipe — keep both in
+         lockstep. */
       & .desktop-menu-canvas {
-        @apply absolute inset-0 translate-y-full transition-[translate] duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+        @apply absolute inset-0 translate-y-[calc(100%-3.5rem)] transition-[translate] duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
       }
 
       &.active .desktop-menu-sheet,
       &.active .desktop-menu-canvas {
         @apply translate-y-0;
+      }
+
+      &.closing .desktop-menu-sheet {
+        @apply after:opacity-0;
       }
 
       /* Category panels live inside .desktop-menu-canvas, not the nav items:

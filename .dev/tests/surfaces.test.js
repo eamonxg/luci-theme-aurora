@@ -60,8 +60,8 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
   assert.ok(!sheet?.includes("backdrop-blur"), `sheet must not blur: ${sheet}`);
   assert.ok(
     sheet?.includes("transition-[translate]") &&
-      sheet?.includes("-translate-y-full"),
-    `sheet must slide, not resize: ${sheet}`,
+      sheet?.includes("translate-y-[calc(-100%+3.5rem)]"),
+    `sheet must slide from the header edge, not resize: ${sheet}`,
   );
   const containerRule =
     layout.match(/& \.desktop-menu-container\s*\{\s*@apply\s+([^;]+);/)?.[1] ??
@@ -71,17 +71,22 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
       !containerRule.includes("will-change"),
     `container is a static frame, it must not animate: ${containerRule}`,
   );
-  // The counter-transformed canvas must mirror the sheet's timing exactly or
-  // the content drifts during the wipe.
+  // The counter-transformed canvas must mirror the sheet's endpoints and
+  // timing exactly or the content drifts during the wipe; both take the
+  // distance-adaptive duration from the same variable.
   const canvasRule =
     layout.match(/& \.desktop-menu-canvas\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
   for (const token of [
-    "translate-y-full",
+    "translate-y-[calc(100%-3.5rem)]",
     "transition-[translate]",
-    "duration-[300ms]",
+    "duration-(--mega-menu-duration,300ms)",
   ]) {
     assert.ok(canvasRule.includes(token), `canvas missing ${token}: ${canvasRule}`);
   }
+  assert.ok(
+    sheet?.includes("duration-(--mega-menu-duration,300ms)"),
+    `sheet must share the adaptive duration: ${sheet}`,
+  );
   // The curtain carries the blur permanently (Apple's globalnav-curtain) and
   // fades it with opacity/visibility so the page frosts progressively WITH
   // the reveal — gating it on a settle state made the frost pop in late and
