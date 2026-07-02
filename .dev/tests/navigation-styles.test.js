@@ -170,7 +170,7 @@ test("mega-menu closing state keeps the panel above the curtain", () => {
   const megaMenu = getBlock(layoutStyles, '[data-nav-type="mega-menu"] &');
   const container = getBlock(megaMenu, "& .desktop-menu-container");
   const headerLift = layoutStyles.match(
-    /When a category is open[\s\S]*?(\[data-nav-type="mega-menu"\][\s\S]*?)\n\s*\.brand/,
+    /The bar must sit above[\s\S]*?(\[data-nav-type="mega-menu"\][\s\S]*?)\n\s*\.brand/,
   )?.[1];
 
   assert.match(
@@ -181,7 +181,17 @@ test("mega-menu closing state keeps the panel above the curtain", () => {
     container,
     /&\.active\s*\{[\s\S]*@apply[^;]*pointer-events-auto/,
   );
-  assert.match(headerLift ?? "", /desktop-menu-container[\s\S]*closing/);
+  // z-70 must span the retract too (or the curtain dims the closing panel)…
+  assert.match(
+    headerLift ?? "",
+    /desktop-menu-container:is\(\.active, \.closing\)\)\s*\{\s*@apply[^;]*z-70/,
+  );
+  // …but the bar colour lift is keyed on .active ALONE, so the bar fades
+  // back during the retract instead of lingering at the top afterwards.
+  assert.match(
+    headerLift ?? "",
+    /desktop-menu-container\.active\)\s*\{\s*@apply[^;]*bg-mega-menu-bg/,
+  );
 });
 
 test("mega-menu category masks use Tailwind arbitrary utilities", () => {

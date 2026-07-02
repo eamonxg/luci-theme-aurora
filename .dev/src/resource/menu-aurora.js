@@ -604,11 +604,11 @@ return baseclass.extend({
         // ones don't blink.
         revealDuration = Math.min(480, Math.max(240, Math.round(maxPanel / 2)));
       }
-      container?.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
-      container?.style.setProperty(
-        "--mega-menu-duration",
-        `${revealDuration}ms`,
-      );
+      // Both vars live on the header, not the container: the container
+      // inherits the height, and the header's own transition-colors reads
+      // the duration so the bar colour fades in lockstep with the wipe.
+      header.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
+      header.style.setProperty("--mega-menu-duration", `${revealDuration}ms`);
     };
 
     // Re-measure on resize even while closed — leaving the cache cold would
@@ -840,7 +840,11 @@ return baseclass.extend({
     // The retract duration is distance-adaptive (see applyCanvasHeight);
     // read it back so the safety net always outlasts the real transition.
     const duration =
-      parseInt(container.style.getPropertyValue("--mega-menu-duration")) || 300;
+      parseInt(
+        document
+          .querySelector("header")
+          ?.style.getPropertyValue("--mega-menu-duration"),
+      ) || 300;
     closeFallback = setTimeout(finishClosing, duration + 50);
   },
 

@@ -58,10 +58,14 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
   // pays main-thread layout + repaint per frame (the low-end hover jank).
   const sheet = layout.split("\n").find((l) => l.includes("bg-mega-menu-bg"));
   assert.ok(!sheet?.includes("backdrop-blur"), `sheet must not blur: ${sheet}`);
+  // The sheet sits below the bar (top-14) so its own height IS the visible
+  // travel: ±100% endpoints wipe from the bar's bottom edge and collapse
+  // back into it, never past it to the viewport top.
   assert.ok(
     sheet?.includes("transition-[translate]") &&
-      sheet?.includes("translate-y-[calc(-100%+3.5rem)]"),
-    `sheet must slide from the header edge, not resize: ${sheet}`,
+      sheet?.includes("top-14") &&
+      sheet?.includes("-translate-y-full"),
+    `sheet must slide from the bar edge, not resize: ${sheet}`,
   );
   const containerRule =
     layout.match(/& \.desktop-menu-container\s*\{\s*@apply\s+([^;]+);/)?.[1] ??
@@ -77,7 +81,7 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
   const canvasRule =
     layout.match(/& \.desktop-menu-canvas\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
   for (const token of [
-    "translate-y-[calc(100%-3.5rem)]",
+    "translate-y-full",
     "transition-[translate]",
     "duration-(--mega-menu-duration,300ms)",
   ]) {

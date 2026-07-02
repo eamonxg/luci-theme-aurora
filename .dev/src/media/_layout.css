@@ -1,5 +1,5 @@
 header {
-  @apply bg-bg sticky top-0 z-40 mb-2 transition-colors duration-[300ms] ease-[cubic-bezier(0.4,0,0.6,1)];
+  @apply bg-bg sticky top-0 z-40 mb-2 transition-colors duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)];
 
   & .header-content {
     @apply relative flex h-14 items-center justify-between px-6 py-3 max-md:px-4 max-md:py-2;
@@ -28,11 +28,8 @@ header {
        Fading the panel in left it half-transparent for the whole open, so the
        header brand/icons showed THROUGH it until opacity settled (the flash).
        Opaque-from-the-first-frame means the descending sheet wipes solidly
-       down over the header instead. The closing state keeps the panel visible
-       and above the curtain while the sheet retracts, without re-enabling
-       input. The sheet's shadow/border ride its moving bottom edge; the part
-       of the sheet above the header is off-viewport, so the container needs
-       no overflow clipping of its own. */
+       down instead. The closing state keeps the panel visible and above the
+       curtain while the sheet retracts, without re-enabling input. */
     & .desktop-menu-container {
       @apply pointer-events-none invisible absolute inset-x-0 top-0 z-30 h-(--mega-menu-height,0) w-full max-md:hidden;
 
@@ -45,24 +42,26 @@ header {
         @apply pointer-events-auto;
       }
 
-      /* The closed endpoint stops 3.5rem (the header height, h-14) short of
-         a full retract: travel past the header's bottom edge is dead
-         distance — the sheet is the same colour as the lifted header bar, so
-         nothing visible moves there, it only adds an invisible wind-up to
-         the open and a crawling easing tail to the close (the wipe must
-         start at and return to the header's edge, like apple.com's flyout
-         collapsing to the bar, not to the viewport top).
+      /* The sheet lives BELOW the bar (top-14): its own height is exactly
+         the visible travel, so ±100% endpoints start the wipe at the bar's
+         bottom edge and retract back to it — the flyout collapses INTO the
+         bar, like apple.com, never crawling on to the viewport top. The bar
+         itself is the header's background, which fades in lockstep with the
+         wipe (see the header rules below), so the close's last visible event
+         is the edge meeting the bar — nothing lingers at the top afterwards.
+         While retracting, the sheet's off-screen part is above the viewport;
+         the container needs no overflow clipping of its own.
 
-         Duration is distance-adaptive via --mega-menu-duration, set by
-         menu-aurora.js from apple.com's flyout pacing (2px/ms over the
-         visible travel, clamped to 240–480ms).
+         Duration is distance-adaptive via --mega-menu-duration, set on the
+         header by menu-aurora.js from apple.com's flyout pacing (2px/ms over
+         the visible travel, clamped to 240–480ms).
 
          The bottom hairline + shadow live on ::after, not the sheet box:
          `.closing` fades them out (compositor opacity) so nothing contrasty
          is left to vanish in one frame when visibility cuts at the end of
          the retract — the flash the border/shadow used to make. */
       & .desktop-menu-sheet {
-        @apply bg-mega-menu-bg absolute inset-0 translate-y-[calc(-100%+3.5rem)] overflow-hidden transition-[translate] duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+        @apply bg-mega-menu-bg absolute inset-x-0 top-14 bottom-0 -translate-y-full overflow-hidden transition-[translate] duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
         @apply after:border-hairline after:pointer-events-none after:absolute after:inset-0 after:border-b after:shadow-xl after:transition-opacity after:duration-(--mega-menu-duration,300ms) after:content-[''] motion-reduce:after:transition-none;
       }
 
@@ -70,7 +69,7 @@ header {
          exactly or the content drifts during the wipe — keep both in
          lockstep. */
       & .desktop-menu-canvas {
-        @apply absolute inset-0 translate-y-[calc(100%-3.5rem)] transition-[translate] duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
+        @apply absolute inset-0 translate-y-full transition-[translate] duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
       }
 
       &.active .desktop-menu-sheet,
@@ -104,7 +103,7 @@ header {
            property, so that is what must be transitioned — transitioning
            `transform` here left the 6px entrance float snapping instead of
            animating (only the opacity ever faded). */
-        @apply pointer-events-none absolute inset-x-0 top-14 mx-auto grid max-h-[calc(100dvh-3.5rem)] max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 overflow-y-auto overscroll-contain px-10 pt-13 pb-8 opacity-0 transition-[opacity,translate] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
+        @apply pointer-events-none absolute inset-x-0 top-0 mx-auto grid max-h-[calc(100dvh-3.5rem)] max-w-[72rem] translate-y-1.5 grid-cols-[12rem_minmax(0,1fr)_13rem] gap-x-8 overflow-y-auto overscroll-contain px-10 pt-13 pb-8 opacity-0 transition-[opacity,translate] duration-[250ms] ease-out max-lg:max-w-[44rem] max-lg:grid-cols-1 max-lg:px-8;
 
         &.active {
           @apply pointer-events-auto translate-y-0 opacity-100;
@@ -209,12 +208,24 @@ header {
     }
   }
 
-  /* When a category is open the bar lifts to the panel's opened colour so the
-     header and the mega-menu read as one continuous surface — no tonal seam
-     where the bar (bg) meets the panel (mega-menu-bg). */
+  /* The bar must sit above the z-60 curtain for the whole open AND the
+     whole retract, or the scrim would dim the closing panel. */
   [data-nav-type="mega-menu"]
     &:has(.desktop-menu-container:is(.active, .closing)) {
-    @apply bg-mega-menu-bg z-70;
+    @apply z-70;
+  }
+
+  /* When a category is open the bar lifts to the panel's opened colour so
+     the header and the mega-menu read as one continuous surface — no tonal
+     seam where the bar (bg) meets the panel (mega-menu-bg). The lift is
+     keyed on `.active` alone and the header's transition-colors runs at the
+     same adaptive duration as the wipe (apple.com transitions its bar
+     background at the flyout rate the same way), so on close the bar fades
+     back WHILE the sheet retracts and both finish together — keying it on
+     `.closing` too left the close's final act as a bar colour fade at the
+     very top of the screen, after the panel was already gone. */
+  [data-nav-type="mega-menu"] &:has(.desktop-menu-container.active) {
+    @apply bg-mega-menu-bg;
   }
 
   .brand {
