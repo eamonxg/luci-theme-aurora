@@ -817,6 +817,12 @@ test("a reopen before the overlay fade-out finishes restarts frost-less", async 
       target: sheet,
       propertyName: "translate",
     });
+  const overlayEnd = (overlay) =>
+    overlay.dispatchEvent({
+      type: "transitionend",
+      target: overlay,
+      propertyName: "opacity",
+    });
   // The first-open dwell is 100ms; category switches on an open menu fire
   // with no dwell but still through a timer.
   const openDwell = () => new Promise((resolve) => setTimeout(resolve, 120));
@@ -863,12 +869,15 @@ test("a reopen before the overlay fade-out finishes restarts frost-less", async 
 
   const [firstItem, secondItem] = ul.children;
 
-  // First open: the frost lands only once the sheet's reveal settles.
+  // First open: the frost lands only once the LAST concurrent fade settles —
+  // the overlay's own (80ms delay + 300ms), not the sheet's reveal (300ms).
   firstItem.dispatchEvent({ type: "mouseenter" });
   await openDwell();
   assert.equal(container.classList.contains("active"), true);
   assert.equal(overlay.classList.contains("settled"), false);
   sheetEnd(sheet);
+  assert.equal(overlay.classList.contains("settled"), false);
+  overlayEnd(overlay);
   assert.equal(overlay.classList.contains("settled"), true);
 
   // Switching categories on the open menu keeps the frost — the menu is at
@@ -886,6 +895,11 @@ test("a reopen before the overlay fade-out finishes restarts frost-less", async 
   await openDwell();
   assert.equal(container.classList.contains("active"), true);
   assert.equal(overlay.classList.contains("settled"), false);
-  sheetEnd(sheet);
+  overlayEnd(overlay);
   assert.equal(overlay.classList.contains("settled"), true);
+
+  // A completed close retires the frost so the next open starts frost-less.
+  menu.hideDesktopNav();
+  overlayEnd(overlay);
+  assert.equal(overlay.classList.contains("settled"), false);
 });

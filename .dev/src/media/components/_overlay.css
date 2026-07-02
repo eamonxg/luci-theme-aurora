@@ -72,9 +72,11 @@ body.mobile-navigation-open > header {
   /* Apple's curtain lifecycle: a full-viewport backdrop blur re-rasterises on
      every frame of a concurrent animation, so the frost must never overlap the
      open transition — during the open only the cheap rgba scrim fades in, and
-     menu-aurora.js adds `.settled` on the sheet's transitionend so the blur is
-     computed ONCE against a static backdrop (apple.com does the inverse of the
-     same split: blur only while .globalnav-animating).
+     menu-aurora.js adds `.settled` on the overlay's OWN transitionend — the
+     last of the concurrent fades, outliving the sheet's reveal by this rule's
+     80ms delay — so the blur is computed ONCE against a fully static backdrop
+     (apple.com does the inverse of the same split: blur only while
+     .globalnav-animating).
 
      On close `.settled` stays: dropping the blur at close start snapped the
      page from blurred to sharp while the dim was still fading — the flash this

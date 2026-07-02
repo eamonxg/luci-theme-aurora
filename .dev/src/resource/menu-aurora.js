@@ -570,7 +570,6 @@ return baseclass.extend({
 
   initMegaMenu(children, url, ul) {
     const container = document.querySelector(".desktop-menu-container");
-    const sheet = container?.querySelector(".desktop-menu-sheet");
     const canvas = container?.querySelector(".desktop-menu-canvas");
     const overlay = document.querySelector(".desktop-menu-overlay");
     const header = document.querySelector("header");
@@ -601,21 +600,21 @@ return baseclass.extend({
       container?.style.setProperty("--mega-menu-height", `${canvasHeight}px`);
     };
 
-    // The curtain frost is deferred until the open transition settles — a
+    // The curtain frost is deferred until EVERY concurrent fade is done — a
     // full-viewport backdrop blur re-rasterises every frame it overlaps an
-    // animation (see _overlay.css). transitionend on the sheet marks settle;
-    // the overlay's own transitionend (fade-out finished, visibility already
-    // hidden) retires it for the next open.
-    sheet?.addEventListener("transitionend", (event) => {
-      if (event.target !== sheet) return;
-      if (container.classList.contains("active")) {
-        overlay.classList.add("settled");
-      }
-    });
+    // animation (see _overlay.css), and the overlay's own fade outlives the
+    // sheet's reveal (80ms delay + 300ms vs 300ms), so the overlay's
+    // transitionend — not the sheet's — marks true settle. The same event
+    // with `.active` gone is the fade-out finishing (visibility:hidden has
+    // already made the filter free): retire the frost for the next open.
+    //
+    // Every fresh open is guaranteed a completing transition to fire this:
+    // the 100ms hover dwell outlasts the overlay's 80ms transition delay,
+    // so an interrupted close has always started moving opacity before a
+    // reopen can land — revisit if either constant changes.
     overlay.addEventListener("transitionend", (event) => {
-      if (event.target === overlay && !overlay.classList.contains("active")) {
-        overlay.classList.remove("settled");
-      }
+      if (event.target !== overlay) return;
+      overlay.classList.toggle("settled", overlay.classList.contains("active"));
     });
 
     // Re-measure on resize even while closed — leaving the cache cold would
