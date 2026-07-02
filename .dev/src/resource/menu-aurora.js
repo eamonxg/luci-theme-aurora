@@ -699,6 +699,7 @@ return baseclass.extend({
 
           if (container) {
             applyCanvasHeight();
+            container.dataset.closeToken = "";
             container.classList.add("active");
             container.classList.remove("closing");
             overlay.classList.add("active");
@@ -807,16 +808,26 @@ return baseclass.extend({
     // translateY(-100%) and the canvas to its counter-position — the drawer
     // close, run entirely on the compositor. --mega-menu-height stays put;
     // it is the translate reference, not the animated property. `.closing`
-    // keeps the container visible until the sheet's transition ends.
+    // keeps the container in the tree only while its opacity fades out and
+    // the sheet returns to the closed translate position.
     container.classList.add("closing");
     container.classList.remove("active");
 
     const sheet = container.querySelector(".desktop-menu-sheet");
+    const closeToken = `${Date.now()}-${Math.random()}`;
+    container.dataset.closeToken = closeToken;
 
     let closeFallback = null;
     const finishClosing = (event) => {
       if (event?.target && event.target !== sheet) return;
-
+      if (container.dataset.closeToken !== closeToken) {
+        if (closeFallback !== null) {
+          clearTimeout(closeFallback);
+          closeFallback = null;
+        }
+        sheet?.removeEventListener("transitionend", finishClosing);
+        return;
+      }
       if (closeFallback !== null) {
         clearTimeout(closeFallback);
         closeFallback = null;
@@ -826,6 +837,7 @@ return baseclass.extend({
 
       if (!container.classList.contains("active")) {
         container.classList.remove("closing");
+        delete container.dataset.closeToken;
       }
     };
 

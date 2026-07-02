@@ -56,15 +56,24 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
   // blurring an animating box re-rasterises every frame (the old clip-path
   // flicker) — and must animate translate, not height: a height transition
   // pays main-thread layout + repaint per frame (the low-end hover jank).
-  const sheet = layout.split("\n").find((l) => l.includes("bg-mega-menu-bg"));
+  const sheet =
+    layout.match(/& \.desktop-menu-sheet\s*\{([\s\S]*?)\n\s*\}/)?.[1] ?? "";
   assert.ok(!sheet?.includes("backdrop-blur"), `sheet must not blur: ${sheet}`);
-  // The sheet's own height IS the visible travel: ±100% endpoints wipe from
-  // the bar's bottom edge and retract back behind it.
+  assert.ok(
+    !layout.includes(
+      "@apply bg-mega-menu-bg pointer-events-none absolute inset-x-0 top-0 h-14",
+    ),
+    "header band must not be static",
+  );
+  // Apple-style geometry: the sheet is the whole opened surface, including the
+  // header-height band. Its closed bottom edge is page top, matching the
+  // reveal origin.
   assert.ok(
     sheet?.includes("transition-[translate]") &&
-      sheet?.includes("h-(--mega-menu-height,0)") &&
+      sheet?.includes("top-0") &&
+      sheet?.includes("h-[calc(var(--mega-menu-height,0px)+3.5rem)]") &&
       sheet?.includes("-translate-y-full"),
-    `sheet must slide by its own travel-sized height: ${sheet}`,
+    `sheet must move from and to page top: ${sheet}`,
   );
   const containerRule =
     layout.match(/& \.desktop-menu-container\s*\{\s*@apply\s+([^;]+);/)?.[1] ??
@@ -74,22 +83,27 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
       !containerRule.includes("will-change"),
     `container is a static frame, it must not animate: ${containerRule}`,
   );
-  // A translated sheet MOVES — without the container clip below the bar
-  // (top-14 + overflow-clip) its body rides up over the bar during the
-  // retract and flashes away at the top when visibility cuts.
+  // A translated sheet moves inside a static clip frame rooted at the page top.
+  // The container adds shadow slack below the travel but does not move itself.
   assert.ok(
-    containerRule.includes("top-14") && containerRule.includes("overflow-clip"),
-    `container must clip the retract behind the bar: ${containerRule}`,
+    containerRule.includes("top-0") &&
+      containerRule.includes("h-[calc(var(--mega-menu-height,0px)+3.5rem+3rem)]") &&
+      containerRule.includes("overflow-clip"),
+    `container must clip the page-top retract: ${containerRule}`,
+  );
+  assert.match(
+    layout,
+    /&\.closing\s*\{[\s\S]*?@apply[^;]*opacity-0[^;]*transition-opacity[^;]*duration-\[220ms\]/,
   );
   // The counter-transformed canvas must mirror the sheet's endpoints and
   // timing exactly or the content drifts during the wipe; both take the
   // distance-adaptive duration from the same variable.
   const canvasRule =
-    layout.match(/& \.desktop-menu-canvas\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
+    layout.match(/& \.desktop-menu-canvas\s*\{([\s\S]*?)\n\s*\}/)?.[1] ?? "";
   for (const token of [
-    "translate-y-full",
     "transition-[translate]",
     "duration-(--mega-menu-duration,300ms)",
+    "translate-y-full",
   ]) {
     assert.ok(canvasRule.includes(token), `canvas missing ${token}: ${canvasRule}`);
   }
@@ -98,9 +112,8 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
     `sheet must share the adaptive duration: ${sheet}`,
   );
   // The curtain carries the blur permanently (Apple's globalnav-curtain) and
-  // fades it with opacity/visibility so the page frosts progressively WITH
-  // the reveal — gating it on a settle state made the frost pop in late and
-  // was rejected as off-design. Never snap it on/off via .active.
+  // fades it with opacity/visibility. Close must start that fade immediately;
+  // delaying the curtain left blur visible after the sheet had collapsed.
   assert.ok(overlay.includes("max-md:backdrop-blur-lg"), "mobile overlay blur");
   const curtain = overlay
     .split("\n")
@@ -108,6 +121,10 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
   assert.ok(
     curtain?.includes("backdrop-blur-lg"),
     `desktop curtain blur: ${curtain}`,
+  );
+  assert.ok(
+    curtain?.includes("duration-[220ms]") && !curtain.includes("delay-"),
+    `desktop curtain exit must be immediate: ${curtain}`,
   );
   assert.ok(!overlay.includes(".settled"), "settle-gated frost must stay gone");
 });

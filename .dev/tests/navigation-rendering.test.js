@@ -770,7 +770,7 @@ test("renders an active group expanded when an open mobile list was initially em
   assert.equal(region.hasAttribute("inert"), false);
 });
 
-test("keeps mega-menu stacking state while the sheet retract transition runs", () => {
+test("starts the mega-menu overlay and surface exit together", () => {
   const sheet = new FakeElement("div", { class: "desktop-menu-sheet" });
   const container = new FakeElement(
     "div",
@@ -780,8 +780,10 @@ test("keeps mega-menu stacking state while the sheet retract transition runs", (
   const overlay = new FakeElement("div", {
     class: "desktop-menu-overlay active",
   });
+  const header = new FakeElement("header");
   const document = createFakeDocument({
     elements: {
+      header,
       ".desktop-menu-container": container,
       ".desktop-menu-overlay": overlay,
     },
@@ -789,9 +791,12 @@ test("keeps mega-menu stacking state while the sheet retract transition runs", (
   const menu = loadMenuModule({ document });
 
   container.style.setProperty("--mega-menu-height", "320px");
+  header.style.setProperty("--mega-menu-duration", "1ms");
 
   menu.hideDesktopNav();
 
+  // Removing .active starts the scrim/blur fade immediately. The container
+  // remains in .closing so its own opacity can fade while the sheet retracts.
   assert.equal(overlay.classList.contains("active"), false);
   assert.equal(container.classList.contains("active"), false);
   assert.equal(container.classList.contains("closing"), true);
@@ -804,6 +809,47 @@ test("keeps mega-menu stacking state while the sheet retract transition runs", (
     target: sheet,
     propertyName: "translate",
   });
+
+  assert.equal(container.classList.contains("closing"), false);
+});
+
+test("ignores stale mega-menu close timers after reopen and second close", async () => {
+  const sheet = new FakeElement("div", { class: "desktop-menu-sheet" });
+  const container = new FakeElement(
+    "div",
+    { class: "desktop-menu-container active" },
+    [sheet],
+  );
+  const overlay = new FakeElement("div", {
+    class: "desktop-menu-overlay active",
+  });
+  const header = new FakeElement("header");
+  const document = createFakeDocument({
+    elements: {
+      header,
+      ".desktop-menu-container": container,
+      ".desktop-menu-overlay": overlay,
+    },
+  });
+  const menu = loadMenuModule({ document });
+
+  header.style.setProperty("--mega-menu-duration", "300ms");
+
+  menu.hideDesktopNav();
+
+  await new Promise((resolve) => setTimeout(resolve, 120));
+
+  container.classList.add("active");
+  container.classList.remove("closing");
+  overlay.classList.add("active");
+
+  menu.hideDesktopNav();
+
+  await new Promise((resolve) => setTimeout(resolve, 260));
+
+  assert.equal(container.classList.contains("closing"), true);
+
+  await new Promise((resolve) => setTimeout(resolve, 120));
 
   assert.equal(container.classList.contains("closing"), false);
 });
