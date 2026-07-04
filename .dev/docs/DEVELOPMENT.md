@@ -108,11 +108,13 @@ Some third-party LuCI apps ship markup that doesn't adapt to the theme and needs
 1. **One file per page, named by `data-page`.** Each patch lives at `media/patches/<page>.css`, where `<page>` is the value of `<body data-page="…">` for the target page — i.e. the request path segments joined by `-` (e.g. `admin-services-openclash-config`). `header.ut` computes the same string at render time from `ctx.request_path`, falling back to `ctx.path` when `request_path` is empty (`join('-', length(ctx.request_path) ? ctx.request_path : ctx.path)`) so default landings reached without an explicit path still resolve their patch.
 2. **Build splits, not bundles.** `vite.config.ts` adds every `media/patches/*.css` as its own Rollup entry, so each compiles to `htdocs/luci-static/aurora/patches/<page>.css`. They are no longer part of `main.css`.
 3. **`@reference`, not `@import`.** Every patch file starts with `@reference "../main.css";`. This loads the theme context (tokens, custom utilities like `bg-surface`, the `dark:` variant) so `@apply` resolves — **without** re-emitting `main.css` into the patch output. Using `@import` here would inline all of `main.css` into every patch (hundreds of KB); `@reference` keeps each patch to just its own rules.
-4. **`header.ut` links exactly one patch.** A static allow-list `PATCH_PAGES` in `header.ut` lists which pages have a patch file. When the current page is in the list, header emits a single `<link>` to its patch file, right after `main.css` (so patches can override base styles). Pages not in the list get nothing — no extra request, no 404. A static list is used (rather than probing the filesystem) to avoid a hard `fs` dependency in the template and to avoid 404s on the ~95% of pages with no patch.
+4. **`header.ut` discovers patches at render time.** On each (non-login) page render, `header.ut` lists `/www/luci-static/aurora/patches/` with ucode's `fs.lsdir()` (a readdir of a dozen entries — microseconds, dwarfed by the template's existing `ubus` call) and matches the installed `*.css` filenames against the **cumulative path-segment prefixes** of the request: a patch matches its exact page and any subpage, but only on real segment boundaries — `admin-services-wol.css` covers `admin/services/wol/plus`, yet never a sibling app whose own segment merely starts the same way (`admin/services/wol-plus`). Every matching patch is linked right after `main.css`, in lexical order — so a general patch loads before a more specific one and the specific one cascades on top. Pages with no match get nothing — no extra request, no 404. If the directory is missing or unreadable, the list is empty and the page renders unpatched.
+5. **The patches directory is a drop-in extension point.** Because discovery is at render time, patches don't have to ship with the theme: **any package may install a `<page-prefix>.css` into `/www/luci-static/aurora/patches/`** and the theme will load it on matching pages. Install/uninstall lifecycle is automatic — the file appears and disappears with the package, no registration or allow-list rebuild. (Patches shipped this way are plain CSS served as-is; the theme's own patches additionally go through the Tailwind build below.)
+6. **Dynamically generated pages are covered by their fixed prefix.** Some apps mint a page per entity — e.g. QModem's SMS conversations render as `admin-modem-qmodem-sms-conversation-<contact>`. Name the patch after the fixed prefix (`admin-modem-qmodem-sms-conversation.css`) and the prefix match loads it for every conversation page, regardless of the contact name. No wildcard syntax is needed (and `*` in a filename is not supported).
 
 **Adding a patch:**
 
-1. Open the target page in the browser and read `document.body.dataset.page` — that exact string is your filename.
+1. Open the target page in the browser and read `document.body.dataset.page` — that exact string is your filename (for a family of dynamic per-entity pages, use their fixed prefix instead — see point 5 above).
 2. Create `media/patches/<that-string>.css`:
    ```css
    /* PATCH: <page> (luci-app-foo) */
@@ -122,12 +124,38 @@ Some third-party LuCI apps ship markup that doesn't adapt to the theme and needs
      /* narrow, selector-scoped overrides using @apply + CSS Nesting */
    }
    ```
-3. Run `pnpm build` (or just `pnpm gen:patch-pages`). The `PATCH_PAGES` allow-list in `header.ut` is **auto-generated** from the `patches/` directory by `scripts/gen-patch-pages.js` — no manual editing. It rewrites the region between the `//#patch-pages-start` / `//#patch-pages-end` markers; don't hand-edit inside them.
+3. Run `pnpm build`. There is no allow-list to regenerate — the loader discovers whatever `.css` files are installed under `patches/` at render time.
 4. Verify `htdocs/luci-static/aurora/patches/<page>.css` is small (just your rules, not a copy of `main.css`).
 
-> Removing a patch is symmetric: delete the file and rebuild — it drops out of `PATCH_PAGES` automatically.
+> Removing a patch is symmetric: delete the file and rebuild — the loader stops linking it because it no longer exists.
 
-> **Naming notes:** match the page exactly — granularity is per page, not per app. An app with several pages (e.g. openclash `…-config` and `…-settings`) gets one file per page. The filename has no `_` prefix (unlike the `_`-prefixed partials, which are `@import`-only fragments); patch files are real build entries that ship to `htdocs/`.
+**Shipping a patch with a third-party app** (no theme release needed): build or hand-write a plain CSS file named after your page's `data-page` prefix and install it from your package's Makefile:
+
+```makefile
+define Package/luci-app-foo/install
+	...
+	$(INSTALL_DIR) $(1)/www/luci-static/aurora/patches
+	$(INSTALL_DATA) ./htdocs/aurora-patch.css \
+		$(1)/www/luci-static/aurora/patches/admin-services-foo.css
+endef
+```
+
+The theme loads it automatically on `admin-services-foo` and all its subpages whenever both packages are installed. Note app-shipped patches bypass the theme's Tailwind build — write plain CSS (you can still target the theme's CSS custom properties, e.g. `var(--surface)`), and scope every rule under your own `[data-page^="…"]` selector.
+
+**Naming.** The filename is the page's `data-page` string; matching by prefix means broader targets also just work:
+
+| You want to patch… | File to create | Then it loads on |
+| --- | --- | --- |
+| One specific page, `admin/services/foo/general` | `admin-services-foo-general.css` | that page (and any subpage under it) |
+| A whole app, all pages under `admin/services/foo/…` | `admin-services-foo.css` | `foo`, `foo/general`, `foo/rules`, … |
+| Dynamic per-entity pages, e.g. QModem SMS `…/sms/conversation/<contact>` | `admin-modem-qmodem-sms-conversation.css` (the fixed prefix — no wildcard needed) | every conversation page, whatever the contact |
+
+Two rules of thumb that follow from prefix matching:
+
+- **A patch applies to its page and all subpages by default.** `admin-services-foo.css` loads on every page under `admin/services/foo/…`. When you need finer targeting, narrow it in either of two ways: scope individual rules inside the file (`[data-page="admin-services-foo-general"] { … }` only affects that one page), or ship an additional, longer-named file (`admin-services-foo-rules.css`) for page-specific rules — on a page matching both, **both load**, shorter name first, so the more specific file wins the cascade.
+- **Matching respects path-segment boundaries**, so a prefix never leaks onto a lookalike sibling: `admin-services-wol.css` covers `admin/services/wol/plus` but not a different app at `admin/services/wol-plus`. The one unavoidable collision is two paths joining to the same `data-page` string (`wol/plus` vs `wol-plus`) — such a patch loads on both pages. If that matters, key rules to your app's own class names/ids so an accidental load matches nothing.
+
+> Unlike the `_`-prefixed partials (which are `@import`-only fragments), patch filenames have no `_` prefix — each is a real build entry that ships to `htdocs/`.
 
 ### Design Tokens
 
@@ -143,6 +171,8 @@ Some third-party LuCI apps ship markup that doesn't adapt to the theme and needs
 1. Edit `tokens/defaults.js` (base input colors) and/or `tokens/spec.js` (derivation rules, fixed literals).
 2. Run `pnpm gen:tokens` (also runs automatically as part of `pnpm build`) to rewrite `src/media/_tokens.css` — it emits `:root` (light) and `[data-darkmode="true"]` (dark) blocks plus the `@theme inline` mapping, in that order.
 3. Run `pnpm test` to check the color-math operators and derived-token invariants (`tests/engine.test.js`, `tests/resolve.test.js`, `tests/surfaces.test.js`) — e.g. hue families, lightness ordering between `bg`/`surface_sunken`/`surface`, and translucency of menu backgrounds.
+
+**Runtime overrides from UCI:** `header.ut` reads `uci get_all aurora.theme` on each render and re-emits stored tokens as CSS custom-property overrides in an inline `<style>` after `main.css`. Keys are namespaced by prefix — `light_*` and `struct_*` land in `:root`, `dark_*` in `[data-darkmode="true"]` — with the prefix stripped and `_` mapped to `-` (e.g. `light_surface_sunken` → `--surface-sunken`). The template flattens all keys in a single pass into two pre-joined declaration strings (rather than per-key template loops), which halves the iteration work and keeps the emitted `<style>` compact. This is the hook `luci-app-aurora-config` writes through.
 
 ### LuCI JavaScript API
 
