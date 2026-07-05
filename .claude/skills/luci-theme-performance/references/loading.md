@@ -37,9 +37,17 @@ route change. An unversioned asset costs at least a conditional request
 **Do / Don't.** Give assets a versioned URL (e.g. `?v=<hash-or-build-id>`)
 paired with a long `Cache-Control`, so the browser skips the network
 entirely on repeat visits. A 304 on every click for an asset that hasn't
-changed is the counter-example this rule exists to prevent (example: aurora
-currently versions only its icons and fonts this way — anything shipped
-without a version query string re-validates every navigation).
+changed is the counter-example this rule exists to prevent. For LuCI theme
+templates, do not judge versioning from the source `.ut` file alone:
+`luci.mk` rewrites quoted `{{ media }}/... .css` and
+`{{ resource }}/... .js` links during package build to append
+`?v=$(PKG_VERSION)` (or `PKG_SRC_VERSION`). `uhttpd` does not add this query
+string; it only separates the query from the filesystem path and serves the
+static file with validators such as `ETag` and `Last-Modified`. Verify the
+installed package output or live page HTML before claiming an asset is
+unversioned. A version query also is not a cache policy by itself: if
+`uhttpd` still omits long-lived `Cache-Control`, repeat navigations can still
+revalidate with 304s.
 
 **Verify.** Repeat-visit Network waterfall shows ~0 asset requests (all
 served from disk/memory cache).

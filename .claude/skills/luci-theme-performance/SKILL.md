@@ -1,9 +1,9 @@
 ---
-name: luci-theme-performance
+name: aurora-performance
 description: Use when developing an OpenWrt LuCI theme — editing ucode (.ut) templates, adding or loading CSS/JS/font/image assets, writing CSS animations or menu/drawer interactions, reviewing a theme PR for performance, or measuring TTFB, transfer size, memory, or dropped frames on router-served pages.
 ---
 
-# LuCI Theme Performance
+# Aurora Theme Performance
 
 ## Overview
 

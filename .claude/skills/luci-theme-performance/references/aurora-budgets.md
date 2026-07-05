@@ -14,7 +14,7 @@ address, so they stay local).
 | main.css (gzip-transferred) | ≤ 30 KB | size | measured 2026-07 (28 KB) |
 | Per-page cold transfer (all theme assets, gzip) | ≤ 60 KB | size | sum of current gzip sizes + headroom |
 | Blocking requests before first paint | ≤ 4 | count | current waterfall |
-| Repeat-visit asset requests | ≈ 0 | count | target state (currently fails — see ledger: cache versioning) |
+| Repeat-visit asset requests | ≈ 0 | count | target state; package-built CSS/JS URLs are versioned, but long-lived cache headers still need live verification |
 | TTFB, login page (device) | proposed: ≤ 130 ms | latency | local device baseline, 2026-07 |
 | LCP @ 4× CPU + Slow 4G | TBD — fill from baseline | latency | local baseline archive |
 | INP @ 4× CPU | TBD — fill from baseline | latency | local baseline archive |
@@ -35,8 +35,21 @@ patches; `font-display: swap`)
 | Terser `compress`+`mangle` in `vite.config.ts` | L3 | ~20 KB → ~10 KB |
 | Inline `@font-face` + preload woff2 | L1 | −1 blocking RTT |
 | SVGO `logo.svg` | L3 | 45 KB → est. < 20 KB |
-| Cache-version `main.css`/`menu-aurora.js` | L2 | kills per-click 304s |
+| Long-lived cache headers for versioned CSS/JS | L2 | after LuCI build-time `?v=$(PKG_VERSION)`, kills per-click 304s if headers permit disk/memory cache reuse |
 | `defer` head scripts | L1 | needs on-device timing verification |
+
+### Notes
+
+- **LuCI build-time asset versioning** — Source templates may show
+  `{{ media }}/main.css`, `{{ media }}/login.css`, or
+  `{{ resource }}/menu-aurora.js` without a query string. When packaged
+  through LuCI's `luci.mk`, quoted `{{ media }}/... .css` and
+  `{{ resource }}/... .js` links are rewritten to append
+  `?v=$(PKG_VERSION)`; for aurora 1.0.7 this yields
+  `/luci-static/aurora/main.css?v=1.0.7` and
+  `/luci-static/aurora/login.css?v=1.0.7`. Do not re-propose manual
+  cache-versioning for these links unless inspecting the installed package
+  or live HTML proves the rewrite did not happen.
 
 ### Accepted exceptions
 
