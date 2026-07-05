@@ -10,8 +10,8 @@ Run from `.dev/`:
 
 ```bash
 cd .dev
-node ../.claude/skills/luci-theme-performance/scripts/bench.mjs
-BENCH_RUNS=20 node ../.claude/skills/luci-theme-performance/scripts/bench.mjs
+node ../.claude/skills/aurora-performance/scripts/bench.mjs
+BENCH_RUNS=20 node ../.claude/skills/aurora-performance/scripts/bench.mjs
 ```
 
 **Setup.** Reads `.dev/.env` for `VITE_OPENWRT_HOST` (default
@@ -67,9 +67,9 @@ For any change that touches server or loading plane performance:
 
 ```bash
 git checkout <base-branch>
-cd .dev && pnpm build && node ../.claude/skills/luci-theme-performance/scripts/bench.mjs > /tmp/bench-base.md
+cd .dev && pnpm build && node ../.claude/skills/aurora-performance/scripts/bench.mjs > /tmp/bench-base.md
 git checkout <working-branch>
-cd .dev && pnpm build && node ../.claude/skills/luci-theme-performance/scripts/bench.mjs > /tmp/bench-branch.md
+cd .dev && pnpm build && node ../.claude/skills/aurora-performance/scripts/bench.mjs > /tmp/bench-branch.md
 ```
 
 Put the two Markdown tables side by side in the PR. For a runtime-plane

@@ -12,8 +12,8 @@
  * directory (.dev/.env), not this script's own path, so the harness keeps
  * working if the skill is later moved or packaged as a plugin.
  *
- * Usage:  node ../.claude/skills/luci-theme-performance/scripts/bench.mjs
- *         BENCH_RUNS=20 node ../.claude/skills/luci-theme-performance/scripts/bench.mjs
+ * Usage:  node ../.claude/skills/aurora-performance/scripts/bench.mjs
+ *         BENCH_RUNS=20 node ../.claude/skills/aurora-performance/scripts/bench.mjs
  */
 
 import { execFile } from "node:child_process";

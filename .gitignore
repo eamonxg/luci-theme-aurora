@@ -16,4 +16,4 @@ docs/superpowers/
 .worktrees/
 
 # On-device perf baselines — record device model and LAN address; keep local
-/.claude/skills/luci-theme-performance/baselines/
+/.claude/skills/aurora-performance/baselines/
