@@ -11,5 +11,9 @@ yarn.lock
 
 # Superpowers AI workflow docs
 docs/superpowers/
+.dev/docs/superpowers/
 .superpowers/
 .worktrees/
+
+# On-device perf baselines — record device model and LAN address; keep local
+/.claude/skills/aurora-performance/baselines/
