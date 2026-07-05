@@ -4,7 +4,7 @@ export const DEFAULTS = {
     bg: "oklch(0.967 0.003 264)",
     surface: "oklch(1 0 0)",
     text: "oklch(0.21 0.02 264)",
-    brand: "oklch(0.68 0.11 233)",
+    brand: "oklch(0.58 0.14 233)",
     on_brand: "oklch(1 0 0)",
     link: "oklch(0.74 0.238 322.16)",
     info: "oklch(0.45 0.12 255)",

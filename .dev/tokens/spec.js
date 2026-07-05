@@ -4,9 +4,9 @@ export const DERIVATIONS = {
   light: {
     text_muted: ["mix", "text", "bg", 0.62],
     text_subtle: ["mix", "text", "bg", 0.48],
-    surface_sunken: ["shade", "bg", -0.010],
+    surface_sunken: ["shade", "bg", -0.012],
     surface_overlay: ["shade", "bg", 0.016],
-    hairline: ["alpha", "text", 0.08],
+    hairline: ["alpha", "text", 0.13],
     hover_faint: ["shade", "bg", -0.04],
     brand_hover: ["shade", "brand", -0.06],
     brand_subtle: ["mix", "brand", "bg", 0.12],
