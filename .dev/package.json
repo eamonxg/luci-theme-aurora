@@ -4,6 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
+		"setup": "node scripts/setup.js",
 		"build": "npm run clean && npm run gen:tokens && vite build",
 		"clean": "node scripts/clean.js",
 		"gen:tokens": "node scripts/gen-tokens.js",

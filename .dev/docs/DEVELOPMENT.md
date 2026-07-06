@@ -28,18 +28,16 @@ pnpm install
 ### 2. Configure Environment
 
 ```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env and set your OpenWrt device address
-# VITE_OPENWRT_HOST=http://192.168.1.1
+# One-shot wizard: asks for the router IP, generates/installs an SSH key
+# (one router-password prompt), and writes .env
+pnpm setup
 ```
 
-**Environment Variables:**
+If the router is at the default `192.168.1.1` and passwordless SSH already works, no `.env` is needed at all — every value below has a working default.
 
-- `VITE_OPENWRT_HOST` - Your OpenWrt LuCI web interface URL (required)
-- `VITE_OPENWRT_SSH_HOST` - SSH target for `.ut` template sync, e.g. `root@192.168.1.1` (optional)
-- `VITE_OPENWRT_SSH_KEY` - Path to SSH private key (optional, falls back to ssh-agent or `~/.ssh/config`)
+**Environment Variables** (all optional):
+
+- `VITE_OPENWRT_HOST` - bare router address, e.g. `192.168.1.1` (default; `host:port` and full-URL forms also accepted). The web proxy target and the `.ut`-sync SSH target (`root@<hostname>`) both derive from it; anything fancier (a dedicated key, a jump host, a non-standard ssh port) belongs in a `Host` block in `~/.ssh/config`, which ssh picks up automatically.
 - `VITE_DEV_HOST` - Development server host (code default: `127.0.0.1`, `.env.example` sets `0.0.0.0` for LAN access)
 - `VITE_DEV_PORT` - Development server port (default: `5173`)
 
@@ -184,46 +182,23 @@ For LuCI-specific JavaScript development, refer to the official API documentatio
 
 - **CSS changes**: Trigger full page reload via custom HMR handler
 - **JS changes**: Trigger full page reload via custom HMR handler
-- **Template changes** (`.ut` files): Auto-synced to router via SCP and trigger full page reload (requires SSH setup, see below)
+- **Template changes** (`.ut` files): Auto-synced to router over SSH and trigger full page reload (one-time `pnpm setup` required, see below)
 
 ### Template (`.ut`) Live Sync
 
-The `.ut` template files are rendered server-side on the OpenWrt device. To see template changes during development, the dev server can automatically sync modified `.ut` files to the router via SCP.
+The `.ut` template files are rendered server-side on the OpenWrt device, so unlike CSS/JS they can't be served locally — the dev server pushes them to the router instead. Run `pnpm setup` once to configure passwordless SSH; after that it's fully automatic:
 
-**1. Set up SSH key authentication to your router:**
+- **On startup**, the whole template directory is pushed (as one tarball over ssh stdin — Dropbear has no SFTP server for scp), so edits made while the dev server was down never leave the router stale.
+- **On save**, changes are debounced and the directory is pushed again, then the browser reloads.
+- **On page load**, requests to `/cgi-bin` wait for any in-flight push, so a proxied render never uses a stale template.
 
-```bash
-# Generate a key if you don't have one
-ssh-keygen -t ed25519
-
-# Copy your public key to the router (OpenWrt uses Dropbear, not OpenSSH)
-cat ~/.ssh/id_ed25519.pub | ssh root@192.168.1.1 "cat >> /etc/dropbear/authorized_keys"
-
-# Verify passwordless login works
-ssh root@192.168.1.1 "echo ok"
-```
-
-**2. Add SSH config to `.env`:**
-
-```bash
-# SSH target for .ut file sync (user@host)
-VITE_OPENWRT_SSH_HOST=root@192.168.1.1
-
-# Optional: path to SSH private key (falls back to ssh-agent or ~/.ssh/config)
-# VITE_OPENWRT_SSH_KEY=~/.ssh/id_ed25519
-```
-
-**3. Start `pnpm dev` and edit any `.ut` file** — the dev server will automatically sync it to the router and reload the browser.
-
-**Troubleshooting:**
-
-The dev server checks SSH connectivity on startup and prints actionable errors:
+**Troubleshooting** — sync errors are printed with the fix:
 
 - **Host key mismatch** (device was reflashed): Run `ssh-keygen -R <device-ip>`, then restart the dev server
-- **Authentication failed** (public key not on device): Copy your key with the command above
+- **Authentication failed** (public key not on device): Run `pnpm setup`
 - **Connection refused/timed out**: Check that the device is online and SSH is enabled
 
-If `VITE_OPENWRT_SSH_HOST` is not set, template sync is simply disabled and other dev features work normally.
+A failed sync is retried on the next `.ut` change; CSS/JS dev features work normally without SSH.
 
 ## Building for Production
 
