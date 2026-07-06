@@ -94,7 +94,7 @@ Third-party compatibility patches are **not** bundled into `main.css` — they a
 
 **Adding new styles:**
 
-- New UI component → create `components/_<name>.css` and add an `@import` line to `main.css`. Each file is its own organizational unit — no `@layer` wrappers needed (any that remain are stripped by PostCSS).
+- New UI component → create `components/_<name>.css` and add an `@import` line to `main.css`. Each file is its own organizational unit — don't add `@layer` wrappers: theme partials stay unlayered, so they outrank Tailwind's layered base/utilities regardless of specificity.
 - Compatibility fix for a third-party LuCI app/page → add a new file under `media/patches/` (see below).
 
 All rules use `@apply` with Tailwind utilities and CSS Nesting — no raw CSS properties.
@@ -252,10 +252,9 @@ htdocs/luci-static/
 **Build Process:**
 
 1. `pnpm gen:tokens` regenerates `src/media/_tokens.css` from `tokens/` (see [Design Tokens](#design-tokens))
-2. Vite builds the CSS entry points (`src/media/main.css` and `src/media/login.css`)
-3. Custom PostCSS plugin removes `@layer` at-rules for OpenWrt compatibility
-4. Custom Vite plugin (`luci-js-compress`) minifies JS files via Terser
-5. Static assets copied from `.dev/public/aurora/`
+2. Vite builds the CSS entry points (`src/media/main.css` and `src/media/login.css`), keeping Tailwind's native `@layer` structure
+3. Custom Vite plugin (`luci-js-compress`) minifies JS files via Terser
+4. Static assets copied from `.dev/public/aurora/`
 
 ## Package Compilation
 

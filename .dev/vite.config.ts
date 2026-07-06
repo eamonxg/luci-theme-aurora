@@ -405,22 +405,6 @@ export default defineConfig(({ mode }) => {
           browserslist("last 4 versions, Firefox ESR, not dead"),
         ),
       },
-      postcss: {
-        plugins: [
-          {
-            postcssPlugin: "remove-layers",
-            Once(root) {
-              function removeLayers(node: any) {
-                node.walkAtRules("layer", (rule: any) => {
-                  removeLayers(rule);
-                  rule.replaceWith(rule.nodes);
-                });
-              }
-              removeLayers(root);
-            },
-          },
-        ],
-      },
     },
 
     build: {

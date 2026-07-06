@@ -18,118 +18,116 @@
   }
 }
 
-@layer login {
-  .login-screen {
-    @apply relative flex min-h-dvh flex-col items-center justify-center px-5 pb-14;
+.login-screen {
+  @apply relative flex min-h-dvh flex-col items-center justify-center px-5 pb-14;
+}
+
+.login-shell {
+  @apply w-full max-w-md;
+}
+
+/* Fixed sibling layer (not form ancestor) on its own GPU surface so input
+   paints don't re-sample the bg image. DOM order keeps the form on top. */
+/* LQIP shown immediately; falls back to full image when no LQIP stored */
+.login-bg {
+  @apply pointer-events-none fixed inset-0 transform-[translateZ(0)] bg-cover bg-center bg-no-repeat [background-image:var(--login-bg-lqip,var(--login-bg))];
+}
+
+/* Full image fades in on top once loaded (compositor-only opacity change) */
+.login-bg::after {
+  @apply pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat opacity-0 [will-change:opacity] content-[''] [transition:opacity_0.5s_ease] [background-image:var(--login-bg)];
+}
+
+.login-bg.full-loaded::after {
+  @apply opacity-100;
+}
+
+.login-card {
+  @apply bg-surface flex flex-col gap-7 rounded-4xl p-14 shadow-lg max-md:rounded-3xl max-md:p-9;
+}
+
+.login-brand {
+  @apply flex items-center gap-3.5;
+}
+
+.login-divider {
+  @apply via-hairline h-px w-full animate-[divider-in_0.7s_cubic-bezier(0.16,1,0.3,1)_0.1s_both] border-0 bg-linear-to-r from-transparent to-transparent;
+}
+
+.login-logo {
+  @apply bg-brand-subtle ring-brand-subtle flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1;
+
+  & img {
+    @apply h-6 w-6;
+  }
+}
+
+.login-title {
+  @apply flex flex-col gap-1;
+}
+
+.login-hostname {
+  @apply text-text text-xl font-semibold tracking-tight;
+}
+
+.login-subtitle {
+  @apply text-text text-sm;
+}
+
+.login-form {
+  @apply flex flex-col gap-5;
+}
+
+.login-fields {
+  @apply flex flex-col gap-4;
+}
+
+.login-field {
+  @apply flex flex-col gap-2;
+}
+
+.login-label {
+  @apply text-text text-xs font-semibold tracking-widest uppercase;
+}
+
+.input-wrap {
+  @apply border-hairline bg-surface-overlay dark:bg-surface-sunken relative rounded-2xl border [contain:layout_style];
+}
+
+/* Focus ring: opacity-only transition runs on compositor thread, not main thread —
+   border-color changes require a repaint (~400 ms INP); opacity changes do not. */
+.input-wrap::after {
+  @apply border-brand pointer-events-none absolute -inset-px rounded-[calc(var(--radius-2xl)+1px)] border-2 opacity-0 [will-change:opacity] content-[''] [transition:opacity_150ms_ease];
+}
+
+.input-wrap:focus-within::after {
+  @apply opacity-100;
+}
+
+.login-input {
+  @apply text-text placeholder:text-text-subtle w-full appearance-none rounded-2xl border-0 bg-transparent px-3 py-2.5 text-base outline-none;
+}
+
+.login-error {
+  @apply bg-danger-surface text-danger border-hairline rounded-2xl border px-3 py-2 text-center text-sm;
+}
+
+.login-actions {
+  @apply pt-4;
+}
+
+.login-submit {
+  @apply bg-brand text-on-brand w-full cursor-pointer rounded-2xl border-0 py-2.5 text-base font-medium hover:opacity-90 active:opacity-80;
+}
+
+.login-footer {
+  @apply text-text-muted absolute right-0 bottom-5 left-0 px-5 text-center text-xs;
+
+  & p {
+    @apply whitespace-normal;
   }
 
-  .login-shell {
-    @apply w-full max-w-md;
-  }
-
-  /* Fixed sibling layer (not form ancestor) on its own GPU surface so input
-     paints don't re-sample the bg image. DOM order keeps the form on top. */
-  /* LQIP shown immediately; falls back to full image when no LQIP stored */
-  .login-bg {
-    @apply pointer-events-none fixed inset-0 transform-[translateZ(0)] bg-cover bg-center bg-no-repeat [background-image:var(--login-bg-lqip,var(--login-bg))];
-  }
-
-  /* Full image fades in on top once loaded (compositor-only opacity change) */
-  .login-bg::after {
-    @apply pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat opacity-0 [will-change:opacity] content-[''] [transition:opacity_0.5s_ease] [background-image:var(--login-bg)];
-  }
-
-  .login-bg.full-loaded::after {
-    @apply opacity-100;
-  }
-
-  .login-card {
-    @apply bg-surface flex flex-col gap-7 rounded-4xl p-14 shadow-lg max-md:rounded-3xl max-md:p-9;
-  }
-
-  .login-brand {
-    @apply flex items-center gap-3.5;
-  }
-
-  .login-divider {
-    @apply via-hairline h-px w-full animate-[divider-in_0.7s_cubic-bezier(0.16,1,0.3,1)_0.1s_both] border-0 bg-linear-to-r from-transparent to-transparent;
-  }
-
-  .login-logo {
-    @apply bg-brand-subtle ring-brand-subtle flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1;
-
-    & img {
-      @apply h-6 w-6;
-    }
-  }
-
-  .login-title {
-    @apply flex flex-col gap-1;
-  }
-
-  .login-hostname {
-    @apply text-text text-xl font-semibold tracking-tight;
-  }
-
-  .login-subtitle {
-    @apply text-text text-sm;
-  }
-
-  .login-form {
-    @apply flex flex-col gap-5;
-  }
-
-  .login-fields {
-    @apply flex flex-col gap-4;
-  }
-
-  .login-field {
-    @apply flex flex-col gap-2;
-  }
-
-  .login-label {
-    @apply text-text text-xs font-semibold tracking-widest uppercase;
-  }
-
-  .input-wrap {
-    @apply border-hairline bg-surface-overlay dark:bg-surface-sunken relative rounded-2xl border [contain:layout_style];
-  }
-
-  /* Focus ring: opacity-only transition runs on compositor thread, not main thread —
-     border-color changes require a repaint (~400 ms INP); opacity changes do not. */
-  .input-wrap::after {
-    @apply border-brand pointer-events-none absolute -inset-px rounded-[calc(var(--radius-2xl)+1px)] border-2 opacity-0 [will-change:opacity] content-[''] [transition:opacity_150ms_ease];
-  }
-
-  .input-wrap:focus-within::after {
-    @apply opacity-100;
-  }
-
-  .login-input {
-    @apply text-text placeholder:text-text-subtle w-full appearance-none rounded-2xl border-0 bg-transparent px-3 py-2.5 text-base outline-none;
-  }
-
-  .login-error {
-    @apply bg-danger-surface text-danger border-hairline rounded-2xl border px-3 py-2 text-center text-sm;
-  }
-
-  .login-actions {
-    @apply pt-4;
-  }
-
-  .login-submit {
-    @apply bg-brand text-on-brand w-full cursor-pointer rounded-2xl border-0 py-2.5 text-base font-medium hover:opacity-90 active:opacity-80;
-  }
-
-  .login-footer {
-    @apply text-text-muted absolute right-0 bottom-5 left-0 px-5 text-center text-xs;
-
-    & p {
-      @apply whitespace-normal;
-    }
-
-    & a {
-      @apply text-brand hover:underline;
-    }
+  & a {
+    @apply text-brand hover:underline;
   }
 }
