@@ -208,7 +208,7 @@
 						<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 							<line class="navigation-toggle-line navigation-toggle-line-top" x1="2.5" y1="5" x2="17.5" y2="5"/>
 							<line class="navigation-toggle-line navigation-toggle-line-middle" x1="2.5" y1="10" x2="17.5" y2="10"/>
-							<line class="navigation-toggle-line navigation-toggle-line-bottom" x1="2.5" y1="15" x2="10" y2="15"/>
+							<line class="navigation-toggle-line navigation-toggle-line-bottom" x1="2.5" y1="15" x2="17.5" y2="15"/>
 						</svg>
 					</button>
 				</div>
@@ -261,6 +261,10 @@
 		{% if (nav_type == 'sidebar'): %}
 		<aside class="sidebar-panel" id="sidebar-panel" aria-label="{{ _('Navigation') }}">
 			<nav class="sidebar-panel-inner">
+				<div class="sidebar-head">
+					<img class="sidebar-logo" src="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" alt="" aria-hidden="true">
+					<a class="sidebar-brand" href="/">{{ hostname }}</a>
+				</div>
 				<ul class="sidebar-list" id="sidebar-list"></ul>
 				<div class="sidebar-footer" id="sidebar-footer"></div>
 			</nav>

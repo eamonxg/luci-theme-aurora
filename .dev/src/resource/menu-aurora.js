@@ -469,7 +469,10 @@ return baseclass.extend({
     items.forEach((item) => {
       if (item.isActiveGroup || item.isActivePage) {
         crumb.push(item.title);
-        if (item.activePage) crumb.push(item.activePage.title);
+        // Same-named group/page pairs ("System › System") collapse to one
+        // level — the duplicate adds no information.
+        if (item.activePage && item.activePage.title !== item.title)
+          crumb.push(item.activePage.title);
       }
 
       if (item.isLogout) {
@@ -485,7 +488,7 @@ return baseclass.extend({
     this.bindNavigationAccordion(list);
 
     crumb.forEach((title, i) => {
-      if (i) crumbEl?.appendChild(E("li", { class: "crumb-sep" }, ["/"]));
+      if (i) crumbEl?.appendChild(E("li", { class: "crumb-sep" }, ["›"]));
       crumbEl?.appendChild(
         E("li", { class: i === crumb.length - 1 ? "current" : "" }, [title]),
       );

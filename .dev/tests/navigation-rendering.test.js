@@ -729,11 +729,45 @@ test("renders sidebar items, logout, and translated crumbs without duplication",
   assert.equal(crumb.children.length, 3);
   assert.deepEqual(
     crumb.children.map((child) => textContent(child)),
-    ["translated:Network", "/", "translated:Wireless"],
+    ["translated:Network", "›", "translated:Wireless"],
   );
   assert.equal(crumb.children[2].getAttribute("class"), "current");
   assert.equal(list.dataset.accordionBound, "true");
   assert.equal(list.listenerCount("click"), 1);
+});
+
+test("collapses same-named group/page crumbs to a single level", () => {
+  const crumb = new FakeElement("ol", {}, [new FakeElement("li")]);
+  const document = createFakeDocument({
+    elements: {
+      "#header-crumb": crumb,
+      "#sidebar-list": new FakeElement("ul"),
+    },
+    navType: "sidebar",
+  });
+  const menu = loadMenuModule({
+    dispatchpath: ["admin", "system", "system"],
+    document,
+    translate: (value) => `translated:${value}`,
+  });
+  const tree = {
+    children: {
+      system: {
+        title: "System",
+        children: {
+          system: { title: "System" },
+        },
+      },
+    },
+  };
+
+  menu.renderSidebar(menu.buildNavigationModel(getMenuChildren(tree), "admin"));
+
+  assert.deepEqual(
+    crumb.children.map((child) => textContent(child)),
+    ["translated:System"],
+  );
+  assert.equal(crumb.children[0].getAttribute("class"), "current");
 });
 
 test("renders an active group expanded when an open mobile list was initially empty", () => {

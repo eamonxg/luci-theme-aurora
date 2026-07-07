@@ -8,7 +8,10 @@
  */
 
 .nav-link {
-  @apply text-text hover:bg-hover-faint block rounded-xl px-3 py-1.5 no-underline transition-all duration-150;
+  /* hover:no-underline: the global `a:hover { underline }` in _elements.css
+     outranks a bare class (a:hover is 0,1,1), so nav rows must opt out at
+     the same specificity tier. */
+  @apply text-text hover:bg-hover-faint block rounded-xl px-3 py-1.5 no-underline transition-all duration-150 hover:no-underline;
 }
 
 .navigation-direct {

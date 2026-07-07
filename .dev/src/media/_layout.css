@@ -193,6 +193,14 @@ header {
 
   .brand {
     @apply hover:text-brand text-text inline-block shrink-0 text-xl font-semibold tracking-tight no-underline transition-[color,transform] duration-150 hover:-translate-y-0.5 max-md:flex-1 max-md:text-lg;
+
+    [data-nav-type="sidebar"] & {
+      @apply md:hidden;
+    }
+
+    [data-nav-type="sidebar"].sidebar-collapsed & {
+      @apply md:inline-block md:transition-opacity md:duration-150 md:starting:opacity-0;
+    }
   }
 
   .nav {
@@ -255,6 +263,14 @@ header {
       @apply md:flex;
     }
 
+    /* D1 底线呼吸：展开态沿用短底线汉堡；折叠后底线伸满（三线齐整 =
+       侧栏收纳完毕）。dasharray 只改可见长度，线帽形状不受影响。 */
+    [data-nav-type="sidebar"].sidebar-collapsed
+      &
+      .navigation-toggle-line-bottom {
+      @apply md:[stroke-dasharray:15_15];
+    }
+
     & .navigation-toggle {
       @apply cursor-pointer rounded-none border-0 bg-transparent p-0 shadow-none transition-transform duration-150 hover:scale-105 active:scale-95;
 
@@ -264,7 +280,15 @@ header {
 
       & .navigation-toggle-line {
         transform-box: fill-box;
-        @apply origin-center transition-[transform,opacity] duration-150 ease-in-out;
+        @apply origin-center transition-[transform,opacity,stroke-dasharray] duration-150 ease-in-out;
+      }
+
+      /* Tabler menu-2 geometry: all three lines are full-length equals.
+         The signature short bottom line is a stroke-dasharray crop, not a
+         shorter segment or a scaleX — scaling distorts the round caps and
+         makes the "equal" collapsed state read as uneven lengths. */
+      & .navigation-toggle-line-bottom {
+        @apply [stroke-dasharray:7.5_15];
       }
 
       &.is-expanded {
@@ -278,7 +302,8 @@ header {
         }
 
         & .navigation-toggle-line-bottom {
-          transform: translate(3.75px, -5px) rotate(-45deg) scaleX(2);
+          transform: translateY(-5px) rotate(-45deg);
+          @apply [stroke-dasharray:15_15];
         }
       }
     }
@@ -316,8 +341,10 @@ header {
 }
 
 body[data-nav-type="sidebar"] {
-  /* Desktop header + sidebar form one flush, L-shaped application frame: a
-     full-width header on top, a sidebar pinned to the left edge below it.
+  /* T4 shell: the sidebar is a full-height first column (brand → menu →
+     logout in one run), and the header spans only the content column — so
+     the sidebar's right border runs viewport top to bottom and the header
+     reads as the content area's toolbar, not a page-wide bar.
      A CSS grid (not flex-wrap) keeps the header row at its natural height —
      so collapsing the sidebar never stretches it — lets the sidebar column
      animate to zero, and lets #maincontent fluidly reclaim the freed space.
@@ -329,11 +356,11 @@ body[data-nav-type="sidebar"] {
   }
 
   & > header {
-    @apply md:border-hairline md:col-span-full md:row-start-1 md:mb-0 md:border-b;
+    @apply md:border-hairline md:col-start-2 md:row-start-1 md:mb-0 md:border-b;
   }
 
   & > .sidebar-panel {
-    @apply md:col-start-1 md:row-start-2;
+    @apply md:col-start-1 md:row-span-2 md:row-start-1;
   }
 
   & > #maincontent {
@@ -341,7 +368,10 @@ body[data-nav-type="sidebar"] {
   }
 
   & .header-crumb {
-    @apply text-text-muted my-0 mr-auto ml-6 hidden min-w-0 list-none items-center gap-2 overflow-hidden p-0 text-sm md:flex;
+    /* Expanded: the crumb is the header's leftmost element (brand lives in
+       the sidebar head), so it sits on the header's own padding. Collapsed:
+       burger + brand reappear before it and it takes back its old offset. */
+    @apply text-text-muted my-0 mr-auto ml-0 hidden min-w-0 list-none items-center gap-2 overflow-hidden p-0 text-sm md:flex;
 
     & li {
       @apply m-0 list-none whitespace-nowrap;
@@ -356,8 +386,12 @@ body[data-nav-type="sidebar"] {
     }
   }
 
+  &.sidebar-collapsed .header-crumb {
+    @apply md:ml-6;
+  }
+
   & .sidebar-panel {
-    @apply border-hairline sticky top-14 hidden h-[calc(100vh-3.5rem)] w-full overflow-hidden rounded-none border-r transition-[visibility] duration-[250ms] md:block;
+    @apply border-hairline sticky top-0 hidden h-dvh w-full overflow-hidden rounded-none border-r transition-[visibility] duration-[250ms] md:block;
   }
 
   /* Visibility flips at the end of the slide so collapsed controls leave the
@@ -372,6 +406,21 @@ body[data-nav-type="sidebar"] {
 
   &.sidebar-collapsed .sidebar-panel-inner {
     @apply -translate-x-full opacity-0;
+  }
+
+  /* Sidebar head: logo + hostname. h-14 matches the header row so its
+     bottom hairline continues the header's border in one unbroken line
+     across the viewport. */
+  & .sidebar-head {
+    @apply border-hairline flex h-14 shrink-0 items-center gap-2.5 border-b px-4;
+
+    & .sidebar-logo {
+      @apply size-5 shrink-0 rounded-md;
+    }
+
+    & .sidebar-brand {
+      @apply text-text hover:text-brand min-w-0 flex-1 truncate text-lg font-semibold tracking-tight no-underline transition-colors duration-150;
+    }
   }
 
   & .sidebar-list {
@@ -397,10 +446,11 @@ body[data-nav-type="sidebar"] {
   & .sidebar-footer {
     @apply border-hairline shrink-0 border-t p-3;
 
-    /* Logout: muted at rest; on hover the base .nav-link pill background
-       plus error-colored text is the intended compound state (matches v1). */
+    /* Logout: muted at rest, standard row treatment on hover — same
+       vocabulary as every other sidebar row (the v1 danger-red hover read
+       as unrelated to the rest of the menu). */
     & .nav-link {
-      @apply text-text-muted hover:text-danger;
+      @apply text-text-muted hover:text-text;
     }
   }
 }
