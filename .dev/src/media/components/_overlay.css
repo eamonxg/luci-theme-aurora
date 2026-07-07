@@ -1,8 +1,11 @@
 .mobile-menu-overlay {
-  @apply max-md:bg-mega-menu-bg max-md:invisible max-md:fixed max-md:inset-0 max-md:z-60 max-md:opacity-0 max-md:backdrop-blur-lg max-md:backdrop-saturate-150 max-md:transition-[visibility,opacity] max-md:duration-[250ms] md:hidden;
+  @apply max-md:bg-mega-menu-bg max-md:invisible max-md:fixed max-md:inset-0 max-md:z-60 max-md:opacity-0 max-md:backdrop-blur-lg max-md:backdrop-saturate-150 md:hidden;
 
+  /* Transitions live on the OPEN state only: opening fades in, closing cuts
+     instantly. Link taps close into a full-page navigation, and any close
+     fade racing the document swap freezes mid-frame as a ghost. */
   &.mobile-menu-open {
-    @apply max-md:visible max-md:opacity-100;
+    @apply max-md:visible max-md:opacity-100 max-md:transition-[visibility,opacity] max-md:duration-[250ms];
   }
 
   .mobile-nav {
@@ -17,7 +20,7 @@
     }
 
     & .mobile-nav-list {
-      @apply max-md:m-0 max-md:flex max-md:min-h-0 max-md:flex-1 max-md:-translate-y-2 max-md:list-none max-md:flex-col max-md:overflow-y-auto max-md:overscroll-contain max-md:p-0 max-md:pb-5 max-md:opacity-0 max-md:transition-[translate,opacity] max-md:duration-[250ms] max-md:ease-out;
+      @apply max-md:m-0 max-md:flex max-md:min-h-0 max-md:flex-1 max-md:-translate-y-2 max-md:list-none max-md:flex-col max-md:overflow-y-auto max-md:overscroll-contain max-md:p-0 max-md:pb-5 max-md:opacity-0;
 
       & .mobile-nav-item {
         @apply max-md:shrink-0;
@@ -60,7 +63,7 @@
   }
 
   &.mobile-menu-open .mobile-nav-list {
-    @apply max-md:translate-y-0 max-md:opacity-100;
+    @apply max-md:translate-y-0 max-md:opacity-100 max-md:transition-[translate,opacity] max-md:duration-[250ms] max-md:ease-out;
   }
 }
 
