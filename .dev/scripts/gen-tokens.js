@@ -1,7 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { resolveMode } from "../tokens/resolve.js";
-import { FIXED } from "../tokens/spec.js";
+import { resolveMode, FIXED } from "@eamonxg/aurora-tokens";
 
 const kebab = (s) => s.replace(/_/g, "-");
 
@@ -56,7 +55,7 @@ ${Object.keys(light)
 
 const HEADER = `/**
  * luci-theme-aurora: design tokens -- GENERATED, DO NOT EDIT.
- * Run \`pnpm gen:tokens\`. Source: tokens/spec.js + tokens/defaults.js
+ * Run \`pnpm gen:tokens\`. Source: @eamonxg/aurora-tokens (spec.js + defaults.js)
  * All color values are flat; lightningcss adds legacy fallbacks.
  * ORDER MATTERS: [data-darkmode="true"] must stay after :root.
  */

@@ -157,16 +157,16 @@ Two rules of thumb that follow from prefix matching:
 
 ### Design Tokens
 
-`src/media/_tokens.css` is **generated** — its header says "DO NOT EDIT". The source of truth is `.dev/tokens/`:
+`src/media/_tokens.css` is **generated** — its header says "DO NOT EDIT". The source of truth is the standalone [`@eamonxg/aurora-tokens`](https://github.com/eamonxg/aurora-tokens) npm package, consumed here as a devDependency:
 
 - **`defaults.js`** — the 10 editable input colors (`bg`, `surface`, `text`, `brand`, `on_brand`, `link`, `info`, `warning`, `success`, `danger`) for light and dark mode, as OKLCH strings.
 - **`spec.js`** — `DERIVATIONS` (how every other token — `text_muted`, `surface_sunken`, `hairline`, `brand_hover`, `brand_subtle`, `focus_ring`, `progress_start`/`progress_end`, `*_surface`, `scrim`, `mega_menu_bg`, …) is computed from the inputs via `mix`/`shade`/`set`/`alpha`/`const` operators, and `FIXED` (mode-specific literals such as shadows that bypass derivation).
 - **`engine.js`** — the OKLCH/OKLAB color math behind those operators, via [colorjs.io](https://colorjs.io/).
-- **`resolve.js`** — `resolveMode(mode)` walks `DERIVATIONS` and returns a flat `{token: oklchString}` map with no `color-mix()`/`var()` left in it.
+- **`resolve.js`** — `resolveMode(mode)` walks `DERIVATIONS` and returns a flat `{token: oklchString}` map with no `color-mix()`/`var()` left in it. `.dev/scripts/gen-tokens.js` imports `resolveMode`/`FIXED` straight from the package root.
 
 **Changing a color:**
 
-1. Edit `tokens/defaults.js` (base input colors) and/or `tokens/spec.js` (derivation rules, fixed literals).
+1. Edit `spec.js`/`defaults.js` in the [`aurora-tokens`](https://github.com/eamonxg/aurora-tokens) repo (derivation rules, fixed literals, base input colors), tag a release so CI publishes the package, then bump the `@eamonxg/aurora-tokens` devDependency version here and run `npm install`. For unreleased iteration against a local checkout, run `npm link ../../aurora-tokens` from `.dev` instead of bumping/publishing.
 2. Run `pnpm gen:tokens` (also runs automatically as part of `pnpm build`) to rewrite `src/media/_tokens.css` — it emits `:root` (light) and `[data-darkmode="true"]` (dark) blocks plus the `@theme inline` mapping, in that order.
 3. Run `pnpm test` to check the color-math operators and derived-token invariants (`tests/engine.test.js`, `tests/resolve.test.js`, `tests/surfaces.test.js`) — e.g. hue families, lightness ordering between `bg`/`surface_sunken`/`surface`, and translucency of menu backgrounds.
 
@@ -226,7 +226,7 @@ htdocs/luci-static/
 
 **Build Process:**
 
-1. `pnpm gen:tokens` regenerates `src/media/_tokens.css` from `tokens/` (see [Design Tokens](#design-tokens))
+1. `pnpm gen:tokens` regenerates `src/media/_tokens.css` from `@eamonxg/aurora-tokens` (see [Design Tokens](#design-tokens))
 2. Vite builds the CSS entry points (`src/media/main.css` and `src/media/login.css`), keeping Tailwind's native `@layer` structure
 3. Custom Vite plugin (`luci-js-compress`) minifies JS files via Terser
 4. Static assets copied from `.dev/public/aurora/`
@@ -272,13 +272,13 @@ luci-theme-aurora/
 │   │   └── images/                 # Theme images + PWA icons
 │   ├── scripts/                    # Build scripts
 │   │   ├── clean.js                # Build cleanup utility
-│   │   └── gen-tokens.js           # Regenerates src/media/_tokens.css from tokens/
+│   │   └── gen-tokens.js           # Regenerates src/media/_tokens.css from @eamonxg/aurora-tokens
 │   ├── src/                        # Source code
 │   │   ├── assets/icons/           # SVG icons
 │   │   ├── media/                  # CSS source (Tailwind CSS v4)
 │   │   │   ├── main.css            # Admin UI entry point (import manifest)
 │   │   │   ├── login.css           # Login page entry point
-│   │   │   ├── _tokens.css         # OKLCH theme tokens -- GENERATED, see tokens/
+│   │   │   ├── _tokens.css         # OKLCH theme tokens -- GENERATED, see @eamonxg/aurora-tokens
 │   │   │   ├── _base.css           # Document foundation (html/body viewport bg)
 │   │   │   ├── _elements.css       # Base element styles (headings, links, …)
 │   │   │   ├── _layout.css         # Page layout/structure
@@ -287,11 +287,6 @@ luci-theme-aurora/
 │   │   │   └── patches/            # Per-page third-party patches (on-demand, one file per data-page)
 │   │   └── resource/               # JavaScript resources
 │   │       └── menu-aurora.js      # Menu logic
-│   ├── tokens/                     # Design token source (-> src/media/_tokens.css)
-│   │   ├── defaults.js             # 10 editable input colors (light/dark)
-│   │   ├── spec.js                 # Derivation rules (DERIVATIONS) + fixed literals
-│   │   ├── engine.js               # OKLCH/OKLAB color math (mix/shade/set/alpha)
-│   │   └── resolve.js              # Resolves spec into a flat token map
 │   ├── tests/                      # All test suites (pnpm test)
 │   │   ├── engine.test.js          # Color-math operators
 │   │   ├── resolve.test.js         # Resolved token invariants
@@ -336,7 +331,7 @@ luci-theme-aurora/
 - **[Vite](https://vitejs.dev/)** - Build tool and development server
 - **[pnpm](https://pnpm.io/)** - Fast, disk space efficient package manager
 - **[lightningcss](https://lightningcss.dev/)** - CSS minifier
-- **[colorjs.io](https://colorjs.io/)** - OKLCH/OKLAB color math for design token generation (`.dev/tokens/`)
+- **[colorjs.io](https://colorjs.io/)** - OKLCH/OKLAB color math for design token generation (used by [`@eamonxg/aurora-tokens`](https://github.com/eamonxg/aurora-tokens))
 - **[Terser](https://terser.org/)** - JavaScript minifier
 - **[Prettier](https://prettier.io/)** - Code formatter
 - **[prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss)** - Tailwind class sorting

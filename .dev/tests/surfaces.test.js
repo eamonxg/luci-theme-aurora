@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import Color from "colorjs.io";
-import { resolveMode } from "../tokens/resolve.js";
+import { resolveMode } from "@eamonxg/aurora-tokens";
 
 // [L, C, H] in oklch; alpha separate.
 const lch = (s) => {

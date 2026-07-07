@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveMode } from "../tokens/resolve.js";
+import { resolveMode } from "@eamonxg/aurora-tokens";
 
 test("resolveMode(light) returns flat oklch for all tokens", () => {
   const out = resolveMode("light");

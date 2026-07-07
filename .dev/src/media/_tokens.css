@@ -1,6 +1,6 @@
 /**
  * luci-theme-aurora: design tokens -- GENERATED, DO NOT EDIT.
- * Run `pnpm gen:tokens`. Source: tokens/spec.js + tokens/defaults.js
+ * Run `pnpm gen:tokens`. Source: @eamonxg/aurora-tokens (spec.js + defaults.js)
  * All color values are flat; lightningcss adds legacy fallbacks.
  * ORDER MATTERS: [data-darkmode="true"] must stay after :root.
  */
