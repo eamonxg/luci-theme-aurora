@@ -158,7 +158,19 @@ table.table,
     }
 
     &.cbi-value-field {
-      @apply break-all;
+      /* Mobile cards (bootstrap-style): value fields stack one per row —
+         the row title and long match-rule cells get the full width — while
+         display-only widgets below pair up two per row. */
+      @apply break-all max-md:mb-1 max-md:basis-full max-md:self-start max-md:text-left;
+
+      &[data-widget="CBI.DummyValue"],
+      &[data-widget="CBI.Button"],
+      &[data-widget="CBI.FlagValue"],
+      &[data-widget="dvalue"],
+      &[data-widget="button"],
+      &[data-widget="fvalue"] {
+        @apply max-md:basis-1/2;
+      }
     }
 
     &.cbi-section-actions {

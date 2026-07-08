@@ -1,5 +1,11 @@
 .cbi-tooltip {
-  @apply bg-surface-overlay text-text border-hairline absolute z-110 max-w-xs scale-95 rounded-xl border px-3 py-2 text-xs break-normal whitespace-normal opacity-0 shadow-xl transition-[visibility,opacity,scale] duration-150 ease-out;
+  /* Hidden bubbles park off-screen (bootstrap's `left:-10000px` trick): a
+     visibility-hidden absolute box left at its anchor still counts into the
+     page's scrollable overflow, so the horizontal scrollbar would survive the
+     bubble's disappearance and the page could never snap back. `:hover`
+     returns it via `inset-s-auto`; the inset isn't transitioned, so the move
+     is instant while opacity/scale animate. */
+  @apply bg-surface-overlay text-text border-hairline absolute inset-s-[-10000px] z-110 w-max max-w-xs scale-95 rounded-xl border px-3 py-2 text-xs break-normal whitespace-normal opacity-0 shadow-xl transition-[visibility,opacity,scale] duration-150 ease-out;
   &.error {
     @apply border-hairline bg-danger-surface text-danger;
   }
@@ -23,6 +29,6 @@
   }
 
   &:hover .cbi-tooltip {
-    @apply visible scale-100 opacity-100;
+    @apply visible scale-100 opacity-100 inset-s-auto;
   }
 }
