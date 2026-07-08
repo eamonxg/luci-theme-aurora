@@ -6,7 +6,7 @@
   }
 
   &:not(.btn):not(.cbi-button) {
-    @apply border-hairline bg-surface rounded-2xl border;
+    @apply border-hairline bg-surface min-w-52.5 max-w-full rounded-2xl border md:max-w-100;
     & > ul > li {
       &[placeholder] {
         @apply hidden;
@@ -114,6 +114,10 @@
       & > .more {
         @apply flex flex-none shrink-0 px-2.5 py-1.5;
       }
+    }
+
+    &[empty] > .more {
+      @apply flex-1;
     }
 
     &[open] {

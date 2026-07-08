@@ -152,9 +152,16 @@ table.table,
 
     & > input[type="text"],
     & > input[type="password"],
-    & > select,
-    & > .cbi-dropdown:not(.btn):not(.cbi-button) {
+    & select,
+    & .cbi-dropdown:not(.btn):not(.cbi-button) {
       @apply w-full;
+    }
+
+    /* Widgets are nested (td > div > div > widget), so the fixed/min widths
+       from _select.css/_dropdown.css must yield to the column width here. */
+    & select,
+    & .cbi-dropdown:not(.btn):not(.cbi-button) {
+      @apply min-w-fit;
     }
 
     &.cbi-value-field {
