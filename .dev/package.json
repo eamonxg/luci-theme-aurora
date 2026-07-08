@@ -11,7 +11,7 @@
 		"test": "node --test tests/*.test.js"
 	},
 	"devDependencies": {
-		"@eamonxg/aurora-tokens": "^1.0.0",
+		"@eamonxg/aurora-tokens": "^1.0.1",
 		"@tailwindcss/vite": "^4.1.11",
 		"@types/node": "^24.0.0",
 		"browserslist": "^4.28.2",
