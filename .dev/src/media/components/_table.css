@@ -38,6 +38,13 @@ table.table,
     @apply max-md:border-hairline max-md:flex max-md:flex-wrap max-md:border-b max-md:px-2 max-md:py-2;
     @apply has-[.cbi-progressbar]:max-md:flex has-[.cbi-progressbar]:max-md:items-center has-[.cbi-progressbar]:max-md:justify-center;
 
+    &:first-child {
+      & th,
+      & .th {
+        @apply first:rounded-tl-2xl last:rounded-tr-2xl;
+      }
+    }
+
     &:last-child {
       @apply max-md:border-b-0;
       &[data-title] {
@@ -102,7 +109,7 @@ table.table,
 
   & th,
   & .th {
-    @apply border-hairline bg-surface-sunken text-text-subtle border-b px-3 py-3 text-left text-xs font-semibold tracking-wider uppercase first:rounded-tl-2xl last:rounded-tr-2xl max-md:flex-[1_1_50%] max-md:border-0 max-md:bg-transparent;
+    @apply border-hairline bg-surface-sunken text-text-subtle border-b px-3 py-3 text-left text-xs font-semibold tracking-wider uppercase max-md:flex-[1_1_50%] max-md:border-0 max-md:bg-transparent;
 
     #cbi-samba4 & {
       @apply px-0.5 py-1.5;

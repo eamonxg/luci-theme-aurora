@@ -187,6 +187,16 @@ test("tables get a hairline frame + sunken header, body stays unclipped", () => 
   assert.ok(!root.includes("overflow-hidden"), `body clipped: ${root}`);
   assert.ok(root.includes("overflow-visible"), `not overflow-visible: ${root}`);
   // Header carries the sunken surface.
-  const th = t.match(/&\s*th,\s*&\s*\.th\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
-  assert.ok(th.includes("bg-surface-sunken"), `header not sunken: ${th}`);
+  const thRules = [...t.matchAll(/&\s*th,\s*&\s*\.th\s*\{\s*@apply\s+([^;]+);/g)].map((m) => m[1]);
+  const th = thRules.find((rule) => rule.includes("bg-surface-sunken")) ?? "";
+  assert.ok(th, `header not sunken: ${thRules.join(" | ")}`);
+  // Top corners round only on the table's first row; a second header row
+  // (e.g. .cbi-section-table-descr) must stay square.
+  assert.ok(!th.includes("rounded-t"), `generic header cells carry corner radius: ${th}`);
+  const firstRow =
+    t.match(/&:first-child\s*\{\s*&\s*th,\s*&\s*\.th\s*\{\s*@apply\s+([^;]+);/)?.[1] ?? "";
+  assert.ok(
+    firstRow.includes("first:rounded-tl-2xl") && firstRow.includes("last:rounded-tr-2xl"),
+    `first-row corner radius missing: ${firstRow}`,
+  );
 });
