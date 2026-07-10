@@ -22,10 +22,10 @@ test("light low-emphasis surfaces carry the Gray tint (chroma > 0)", () => {
   assert.ok(lch(l.surface_overlay).C > 0.001, `overlay flat: ${l.surface_overlay}`);
 });
 
-test("light bg, sunken and overlay share one hue family (~264)", () => {
+test("light bg, sunken and overlay share one hue family (~235)", () => {
   const l = resolveMode("light");
   for (const k of ["bg", "surface_sunken", "surface_overlay"]) {
-    assert.ok(nearHue(l[k], 264), `${k} hue off: ${l[k]}`);
+    assert.ok(nearHue(l[k], 235), `${k} hue off: ${l[k]}`);
   }
 });
 

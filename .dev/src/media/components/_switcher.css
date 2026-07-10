@@ -1,7 +1,7 @@
 .theme-switcher {
-  @apply bg-surface relative inline-flex items-center gap-0 rounded-full shadow-sm backdrop-blur-md backdrop-saturate-150 transition-transform duration-150 max-md:py-0.5;
+  @apply bg-surface-sunken relative inline-flex items-center gap-0 rounded-full shadow-sm transition-transform duration-150 max-md:py-0.5;
   @apply border-hairline border;
-  @apply before:bg-hairline before:ring-hairline before:absolute before:top-1 before:left-1 before:z-0 before:h-[calc(100%-0.5rem)] before:w-[calc(33.333%-0.5rem)] before:rounded-full before:shadow-md before:ring-1 before:transition-transform before:duration-[250ms];
+  @apply before:bg-surface-overlay before:absolute before:top-1 before:left-1 before:z-0 before:h-[calc(100%-0.5rem)] before:w-[calc(33.333%-0.5rem)] before:rounded-full before:shadow-md before:transition-transform before:duration-[250ms];
 
   footer & {
     @apply max-md:hidden;

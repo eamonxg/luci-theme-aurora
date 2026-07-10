@@ -6,39 +6,41 @@
  */
 
 :root {
-  --bg: oklch(0.967 0.003 264);
+  --bg: oklch(0.984 0.004 235);
   --surface: oklch(1 0 0);
-  --text: oklch(0.21 0.02 264);
+  --text: oklch(0.215 0.02 250);
   --brand: oklch(0.58 0.14 233);
   --on-brand: oklch(1 0 0);
   --link: oklch(0.58 0.14 233);
-  --info: oklch(0.45 0.12 255);
-  --warning: oklch(0.35 0.08 60);
-  --success: oklch(0.32 0.09 165);
-  --danger: oklch(0.35 0.12 25);
-  --text-muted: oklch(49.77% 0.0135 264);
-  --text-subtle: oklch(60.36% 0.0112 264);
-  --surface-sunken: oklch(95.5% 0.003 264);
-  --surface-overlay: oklch(98.3% 0.003 264);
-  --hairline: oklch(21% 0.02 264 / 0.13);
-  --hover-faint: oklch(92.7% 0.003 264);
+  --info: oklch(0.45 0.12 250);
+  --warning: oklch(0.4 0.09 72);
+  --success: oklch(0.38 0.1 172);
+  --danger: oklch(0.42 0.15 22);
+  --text-muted: oklch(50.72% 0.0139 248.4);
+  --text-subtle: oklch(61.49% 0.0116 247.3);
+  --surface-sunken: oklch(97.5% 0.005 235);
+  --surface-overlay: oklch(100% 0.004 235);
+  --hairline: oklch(21.5% 0.02 250 / 0.13);
+  --hover-faint: oklch(95% 0.006 235);
   --brand-hover: oklch(52% 0.14 233);
-  --brand-subtle: oklch(92.06% 0.0191 237.1);
-  --brand-subtle-hover: oklch(88.06% 0.0191 237.1);
+  --brand-subtle: oklch(93.55% 0.0203 233.3);
+  --brand-subtle-hover: oklch(89.55% 0.0203 233.3);
   --focus-ring: oklch(58% 0.14 233 / 0.6);
-  --progress-start: oklch(71.13% 0.0919 233.3);
+  --progress-start: oklch(71.82% 0.0927 233);
   --progress-end: oklch(0.58 0.14 233);
-  --info-surface: oklch(94% 0.05 255);
-  --warning-surface: oklch(95% 0.05 60);
-  --success-surface: oklch(94% 0.05 165);
-  --danger-surface: oklch(94% 0.05 25);
-  --danger-surface-hover: oklch(90% 0.05 25);
+  --info-surface: oklch(94.5% 0.042 250);
+  --warning-surface: oklch(95.5% 0.042 72);
+  --success-surface: oklch(95% 0.042 172);
+  --danger-surface: oklch(95% 0.036 22);
+  --danger-surface-hover: oklch(91% 0.036 22);
+  --control-bg: oklch(100% 0.004 235);
   --scrim: oklch(0% 0 0 / 0.6);
-  --mega-menu-bg: oklch(98.3% 0.003 264);
-  --mega-menu-scrim: oklch(0% 0 0 / 0.32);
+  --mega-menu-bg: oklch(97.2% 0.008 235);
+  --mega-menu-scrim: oklch(22% 0.035 250 / 0.38);
   --app-shadow-sm: 0 1px 3px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04);
   --app-shadow-md: 0 4px 16px oklch(0 0 0 / 0.08), 0 1px 3px oklch(0 0 0 / 0.04);
   --app-shadow-lg: 0 12px 32px oklch(0 0 0 / 0.12);
+  --app-opacity-disabled: 0.4;
 
   --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
@@ -75,12 +77,14 @@
   --success-surface: oklch(30% 0.05 158);
   --danger-surface: oklch(32% 0.08 22);
   --danger-surface-hover: oklch(36% 0.08 22);
+  --control-bg: oklch(16.5% 0.02 264);
   --scrim: oklch(0% 0 0 / 0.6);
   --mega-menu-bg: oklch(16.5% 0.02 264);
   --mega-menu-scrim: oklch(0% 0 0 / 0.5);
   --app-shadow-sm: 0 4px 12px oklch(0 0 0 / 0.3);
   --app-shadow-md: 0 10px 28px oklch(0 0 0 / 0.42);
   --app-shadow-lg: 0 20px 48px oklch(0 0 0 / 0.55);
+  --app-opacity-disabled: 0.3;
 }
 
 @theme inline {
@@ -111,6 +115,7 @@
   --color-success-surface: var(--success-surface);
   --color-danger-surface: var(--danger-surface);
   --color-danger-surface-hover: var(--danger-surface-hover);
+  --color-control-bg: var(--control-bg);
   --color-scrim: var(--scrim);
   --color-mega-menu-bg: var(--mega-menu-bg);
   --color-mega-menu-scrim: var(--mega-menu-scrim);
