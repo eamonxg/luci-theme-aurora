@@ -46,13 +46,15 @@
 	const toolbar_enabled = tokens.toolbar_enabled ? tokens.toolbar_enabled == '1' : true;
 	const icon_cache_version = tokens.icon_cache_version || '0';
 	const font_css = readfile(`/www${media}/fonts/aurora-font.css`);
-	let font_preload = trim(readfile(`/www${media}/fonts/preload.txt`) ?? '');
-	if (index(font_preload, '/luci-static/aurora/fonts/') != 0)
+	const preload_raw = readfile(`/www${media}/fonts/preload.txt`);
+	// null = file absent (older config app): fall back to Lato below.
+	// '' = deliberately empty (pure-stack preset): preload nothing.
+	let font_preload = preload_raw == null ? null : trim(preload_raw);
+	if (font_preload && index(font_preload, '/luci-static/aurora/fonts/') != 0)
 		font_preload = '';
-	// preload.txt absent (fresh install / older config app): the default
-	// combined CSS only declares Lato, preload it directly.
-	if (!font_preload && font_css && index(font_css, 'lato-v24-latin-regular') >= 0)
-		font_preload = `${media}/fonts/lato-v24-latin-regular.woff2`;
+	if (font_preload == null)
+		font_preload = (font_css && index(font_css, 'lato-v24-latin-regular') >= 0)
+			? `${media}/fonts/lato-v24-latin-regular.woff2` : '';
 	const logo_svg = tokens.logo_svg || 'logo.svg';
 	const favicon_png = tokens.favicon_png || '';
 	const favicon_ico = tokens.favicon_ico || 'favicon.ico';
