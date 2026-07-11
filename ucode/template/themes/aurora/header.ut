@@ -140,6 +140,7 @@
 				if (toolbarToggle && floatingToolbar) {
 					toolbarToggle.addEventListener('click', () => {
 						const collapsed = floatingToolbar.classList.toggle('collapsed');
+						toolbarToggle.dataset.tip = collapsed ? toolbarToggle.dataset.tipShow : toolbarToggle.dataset.tipHide;
 						localStorage.setItem('aurora.toolbarCollapsed', collapsed);
 					});
 				}
@@ -313,18 +314,24 @@
 		{% if (toolbar_enabled): %}
 		<div id="floating-toolbar" class="floating-toolbar">
     		<div class="toolbar-list">
-        		<div class="toolbar-list-inner">
+        		<div class="toolbar-list-inner" style="--fab-n:{{ length(toolbar_items) }}">
             		{% for (let i = 0; i < length(toolbar_items); i++): %}
                 		{% let item = toolbar_items[i]; %}
-                		<a href="{{ item.url }}" class="toolbar-btn" title="{{ item.title }}">
-                    		<img src="{{ media }}/images/{{ item.icon }}?v={{ icon_cache_version }}" class="icon" alt="{{ item.title }}"/>
+                		<a href="{{ item.url }}" class="toolbar-btn" data-tip="{{ entityencode(item.title, true) }}" data-tip-pos="left" aria-label="{{ entityencode(item.title, true) }}" style="--fab-i:{{ i }};--fab-icon:url('{{ entityencode(`${media}/images/${item.icon}?v=${icon_cache_version}`, true) }}')">
+                    		<span class="icon" aria-hidden="true"></span>
                 		</a>
             		{% endfor %}
         		</div>
     		</div>
-    
-			<button class="toolbar-btn toggle" id="toolbar-toggle" title="{{ _('Toggle floating buttons') }}" aria-label="{{ _('Toggle floating buttons') }}">
-				<span class="icon">
+
+			{#
+				The tooltip is a short state-dependent verb — "Hide" while the
+				shortcuts are shown, "Show" once collapsed. Both strings ship
+				in luci-base's po (the theme carries none of its own); the
+				verbose static label stays on aria-label only.
+			#}
+			<button class="toolbar-btn toggle" id="toolbar-toggle" data-tip="{{ _('Hide') }}" data-tip-hide="{{ _('Hide') }}" data-tip-show="{{ _('Show') }}" data-tip-pos="left" aria-label="{{ _('Toggle floating buttons') }}">
+				<span class="icon" aria-hidden="true">
 					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 						<path d="M6 18L18 6M6 6l12 12"/>
 					</svg>
@@ -337,6 +344,8 @@
         		const toolbar = document.getElementById('floating-toolbar');
         		if (toolbar && localStorage.getItem('aurora.toolbarCollapsed') === 'true') {
             		toolbar.classList.add('collapsed');
+            		const toggle = document.getElementById('toolbar-toggle');
+            		if (toggle) toggle.dataset.tip = toggle.dataset.tipShow;
         		}
     		})();
 		</script>
