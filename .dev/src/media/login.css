@@ -91,7 +91,7 @@
 }
 
 .input-wrap {
-  @apply border-hairline bg-surface-overlay dark:bg-surface-sunken relative rounded-2xl border [contain:layout_style];
+  @apply border-hairline bg-control-bg relative rounded-2xl border [contain:layout_style];
 }
 
 /* Focus ring: opacity-only transition runs on compositor thread, not main thread —

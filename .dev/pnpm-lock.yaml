@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@eamonxg/aurora-tokens':
-        specifier: ^1.0.1
-        version: 1.0.1
+        specifier: ^1.2.0
+        version: 1.2.0
       '@tailwindcss/vite':
         specifier: ^4.1.11
         version: 4.3.2(vite@7.3.1(@types/node@24.10.9)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.0))
@@ -50,8 +50,8 @@ importers:
 
 packages:
 
-  '@eamonxg/aurora-tokens@1.0.1':
-    resolution: {integrity: sha512-AbqXZfEEDwxLiSjg+h4vFHeEE0GTb7vwyKvfh7GJK3TKCP0DNTfJpdIqI+6KhiXDLQI5nHuwYvbmx77o+baAjA==}
+  '@eamonxg/aurora-tokens@1.2.0':
+    resolution: {integrity: sha512-Sfpqi5lvwSWDLqmAK1AVxp3g7ScWSk9y3iJ+0+3kU6b1AZ6Mp27TlyklpaimQLjdrOaASn49aaJgTsRxISt0kg==}
 
   '@esbuild/aix-ppc64@0.27.2':
     resolution: {integrity: sha512-GZMB+a0mOMZs4MpDbj8RJp4cw+w1WV5NYD6xzgvzUJ5Ek2jerwfO2eADyI6ExDSUED+1X8aMbegahsJi+8mgpw==}
@@ -799,7 +799,7 @@ packages:
 
 snapshots:
 
-  '@eamonxg/aurora-tokens@1.0.1':
+  '@eamonxg/aurora-tokens@1.2.0':
     dependencies:
       colorjs.io: 0.6.1
 

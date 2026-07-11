@@ -50,9 +50,9 @@ test("menu panel is fully opaque (frost lives on the curtain, not the panel)", (
   assert.ok(!d.mega_menu_bg.includes("/"), `dark opaque: ${d.mega_menu_bg}`);
 });
 
-test("light bg is the Gray canvas; surface stays pure white", () => {
+test("light bg is the snow-blue canvas; surface stays pure white", () => {
   const light = resolveMode("light");
-  assert.equal(light.bg, "oklch(0.967 0.003 264)");
+  assert.equal(light.bg, "oklch(0.984 0.004 235)");
   assert.equal(light.surface, "oklch(1 0 0)");
 });
 

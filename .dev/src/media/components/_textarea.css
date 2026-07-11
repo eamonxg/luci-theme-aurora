@@ -1,6 +1,6 @@
 textarea {
-  @apply text-text border-hairline bg-surface-overlay dark:bg-surface-sunken placeholder-text-muted focus:border-brand focus:ring-focus-ring min-h-24 w-full resize-y rounded-2xl border px-3 py-2 text-sm font-normal shadow-sm transition-[border-color,box-shadow] duration-150 focus:ring-2 focus:outline-none;
+  @apply text-text border-hairline bg-control-bg placeholder-text-muted focus:border-brand focus:ring-focus-ring min-h-24 w-full resize-y rounded-2xl border px-3 py-2 text-sm font-normal shadow-sm transition-[border-color,box-shadow] duration-150 focus:ring-2 focus:outline-none;
   &[disabled] {
-    @apply cursor-not-allowed opacity-40 dark:opacity-30;
+    @apply cursor-not-allowed opacity-(--app-opacity-disabled);
   }
 }

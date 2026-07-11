@@ -8,7 +8,7 @@ input[type="reset"],
      variant in _form.css, which relies on this base transition. */
   @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-medium antialiased transition-[background-color,border-color,transform] duration-150 max-md:text-base max-md:font-medium;
   &[disabled] {
-    @apply cursor-not-allowed opacity-40 dark:opacity-30;
+    @apply cursor-not-allowed opacity-(--app-opacity-disabled);
   }
   .td & {
     @apply inline-flex w-auto flex-none whitespace-nowrap max-md:min-h-9 max-md:text-sm;
