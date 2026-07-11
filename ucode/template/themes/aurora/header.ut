@@ -185,8 +185,6 @@
 		{% endif %}
 		{% if (font_css): %}
 		<style>{{ font_css }}</style>
-		{% else %}
-		<link rel="stylesheet" href="{{ media }}/fonts/aurora-font.css?v={{ icon_cache_version }}">
 		{% endif %}
 		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any" type="image/svg+xml">
 		{% if (favicon_png): %}
