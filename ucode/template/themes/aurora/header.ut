@@ -12,7 +12,7 @@
 {%
 	import { getuid, getspnam } from 'luci.core';
 	import { cursor } from 'uci';
-	import { lsdir } from 'fs';
+	import { lsdir, readfile } from 'fs';
 
 	const boardinfo = ubus.call('system', 'board') ?? {};
 	const hostname = striptags(boardinfo.hostname ?? '?');
@@ -45,6 +45,16 @@
 	const nav_type = tokens.nav_type || 'mega-menu';
 	const toolbar_enabled = tokens.toolbar_enabled ? tokens.toolbar_enabled == '1' : true;
 	const icon_cache_version = tokens.icon_cache_version || '0';
+	const font_css = readfile(`/www${media}/fonts/aurora-font.css`);
+	const preload_raw = readfile(`/www${media}/fonts/preload.txt`);
+	// null = file absent (older config app): fall back to Lato below.
+	// '' = deliberately empty (pure-stack preset): preload nothing.
+	let font_preload = preload_raw == null ? null : trim(preload_raw);
+	if (font_preload && index(font_preload, '/luci-static/aurora/fonts/') != 0)
+		font_preload = '';
+	if (font_preload == null)
+		font_preload = (font_css && index(font_css, 'lato-v24-latin-regular') >= 0)
+			? `${media}/fonts/lato-v24-latin-regular.woff2` : '';
 	const logo_svg = tokens.logo_svg || 'logo.svg';
 	const favicon_png = tokens.favicon_png || '';
 	const favicon_ico = tokens.favicon_ico || 'favicon.ico';
@@ -170,7 +180,12 @@
 		<link rel="stylesheet" href="{{ media }}/patches/{{ patch }}.css">
 		{% endfor %}
 		{% endif %}
-		<link rel="stylesheet" href="{{ media }}/fonts/aurora-font.css?v={{ icon_cache_version }}">
+		{% if (font_preload): %}
+		<link rel="preload" as="font" type="font/woff2" crossorigin href="{{ font_preload }}">
+		{% endif %}
+		{% if (font_css): %}
+		<style>{{ font_css }}</style>
+		{% endif %}
 		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any" type="image/svg+xml">
 		{% if (favicon_png): %}
 		<link rel="icon" href="{{ media }}/images/{{ favicon_png }}?v={{ icon_cache_version }}" type="image/png">
