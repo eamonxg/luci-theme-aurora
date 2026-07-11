@@ -33,6 +33,14 @@
     @apply text-text-muted border-dashed bg-transparent font-normal italic;
   }
 
+  /* Bare zone-colour swatch: the interface overview / tooltip renders a
+     label-less `.zonebadge` as a colour chip prefixing an `.ifacebadge`. The
+     tag redesign's horizontal padding is meant for text labels, so keep the
+     label-less swatch a compact pill instead of a wide block. */
+  .ifacebadge > & {
+    @apply rounded-full px-1 py-1.5;
+  }
+
   .cbi-dropdown & {
     @apply px-1.5 py-0.5;
   }
