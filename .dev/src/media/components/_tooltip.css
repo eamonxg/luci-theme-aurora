@@ -32,3 +32,48 @@
     @apply visible scale-100 opacity-100 inset-s-auto;
   }
 }
+
+/* Generic label tooltip — a CSS-only inverse pill for icon buttons and other
+   compact controls; any element opts in via attributes:
+     data-tip="label"      tooltip text (empty value renders nothing)
+     data-tip-pos="left"   placement: top (default) | bottom | left | right
+   Named `data-tip` because `data-tooltip` above is claimed by LuCI's cbi
+   help bubbles. Show is delayed so cursor sweeps don't flash labels; hide is
+   immediate. Motion is opacity/scale only (compositor-safe), and hover is
+   gated to hover-capable pointers so a tap on touch doesn't strand a label —
+   keyboard focus still shows it everywhere. */
+[data-tip]:not([data-tip='']) {
+  @apply relative;
+
+  &::after {
+    content: attr(data-tip);
+    @apply bg-text text-bg pointer-events-none absolute z-110 w-max max-w-xs scale-95 rounded-lg px-2 py-1 text-xs break-normal whitespace-normal opacity-0 transition-[opacity,scale] duration-150 ease-out;
+  }
+
+  &:not([data-tip-pos])::after,
+  &[data-tip-pos='top']::after {
+    @apply bottom-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2;
+  }
+
+  &[data-tip-pos='bottom']::after {
+    @apply top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2;
+  }
+
+  &[data-tip-pos='left']::after {
+    @apply top-1/2 right-[calc(100%+0.625rem)] -translate-y-1/2;
+  }
+
+  &[data-tip-pos='right']::after {
+    @apply top-1/2 left-[calc(100%+0.625rem)] -translate-y-1/2;
+  }
+
+  &:focus-visible::after {
+    @apply scale-100 opacity-100 delay-300;
+  }
+
+  @media (hover: hover) {
+    &:hover::after {
+      @apply scale-100 opacity-100 delay-300;
+    }
+  }
+}

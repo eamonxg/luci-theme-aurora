@@ -1,45 +1,80 @@
 .floating-toolbar {
-  @apply fixed right-4 bottom-4 z-40 flex flex-col items-center max-md:right-3 max-md:bottom-3;
+  /* Detached-bubble speed dial: every shortcut is its own floating circle
+     (elevation only, no border), collapsing drops the bubbles into the
+     toggle one after another and the toggle's X rotates into a +.
+
+     All motion is translate/scale/opacity/rotate — compositor-only (R1).
+     The stagger math runs on custom properties set by header.ut:
+       --fab-n (on .toolbar-list)        item count
+       --fab-i (on each .toolbar-btn)    index, 0 = top bubble
+       --fab-icon (on each .toolbar-btn) configured icon URL, drawn via
+         mask + bg-current so it follows the theme text color in both
+         modes (replaces the old <img> + dark:invert).
+     Travel per step = bubble 44px + 10px gap = 3.375rem (40px + 8px =
+     3rem below md). Expanding pops bottom-first ("jump up"), collapsing
+     drops top-first; --fab-d only ever delays the motion properties, so
+     hover color feedback stays instant. */
+  /* The stack keeps its layout height when collapsed (the bubbles must
+     travel a real distance into the toggle), so the container itself must
+     not catch clicks — only the buttons do. */
+  @apply pointer-events-none fixed right-4 bottom-4 z-40 flex flex-col items-center max-md:right-3 max-md:bottom-3;
 
   .toolbar-list {
-    @apply visible mb-2 grid origin-bottom grid-rows-[1fr] opacity-100 transition-[grid-template-rows,transform,opacity,visibility] duration-[250ms] ease-in-out max-md:mb-1.5;
-
-    .toolbar-list-inner {
-      @apply border-hairline bg-surface-overlay flex min-h-0 flex-col items-center gap-2 overflow-hidden rounded-full border p-1 shadow-sm max-md:gap-1.5 max-md:p-0.5;
-    }
+    @apply mb-2.5 flex flex-col items-center gap-2.5 max-md:mb-2 max-md:gap-2;
   }
 
   .toolbar-btn {
-    @apply flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full p-2 transition-[background-color,transform,opacity] duration-150 ease-in-out active:scale-95 max-md:h-9 max-md:w-9 max-md:p-1.5;
+    @apply text-text-muted bg-surface-overlay pointer-events-auto grid size-11 cursor-pointer place-items-center rounded-full shadow-md max-md:size-10;
+    /* `visibility` rides the same transition so collapsed bubbles leave the
+       tab order, but only after the drop finishes (it flips at the end of
+       its transition window, so the motion itself is never clipped). */
+    @apply [transition:translate_320ms_cubic-bezier(0.34,1.25,0.5,1),scale_320ms_cubic-bezier(0.34,1.25,0.5,1),opacity_220ms_ease,visibility_320ms_ease,background-color_150ms_ease,color_150ms_ease];
+    @apply [transition-delay:var(--fab-d,0s),var(--fab-d,0s),var(--fab-d,0s),var(--fab-d,0s),0s,0s];
 
-    .icon {
-      @apply h-5 w-5 shrink-0 transition-transform duration-150 ease-in-out max-md:h-4 max-md:w-4;
+    &:hover {
+      @apply text-text bg-hover-faint;
+    }
+
+    &:active {
+      @apply scale-[0.92];
     }
 
     &:not(.toggle) {
-      @apply hover:bg-hover-faint no-underline hover:scale-110;
+      @apply [--fab-d:calc((var(--fab-n,1)-1-var(--fab-i,0))*60ms)] no-underline;
+
+      /* The stagger delay must not defer press feedback: `scale` shares the
+         delayed transition channel, so without this a press on the top
+         bubble would acknowledge (n-1)*60ms late. Nested (not merged into
+         the base `:active`) so it outranks the delay set just above. */
+      &:active {
+        @apply [--fab-d:0s];
+      }
+
       .icon {
-        @apply object-contain dark:invert;
+        @apply size-5 shrink-0 bg-current [mask:var(--fab-icon)_center/contain_no-repeat] max-md:size-4.5;
       }
     }
 
     &.toggle {
-      @apply bg-surface border-0 shadow-sm;
+      @apply text-text-subtle hover:text-text border-0;
+
       .icon {
-        @apply transition-transform duration-150 ease-out;
+        @apply grid size-5 place-items-center transition-[rotate] duration-[250ms] ease-out max-md:size-4.5;
+
+        svg {
+          @apply size-full;
+        }
       }
     }
   }
 
   &.collapsed {
-    .toolbar-list {
-      @apply pointer-events-none invisible translate-y-2 scale-90 grid-rows-[0fr] opacity-0;
-    }
-
     .toolbar-btn {
       &:not(.toggle) {
-        @apply scale-50 opacity-0;
+        @apply pointer-events-none invisible scale-[0.35] opacity-0;
+        @apply [--fab-d:calc(var(--fab-i,0)*60ms)] translate-y-[calc((var(--fab-n,1)-var(--fab-i,0))*3.375rem)] max-md:translate-y-[calc((var(--fab-n,1)-var(--fab-i,0))*3rem)];
       }
+
       &.toggle .icon {
         @apply rotate-45;
       }
