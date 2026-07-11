@@ -1,0 +1,115 @@
+/**
+ * Header route search — Spotlight-style palette, available in all three nav
+ * types (sidebar / mega-menu / dropdown). The toggle sits at the header's
+ * right edge next to #indicators; ⌘K / Ctrl+K toggles the panel globally.
+ *
+ * The panel is built lazily by menu-aurora.js on first open; its index is
+ * the navigation model the menus already render from (no extra requests).
+ */
+
+.header-search-toggle {
+  @apply text-text relative mr-4 grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg border-0 bg-transparent p-0 shadow-none transition-colors duration-150;
+
+  /* Non-sidebar headers have no mr-auto crumb absorbing the slack — pull the
+     toggle right so it docks next to #indicators instead of landing in the
+     middle of the justify-between row. */
+  body:not([data-nav-type="sidebar"]) & {
+    @apply ml-auto;
+  }
+
+  &::before {
+    @apply size-4.5 bg-current content-[''] [mask:url('@assets/icons/search.svg')_center/contain_no-repeat];
+  }
+
+  &:hover {
+    @apply bg-hover-faint;
+  }
+
+  &:focus-visible {
+    @apply ring-focus-ring ring-2 outline-none;
+  }
+}
+
+.header-search-panel {
+  @apply border-hairline bg-surface/85 fixed top-24 left-1/2 z-120 w-[min(36rem,calc(100vw-2.5rem))] -translate-x-1/2 overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xl backdrop-saturate-150 transition-[opacity,translate] duration-150 ease-out starting:-translate-y-2 starting:opacity-0;
+
+  /* <md: the same panel becomes a full-screen takeover (Algolia DocSearch
+     manner) — opaque page background (no full-screen blur cost on phones),
+     input bar pinned top with a Cancel exit, results fill the rest. */
+  @apply max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:left-0 max-md:flex max-md:w-auto max-md:translate-none max-md:flex-col max-md:rounded-none max-md:border-0 max-md:bg-bg max-md:shadow-none max-md:backdrop-blur-none max-md:backdrop-saturate-100;
+
+  & .header-search-box {
+    @apply flex items-center gap-3 px-5 py-3.5;
+    @apply max-md:border-hairline max-md:bg-surface max-md:border-b max-md:px-4 max-md:py-2.5;
+
+    &::before {
+      @apply text-text-subtle size-5 shrink-0 bg-current content-[''] [mask:url('@assets/icons/search.svg')_center/contain_no-repeat];
+    }
+
+    & .header-search-input {
+      @apply text-text placeholder-text-subtle w-full min-w-0 flex-1 rounded-none border-0 bg-transparent p-0 text-base shadow-none focus:ring-0 focus:outline-none;
+    }
+
+    & .header-search-cancel {
+      @apply text-brand hidden shrink-0 cursor-pointer border-0 bg-transparent p-1 text-sm shadow-none max-md:block;
+    }
+  }
+
+  & .header-search-results {
+    @apply border-hairline max-h-80 overflow-y-auto border-t p-2 empty:hidden;
+    @apply max-md:max-h-none max-md:flex-1 max-md:overscroll-contain;
+
+    & .header-search-result {
+      @apply text-text flex items-center gap-3 rounded-lg px-3 py-2 text-sm no-underline;
+
+      & .result-title {
+        @apply min-w-0 truncate;
+      }
+
+      & .result-group {
+        @apply text-text-subtle ml-auto shrink-0 text-xs;
+      }
+
+      & mark {
+        @apply text-brand bg-transparent font-semibold;
+      }
+
+      &.is-selected {
+        @apply bg-brand-subtle;
+
+        & .result-title {
+          @apply text-brand font-medium;
+        }
+      }
+    }
+
+    & .header-search-empty {
+      @apply text-text-subtle px-3 py-6 text-center text-sm;
+    }
+  }
+
+  & .header-search-hint {
+    @apply border-hairline text-text-subtle flex items-center gap-4 border-t px-4 py-2 text-xs max-md:hidden;
+
+    & .header-search-hint-key {
+      @apply ml-auto;
+    }
+
+    & kbd {
+      @apply border-hairline bg-surface-sunken text-text-muted rounded-md border px-1.5 py-px font-mono text-[11px];
+    }
+  }
+}
+
+/* The frost is decorative — both degradation paths go opaque. */
+@supports not (backdrop-filter: blur(1px)) {
+  .header-search-panel {
+    @apply bg-surface;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .header-search-panel {
+    @apply bg-surface;
+  }
+}

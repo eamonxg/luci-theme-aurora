@@ -495,6 +495,261 @@ return baseclass.extend({
     });
   },
 
+  // Route search (all nav types): a Spotlight-style palette on ⌘K / Ctrl+K
+  // or the header toggle. The index is the navigation model the menus
+  // already render from — no extra requests, no DOM scraping — and the
+  // panel DOM is built lazily on first open, so pages where search is never
+  // used pay nothing beyond this flat array.
+  initSearch(items) {
+    const toggle = document.querySelector("#header-search-toggle");
+    if (!toggle || this.searchIndex) return;
+
+    this.searchIndex = [];
+    items.forEach((item) => {
+      if (item.isLogout) return;
+      if (!item.hasChildren) {
+        this.searchIndex.push({
+          title: item.title,
+          name: item.name,
+          group: null,
+          href: item.href,
+        });
+        return;
+      }
+      item.pages.forEach((page) =>
+        this.searchIndex.push({
+          title: page.title,
+          name: page.name,
+          group: item.title,
+          href: page.href,
+        }),
+      );
+    });
+
+    // Only msgids that already exist in the luci-base catalog are used —
+    // the theme intentionally ships no translations of its own.
+    const isMac = /Mac|iP(ad|hone|od)/.test(navigator.platform);
+    this.searchKey = isMac ? "⌘K" : "Ctrl+K";
+    toggle.setAttribute("aria-keyshortcuts", isMac ? "Meta+K" : "Control+K");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.addEventListener("click", () => this.toggleSearch());
+    this.searchToggle = toggle;
+
+    document.addEventListener("keydown", (e) => {
+      // An IME swallows these keys while composing (Esc cancels the
+      // composition, not the panel); keyCode 229 covers engines that
+      // don't set isComposing on the trailing keydown.
+      if (e.isComposing || e.keyCode === 229) return;
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        !e.altKey &&
+        !e.shiftKey &&
+        (e.key || "").toLowerCase() === "k"
+      ) {
+        e.preventDefault();
+        this.toggleSearch();
+      } else if (
+        e.key === "Escape" &&
+        this.searchPanel &&
+        !this.searchPanel.hidden
+      ) {
+        this.closeSearch();
+      }
+    });
+
+    // Registered only while the panel is open (see openSearch/closeSearch).
+    this.onSearchAway = (e) => {
+      if (!this.searchPanel.contains(e.target) && !toggle.contains(e.target))
+        this.closeSearch();
+    };
+  },
+
+  buildSearchPanel() {
+    const input = E("input", {
+      class: "header-search-input",
+      type: "text",
+      placeholder: _("Type to filter…"),
+      "aria-label": _("Type to filter…"),
+      autocomplete: "off",
+      spellcheck: "false",
+    });
+    const results = E("div", { class: "header-search-results" });
+    // Mobile-only exit (the full-screen takeover leaves no outside to tap
+    // and touch devices have no Escape) — hidden on md+ via CSS.
+    const cancel = E(
+      "button",
+      { class: "header-search-cancel", type: "button" },
+      [_("Cancel")],
+    );
+    cancel.addEventListener("click", () => this.closeSearch());
+    const panel = E(
+      "div",
+      {
+        id: "header-search-panel",
+        class: "header-search-panel",
+        role: "dialog",
+        "aria-modal": "true",
+        "aria-label": _("Navigation"),
+        hidden: "",
+      },
+      [
+        E("div", { class: "header-search-box" }, [input, cancel]),
+        results,
+        E("div", { class: "header-search-hint" }, [
+          E("kbd", {}, ["↑↓"]),
+          E("kbd", {}, ["↵"]),
+          E("kbd", {}, ["esc"]),
+          E("span", { class: "header-search-hint-key" }, [
+            E("kbd", {}, [this.searchKey]),
+          ]),
+        ]),
+      ],
+    );
+
+    input.addEventListener("input", () =>
+      this.renderSearchResults(input.value),
+    );
+    input.addEventListener("keydown", (e) => {
+      // Mid-composition these keys belong to the IME: Enter commits the
+      // buffer (navigating away for pinyin users) and arrows move inside
+      // the candidate list, not the results.
+      if (e.isComposing || e.keyCode === 229) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        this.moveSearchSelection(e.key === "ArrowDown" ? 1 : -1);
+      } else if (e.key === "Enter") {
+        results.querySelector(".is-selected")?.click();
+      }
+    });
+    // mousemove, not mouseover: scrollIntoView() slides rows under a
+    // stationary pointer, which fires mouseover and would snap the
+    // selection back to whatever the mouse happens to rest on.
+    results.addEventListener("mousemove", (e) => {
+      const row = e.target?.closest?.(".header-search-result");
+      if (row && !row.classList.contains("is-selected"))
+        this.setSearchSelection(row);
+    });
+    // The dialog is modal (full-screen takeover on mobile): keep Tab
+    // cycling within it instead of escaping onto the page beneath.
+    panel.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      const focusables = [
+        input,
+        ...results.querySelectorAll("a"),
+        cancel,
+      ].filter((el) => el.getClientRects().length);
+      const edge = e.shiftKey ? focusables[0] : focusables.at(-1);
+      if (document.activeElement === edge) {
+        e.preventDefault();
+        (e.shiftKey ? focusables.at(-1) : focusables[0]).focus();
+      }
+    });
+
+    document.body.appendChild(panel);
+    this.searchToggle.setAttribute("aria-controls", panel.id);
+    this.searchPanel = panel;
+    this.searchInput = input;
+    this.searchResults = results;
+  },
+
+  renderSearchResults(value) {
+    const q = value.trim().toLowerCase();
+    this.searchResults.replaceChildren();
+    if (!q) return; // Spotlight manner: quiet until typed.
+
+    const matches = this.searchIndex.filter(
+      (page) =>
+        page.title.toLowerCase().includes(q) ||
+        page.name.toLowerCase().includes(q) ||
+        page.group?.toLowerCase().includes(q),
+    );
+
+    if (!matches.length) {
+      this.searchResults.appendChild(
+        E("div", { class: "header-search-empty" }, [_("No entries available")]),
+      );
+      return;
+    }
+
+    matches.forEach((page, i) => {
+      this.searchResults.appendChild(
+        E(
+          "a",
+          {
+            class: `header-search-result${i ? "" : " is-selected"}`,
+            href: page.href,
+          },
+          [
+            E(
+              "span",
+              { class: "result-title" },
+              this.highlightSearchMatch(page.title, q),
+            ),
+            page.group ? E("span", { class: "result-group" }, [page.group]) : "",
+          ],
+        ),
+      );
+    });
+  },
+
+  highlightSearchMatch(title, q) {
+    const at = title.toLowerCase().indexOf(q);
+    if (at < 0) return [title];
+
+    return [
+      title.slice(0, at),
+      E("mark", {}, [title.slice(at, at + q.length)]),
+      title.slice(at + q.length),
+    ];
+  },
+
+  setSearchSelection(row) {
+    this.searchResults
+      .querySelector(".is-selected")
+      ?.classList.remove("is-selected");
+    row.classList.add("is-selected");
+  },
+
+  moveSearchSelection(delta) {
+    const rows = [
+      ...this.searchResults.querySelectorAll(".header-search-result"),
+    ];
+    if (!rows.length) return;
+
+    const current = rows.findIndex((row) =>
+      row.classList.contains("is-selected"),
+    );
+    const next = rows[(current + delta + rows.length) % rows.length];
+
+    this.setSearchSelection(next);
+    next.scrollIntoView({ block: "nearest" });
+  },
+
+  toggleSearch() {
+    if (!this.searchPanel) this.buildSearchPanel();
+
+    if (this.searchPanel.hidden) this.openSearch();
+    else this.closeSearch();
+  },
+
+  openSearch() {
+    this.searchReturnFocus = document.activeElement;
+    this.searchToggle.setAttribute("aria-expanded", "true");
+    this.searchPanel.hidden = false;
+    this.searchInput.value = "";
+    this.searchResults.replaceChildren();
+    this.searchInput.focus();
+    document.addEventListener("pointerdown", this.onSearchAway);
+  },
+
+  closeSearch() {
+    this.searchToggle.setAttribute("aria-expanded", "false");
+    this.searchPanel.hidden = true;
+    document.removeEventListener("pointerdown", this.onSearchAway);
+    if (this.searchReturnFocus?.isConnected) this.searchReturnFocus.focus();
+    this.searchReturnFocus = null;
+  },
+
   // Shared scaffolding for the two desktop dropdown modes (mega-menu and
   // dropdown): builds the top-level `.menu` link + its `.desktop-nav`
   // panel. Hover/activation behaviour differs per mode and is wired by the
@@ -897,6 +1152,7 @@ return baseclass.extend({
       );
       this.renderMainMenu(activeChild, activeChild.name, 0, navigationItems);
       this.renderMobileMenu(navigationItems);
+      this.initSearch(navigationItems);
     }
 
     if (ul?.children.length > 1) {
