@@ -179,7 +179,7 @@
 		{% endfor %}
 		{% endif %}
 		{% if (font_preload): %}
-		<link rel="preload" as="font" type="font/woff2" crossorigin href="{{ font_preload }}?v={{ icon_cache_version }}">
+		<link rel="preload" as="font" type="font/woff2" crossorigin href="{{ font_preload }}">
 		{% endif %}
 		{% if (font_css): %}
 		<style>{{ font_css }}</style>
