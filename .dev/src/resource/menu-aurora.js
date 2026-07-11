@@ -531,14 +531,20 @@ return baseclass.extend({
     const isMac = /Mac|iP(ad|hone|od)/.test(navigator.platform);
     this.searchKey = isMac ? "⌘K" : "Ctrl+K";
     toggle.setAttribute("aria-keyshortcuts", isMac ? "Meta+K" : "Control+K");
+    toggle.setAttribute("aria-expanded", "false");
     toggle.addEventListener("click", () => this.toggleSearch());
+    this.searchToggle = toggle;
 
     document.addEventListener("keydown", (e) => {
+      // An IME swallows these keys while composing (Esc cancels the
+      // composition, not the panel); keyCode 229 covers engines that
+      // don't set isComposing on the trailing keydown.
+      if (e.isComposing || e.keyCode === 229) return;
       if (
         (e.metaKey || e.ctrlKey) &&
         !e.altKey &&
         !e.shiftKey &&
-        e.key.toLowerCase() === "k"
+        (e.key || "").toLowerCase() === "k"
       ) {
         e.preventDefault();
         this.toggleSearch();
@@ -579,8 +585,10 @@ return baseclass.extend({
     const panel = E(
       "div",
       {
+        id: "header-search-panel",
         class: "header-search-panel",
         role: "dialog",
+        "aria-modal": "true",
         "aria-label": _("Navigation"),
         hidden: "",
       },
@@ -602,6 +610,10 @@ return baseclass.extend({
       this.renderSearchResults(input.value),
     );
     input.addEventListener("keydown", (e) => {
+      // Mid-composition these keys belong to the IME: Enter commits the
+      // buffer (navigating away for pinyin users) and arrows move inside
+      // the candidate list, not the results.
+      if (e.isComposing || e.keyCode === 229) return;
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
         this.moveSearchSelection(e.key === "ArrowDown" ? 1 : -1);
@@ -609,12 +621,32 @@ return baseclass.extend({
         results.querySelector(".is-selected")?.click();
       }
     });
-    results.addEventListener("mouseover", (e) => {
+    // mousemove, not mouseover: scrollIntoView() slides rows under a
+    // stationary pointer, which fires mouseover and would snap the
+    // selection back to whatever the mouse happens to rest on.
+    results.addEventListener("mousemove", (e) => {
       const row = e.target?.closest?.(".header-search-result");
-      if (row) this.setSearchSelection(row);
+      if (row && !row.classList.contains("is-selected"))
+        this.setSearchSelection(row);
+    });
+    // The dialog is modal (full-screen takeover on mobile): keep Tab
+    // cycling within it instead of escaping onto the page beneath.
+    panel.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      const focusables = [
+        input,
+        ...results.querySelectorAll("a"),
+        cancel,
+      ].filter((el) => el.getClientRects().length);
+      const edge = e.shiftKey ? focusables[0] : focusables.at(-1);
+      if (document.activeElement === edge) {
+        e.preventDefault();
+        (e.shiftKey ? focusables.at(-1) : focusables[0]).focus();
+      }
     });
 
     document.body.appendChild(panel);
+    this.searchToggle.setAttribute("aria-controls", panel.id);
     this.searchPanel = panel;
     this.searchInput = input;
     this.searchResults = results;
@@ -702,6 +734,7 @@ return baseclass.extend({
 
   openSearch() {
     this.searchReturnFocus = document.activeElement;
+    this.searchToggle.setAttribute("aria-expanded", "true");
     this.searchPanel.hidden = false;
     this.searchInput.value = "";
     this.searchResults.replaceChildren();
@@ -710,6 +743,7 @@ return baseclass.extend({
   },
 
   closeSearch() {
+    this.searchToggle.setAttribute("aria-expanded", "false");
     this.searchPanel.hidden = true;
     document.removeEventListener("pointerdown", this.onSearchAway);
     if (this.searchReturnFocus?.isConnected) this.searchReturnFocus.focus();
