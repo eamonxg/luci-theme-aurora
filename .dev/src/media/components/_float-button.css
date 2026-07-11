@@ -5,7 +5,7 @@
 
      All motion is translate/scale/opacity/rotate — compositor-only (R1).
      The stagger math runs on custom properties set by header.ut:
-       --fab-n (on .toolbar-list-inner)  item count
+       --fab-n (on .toolbar-list)        item count
        --fab-i (on each .toolbar-btn)    index, 0 = top bubble
        --fab-icon (on each .toolbar-btn) configured icon URL, drawn via
          mask + bg-current so it follows the theme text color in both
@@ -19,7 +19,7 @@
      not catch clicks — only the buttons do. */
   @apply pointer-events-none fixed right-4 bottom-4 z-40 flex flex-col items-center max-md:right-3 max-md:bottom-3;
 
-  .toolbar-list-inner {
+  .toolbar-list {
     @apply mb-2.5 flex flex-col items-center gap-2.5 max-md:mb-2 max-md:gap-2;
   }
 
@@ -41,6 +41,14 @@
 
     &:not(.toggle) {
       @apply [--fab-d:calc((var(--fab-n,1)-1-var(--fab-i,0))*60ms)] no-underline;
+
+      /* The stagger delay must not defer press feedback: `scale` shares the
+         delayed transition channel, so without this a press on the top
+         bubble would acknowledge (n-1)*60ms late. Nested (not merged into
+         the base `:active`) so it outranks the delay set just above. */
+      &:active {
+        @apply [--fab-d:0s];
+      }
 
       .icon {
         @apply size-5 shrink-0 bg-current [mask:var(--fab-icon)_center/contain_no-repeat] max-md:size-4.5;

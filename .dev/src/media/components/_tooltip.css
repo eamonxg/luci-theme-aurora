@@ -47,7 +47,7 @@
 
   &::after {
     content: attr(data-tip);
-    @apply bg-text text-bg pointer-events-none absolute z-110 w-max max-w-xs scale-95 rounded-lg px-2 py-1 text-xs whitespace-nowrap opacity-0 transition-[opacity,scale] duration-150 ease-out;
+    @apply bg-text text-bg pointer-events-none absolute z-110 w-max max-w-xs scale-95 rounded-lg px-2 py-1 text-xs break-normal whitespace-normal opacity-0 transition-[opacity,scale] duration-150 ease-out;
   }
 
   &:not([data-tip-pos])::after,
