@@ -265,7 +265,6 @@ New issues are handled by the `claude-issue-bot` workflow — it checks for spam
 luci-theme-aurora/
 ├── .dev/                           # Development environment
 │   ├── docs/                       # Project documentation
-│   │   ├── changelog/              # Version changelogs
 │   │   └── DEVELOPMENT.md          # Development guide (this file)
 │   ├── public/aurora/              # Public static assets
 │   │   ├── fonts/                  # Web fonts (Lato)

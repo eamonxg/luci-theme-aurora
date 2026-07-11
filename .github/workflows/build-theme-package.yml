@@ -36,4 +36,5 @@ jobs:
             ./scripts/feeds install -p luci-base
           artifact_paths: |
             bin/packages/$ARCH/base/*luci-theme-aurora*.[ai]pk
-          release_body_path: .dev/docs/changelog/${{ github.ref_name }}.md
+          release_body_repo: eamonxg/assets
+          release_body_path: aurora/docs/theme/changelog/${{ github.ref_name }}.md
