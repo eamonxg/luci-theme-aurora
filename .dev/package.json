@@ -4,11 +4,14 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"setup": "node scripts/setup.js",
+		"setup:router": "node scripts/setup.js",
 		"build": "npm run clean && npm run gen:tokens && vite build",
 		"clean": "node scripts/clean.js",
 		"gen:tokens": "node scripts/gen-tokens.js",
 		"test": "node --test tests/*.test.js"
+	},
+	"engines": {
+		"node": "^20.19.0 || >=22.12.0"
 	},
 	"devDependencies": {
 		"@eamonxg/aurora-tokens": "^1.2.0",

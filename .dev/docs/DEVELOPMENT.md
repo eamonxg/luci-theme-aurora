@@ -4,7 +4,7 @@ This guide covers the complete development workflow for the Aurora theme, from e
 
 ## Prerequisites
 
-- **[Node.js v20.19+](https://nodejs.org/en/download)** - JavaScript runtime
+- **[Node.js 20.19+ / 22.12+](https://nodejs.org/en/download)** - JavaScript runtime (mirrors Vite 7's support range — odd releases like 21.x don't qualify; enforced at `pnpm install` time via `engines` + `engine-strict`, so an unsupported Node fails fast with a clear message)
 - **pnpm** - Package manager (managed via [Corepack](https://github.com/nodejs/corepack))
 - **Tailwind CSS knowledge** - Required for styling. See [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - **Network access** - Development machine must be on the same network as your OpenWrt router
@@ -28,10 +28,32 @@ pnpm install
 ### 2. Configure Environment
 
 ```bash
-# One-shot wizard: asks for the router IP, generates/installs an SSH key
-# (one router-password prompt), and writes .env
-pnpm setup
+# One-shot wizard: asks for every .env value (router IP, dev-server host/port,
+# current .env entries as defaults), generates/installs an SSH key (one
+# router-password prompt), verifies template sync end-to-end, and writes .env
+pnpm setup:router
+
+# Non-interactive: pass the IP directly (no prompts; dev-server values keep
+# their saved .env entries or defaults)
+pnpm setup:router 192.168.2.1
+
+# Reinstall the SSH key even if passwordless SSH still works
+# (e.g. after reflashing the router)
+pnpm setup:router --force
 ```
+
+> The script is named `setup:router` (not `setup`) because `pnpm setup` resolves to pnpm's own built-in setup command and would never run a package script.
+
+**What it does** (`scripts/setup.js`), in order:
+
+1. **Collects the `.env` values.** With no argument it prompts for each variable in turn, showing the current `.env` entry as the default (an empty answer keeps it). With an IP argument it takes that as `VITE_OPENWRT_HOST` non-interactively and leaves the dev-server values alone. Nothing is written yet — `.env` is only updated once every step below has succeeded.
+2. **Pre-flights the connection.** A raw TCP probe of `<host>:22` with a 2s timeout, so an unreachable device or one with SSH disabled fails immediately with a clear message instead of hanging inside ssh.
+3. **Finds or generates an SSH key.** It looks for `~/.ssh/id_ed25519.pub`, `id_rsa.pub`, `id_ecdsa.pub` in that order and reuses the first one present — an existing key is never overwritten. **If you have no key at all, it generates one** (`ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519`). The empty passphrase is deliberate: `.ut` sync has to run unattended for the whole `pnpm dev` session.
+4. **Installs the public key on the router.** It first tests whether passwordless SSH already works (`ssh -o BatchMode=yes … echo ok`) and skips the install if so — `--force` bypasses that check. Otherwise it appends the key to `/etc/dropbear/authorized_keys` over one interactive SSH session; the append is guarded by `grep -qxF`, so re-running never duplicates the entry. **This is the only step that asks for the router's root password, and it asks once.** Afterwards it re-tests passwordless auth and classifies any failure (wrong password / host unreachable / other). On a device running openssh rather than dropbear the key belongs in `/root/.ssh/authorized_keys` instead — install it manually there and this step detects it and skips.
+5. **Verifies the sync end-to-end.** Rather than trusting `echo ok`, it pushes `ucode/template/themes/aurora/` through the exact `tar -cf - | ssh … tar -xf -` pipeline the `ut-sync` plugin uses (see [Template (`.ut`) Live Sync](#template-ut-live-sync)). If this passes, `pnpm dev`'s template sync will too.
+6. **Writes `.env`.** Managed keys are rewritten in place so surrounding comments keep their meaning, missing ones are appended, and any other line passes through untouched.
+
+> The password prompt in step 4 comes from the **local** ssh client, which reads it straight from `/dev/tty` rather than stdin — so it shows up normally even though the script pipes ssh's stderr in order to classify errors. It does mean the step needs a controlling terminal **on the development machine** (the router side is unaffected): run it from a normal shell, not from CI, `nohup`, or an editor task pane, where ssh has no way to ask and the run fails at authentication. Check with `tty` if unsure; in such an environment, install the key by hand instead.
 
 If the router is at the default `192.168.1.1` and passwordless SSH already works, no `.env` is needed at all — every value below has a working default.
 
@@ -182,11 +204,11 @@ For LuCI-specific JavaScript development, refer to the official API documentatio
 
 - **CSS changes**: Trigger full page reload via custom HMR handler
 - **JS changes**: Trigger full page reload via custom HMR handler
-- **Template changes** (`.ut` files): Auto-synced to router over SSH and trigger full page reload (one-time `pnpm setup` required, see below)
+- **Template changes** (`.ut` files): Auto-synced to router over SSH and trigger full page reload (one-time `pnpm setup:router` required, see below)
 
 ### Template (`.ut`) Live Sync
 
-The `.ut` template files are rendered server-side on the OpenWrt device, so unlike CSS/JS they can't be served locally — the dev server pushes them to the router instead. Run `pnpm setup` once to configure passwordless SSH; after that it's fully automatic:
+The `.ut` template files are rendered server-side on the OpenWrt device, so unlike CSS/JS they can't be served locally — the dev server pushes them to the router instead. Run `pnpm setup:router` once to configure passwordless SSH; after that it's fully automatic:
 
 - **On startup**, the whole template directory is pushed (as one tarball over ssh stdin — Dropbear has no SFTP server for scp), so edits made while the dev server was down never leave the router stale.
 - **On save**, changes are debounced and the directory is pushed again, then the browser reloads.
@@ -195,7 +217,7 @@ The `.ut` template files are rendered server-side on the OpenWrt device, so unli
 **Troubleshooting** — sync errors are printed with the fix:
 
 - **Host key mismatch** (device was reflashed): Run `ssh-keygen -R <device-ip>`, then restart the dev server
-- **Authentication failed** (public key not on device): Run `pnpm setup`
+- **Authentication failed** (public key not on device, e.g. after a reflash): Run `pnpm setup:router` (add `--force` if it reports SSH already works)
 - **Connection refused/timed out**: Check that the device is online and SSH is enabled
 
 A failed sync is retried on the next `.ut` change; CSS/JS dev features work normally without SSH.
@@ -271,7 +293,8 @@ luci-theme-aurora/
 │   │   └── images/                 # Theme images + PWA icons
 │   ├── scripts/                    # Build scripts
 │   │   ├── clean.js                # Build cleanup utility
-│   │   └── gen-tokens.js           # Regenerates src/media/_tokens.css from @eamonxg/aurora-tokens
+│   │   ├── gen-tokens.js           # Regenerates src/media/_tokens.css from @eamonxg/aurora-tokens
+│   │   └── setup.js                # pnpm setup:router — .env wizard + passwordless SSH to the router
 │   ├── src/                        # Source code
 │   │   ├── assets/icons/           # SVG icons
 │   │   ├── media/                  # CSS source (Tailwind CSS v4)
