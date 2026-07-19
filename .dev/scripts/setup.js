@@ -2,12 +2,10 @@
  * Router connection setup: writes .env and installs an SSH key on the router
  * so ut-sync works without any manual ssh configuration.
  *
- * Usage: pnpm setup:router [ip] [--force]
+ * Usage: pnpm setup:router [ip]
  *   ip       router address; omit for the interactive wizard, which asks for
  *            every .env value (router IP, dev-server host/port) with the
  *            current .env entries as defaults
- *   --force  reinstall the SSH key even if passwordless SSH already works
- *            (e.g. after reflashing the router)
  *
  * (The script is named `setup:router` because plain `pnpm setup` resolves to
  * pnpm's own built-in setup command, never a package.json script.)
@@ -69,7 +67,6 @@ function canReachSsh(hostname, timeout = 2000) {
 console.log("Aurora router setup — passwordless SSH + .env for `pnpm dev`\n");
 
 const args = process.argv.slice(2);
-const force = args.includes("--force") || args.includes("-f");
 const argIp = args.find((a) => !a.startsWith("-"));
 
 // Every variable the wizard manages (the full .env surface, see
@@ -163,18 +160,13 @@ if (!pubKeyPath) {
   pubKeyPath = join(sshDir, "id_ed25519.pub");
 }
 
-if (!force && canAuth(host)) {
+if (canAuth(host)) {
   console.log(
     `✓ Passwordless SSH to ${host} already works (checked: ssh echo).`,
   );
-  console.log(
-    "  If the router was reflashed or keys changed, re-run with --force to reinstall the key.",
-  );
 } else {
   console.log(
-    force
-      ? `Reinstalling ${pubKeyPath} on the router (--force; enter the router password once):`
-      : `Installing ${pubKeyPath} on the router (enter the router password once):`,
+    `Installing ${pubKeyPath} on the router (enter the router password once):`,
   );
   const pubKey = readFileSync(pubKeyPath, "utf-8").trim();
   // stderr is piped so failures can be classified below; ssh's password prompt

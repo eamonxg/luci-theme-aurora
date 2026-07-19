@@ -8,7 +8,7 @@ All dev commands run from `.dev/`:
 
 ```bash
 cd .dev/
-pnpm setup:router  # One-shot dev setup: all .env values (router IP, dev host/port) → .env, installs SSH key on device ([ip] [--force] to re-run after a reflash)
+pnpm setup:router  # One-shot dev setup: all .env values (router IP, dev host/port) → .env, installs SSH key on device ([ip] to run non-interactively; safe to re-run after a reflash)
 pnpm dev        # Start Vite dev server (proxies to OpenWrt device)
 pnpm build      # Clean + regenerate tokens + build production assets to htdocs/luci-static/
 pnpm gen:tokens # Regenerate src/media/_tokens.css from tokens/ (also runs as part of build)

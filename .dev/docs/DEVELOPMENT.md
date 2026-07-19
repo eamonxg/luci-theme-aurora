@@ -36,10 +36,6 @@ pnpm setup:router
 # Non-interactive: pass the IP directly (no prompts; dev-server values keep
 # their saved .env entries or defaults)
 pnpm setup:router 192.168.2.1
-
-# Reinstall the SSH key even if passwordless SSH still works
-# (e.g. after reflashing the router)
-pnpm setup:router --force
 ```
 
 > The script is named `setup:router` (not `setup`) because `pnpm setup` resolves to pnpm's own built-in setup command and would never run a package script.
@@ -49,7 +45,7 @@ pnpm setup:router --force
 1. **Collects the `.env` values.** With no argument it prompts for each variable in turn, showing the current `.env` entry as the default (an empty answer keeps it). With an IP argument it takes that as `VITE_OPENWRT_HOST` non-interactively and leaves the dev-server values alone. Nothing is written yet — `.env` is only updated once every step below has succeeded.
 2. **Pre-flights the connection.** A raw TCP probe of `<host>:22` with a 2s timeout, so an unreachable device or one with SSH disabled fails immediately with a clear message instead of hanging inside ssh.
 3. **Finds or generates an SSH key.** It looks for `~/.ssh/id_ed25519.pub`, `id_rsa.pub`, `id_ecdsa.pub` in that order and reuses the first one present — an existing key is never overwritten. **If you have no key at all, it generates one** (`ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519`). The empty passphrase is deliberate: `.ut` sync has to run unattended for the whole `pnpm dev` session.
-4. **Installs the public key on the router.** It first tests whether passwordless SSH already works (`ssh -o BatchMode=yes … echo ok`) and skips the install if so — `--force` bypasses that check. Otherwise it appends the key to `/etc/dropbear/authorized_keys` over one interactive SSH session; the append is guarded by `grep -qxF`, so re-running never duplicates the entry. **This is the only step that asks for the router's root password, and it asks once.** Afterwards it re-tests passwordless auth and classifies any failure (wrong password / host unreachable / other). On a device running openssh rather than dropbear the key belongs in `/root/.ssh/authorized_keys` instead — install it manually there and this step detects it and skips.
+4. **Installs the public key on the router.** It first tests whether passwordless SSH already works (`ssh -o BatchMode=yes … echo ok`) and skips the install if so — after a full reflash that wipes the key, the test fails and the install simply runs again. Otherwise it appends the key to `/etc/dropbear/authorized_keys` over one interactive SSH session; the append is guarded by `grep -qxF`, so re-running never duplicates the entry. **This is the only step that asks for the router's root password, and it asks once.** Afterwards it re-tests passwordless auth and classifies any failure (wrong password / host unreachable / other). On a device running openssh rather than dropbear the key belongs in `/root/.ssh/authorized_keys` instead — install it manually there and this step detects it and skips.
 5. **Verifies the sync end-to-end.** Rather than trusting `echo ok`, it pushes `ucode/template/themes/aurora/` through the exact `tar -cf - | ssh … tar -xf -` pipeline the `ut-sync` plugin uses (see [Template (`.ut`) Live Sync](#template-ut-live-sync)). If this passes, `pnpm dev`'s template sync will too.
 6. **Writes `.env`.** Managed keys are rewritten in place so surrounding comments keep their meaning, missing ones are appended, and any other line passes through untouched.
 
@@ -217,7 +213,7 @@ The `.ut` template files are rendered server-side on the OpenWrt device, so unli
 **Troubleshooting** — sync errors are printed with the fix:
 
 - **Host key mismatch** (device was reflashed): Run `ssh-keygen -R <device-ip>`, then restart the dev server
-- **Authentication failed** (public key not on device, e.g. after a reflash): Run `pnpm setup:router` (add `--force` if it reports SSH already works)
+- **Authentication failed** (public key not on device, e.g. after a reflash): Run `pnpm setup:router`
 - **Connection refused/timed out**: Check that the device is online and SSH is enabled
 
 A failed sync is retried on the next `.ut` change; CSS/JS dev features work normally without SSH.
