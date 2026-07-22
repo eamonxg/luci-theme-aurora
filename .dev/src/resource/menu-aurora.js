@@ -519,12 +519,35 @@ return baseclass.extend({
       item.pages.forEach((page) =>
         this.searchIndex.push({
           title: page.title,
-          name: page.name,
+          // Section-qualified: "status/overview" keeps English dispatch
+          // segments matchable under any UI language, and the "/" is what
+          // arms the scorer's segment-start bonus.
+          name: `${item.name}/${page.name}`,
           group: item.title,
           href: page.href,
         }),
       );
     });
+
+    // The only non-navigation commands: theme modes. They ride the same
+    // index — matched and rendered like pages, grouped under _("Design")
+    // (the System → Language and Style label) — but execute header.ut's
+    // global setTheme() instead of navigating, so the panel stays open and
+    // previews the switch live. luci-base has no Light/Dark msgids — they
+    // stay English literals, wrapped in _() so a future catalog entry would
+    // take effect (the same trade the icon-only switcher makes).
+    [
+      ["light", _("Light")],
+      ["dark", _("Dark")],
+      ["device", _("Automatic")],
+    ].forEach(([mode, title]) =>
+      this.searchIndex.push({
+        title,
+        name: `theme ${mode}`,
+        group: _("Design"),
+        mode,
+      }),
+    );
 
     // Only msgids that already exist in the luci-base catalog are used —
     // the theme intentionally ships no translations of its own.
@@ -540,8 +563,10 @@ return baseclass.extend({
       // composition, not the panel); keyCode 229 covers engines that
       // don't set isComposing on the trailing keydown.
       if (e.isComposing || e.keyCode === 229) return;
+      // Platform-exact modifier — only the advertised shortcut. On macOS,
+      // Ctrl+K is kill-to-end-of-line in text fields and must keep working.
       if (
-        (e.metaKey || e.ctrlKey) &&
+        (isMac ? e.metaKey : e.ctrlKey) &&
         !e.altKey &&
         !e.shiftKey &&
         (e.key || "").toLowerCase() === "k"
@@ -565,15 +590,27 @@ return baseclass.extend({
   },
 
   buildSearchPanel() {
+    // type=search gets WebKit's native clear button for free; the combobox
+    // wiring (with role=option rows) is what makes arrow-key selection
+    // audible to screen readers — visually it's CSS-only .is-selected.
     const input = E("input", {
       class: "header-search-input",
-      type: "text",
+      type: "search",
+      enterkeyhint: "go",
       placeholder: _("Type to filter…"),
       "aria-label": _("Type to filter…"),
       autocomplete: "off",
       spellcheck: "false",
+      role: "combobox",
+      "aria-expanded": "true",
+      "aria-autocomplete": "list",
+      "aria-controls": "header-search-results",
     });
-    const results = E("div", { class: "header-search-results" });
+    const results = E("div", {
+      class: "header-search-results",
+      id: "header-search-results",
+      role: "listbox",
+    });
     // Mobile-only exit (the full-screen takeover leaves no outside to tap
     // and touch devices have no Escape) — hidden on md+ via CSS.
     const cancel = E(
@@ -598,6 +635,7 @@ return baseclass.extend({
         E("div", { class: "header-search-hint" }, [
           E("kbd", {}, ["↑↓"]),
           E("kbd", {}, ["↵"]),
+          E("kbd", {}, [">"]),
           E("kbd", {}, ["esc"]),
           E("span", { class: "header-search-hint-key" }, [
             E("kbd", {}, [this.searchKey]),
@@ -629,6 +667,21 @@ return baseclass.extend({
       if (row && !row.classList.contains("is-selected"))
         this.setSearchSelection(row);
     });
+    // Theme rows execute instead of navigate: hand the mode to header.ut's
+    // global setTheme/syncSwitchers, keep the panel open so the switch
+    // previews live, and re-render so the ✓ follows. Refocus the input —
+    // the clicked anchor is replaced by the re-render, which would strand
+    // focus on <body> with the dialog still open.
+    results.addEventListener("click", (e) => {
+      const mode = e.target?.closest?.(".header-search-result")?.dataset.mode;
+      if (!mode) return;
+      e.preventDefault();
+      setTheme(mode);
+      syncSwitchers();
+      this.renderSearchResults(input.value);
+      this.setSearchSelection(results.querySelector(`[data-mode="${mode}"]`));
+      input.focus();
+    });
     // The dialog is modal (full-screen takeover on mobile): keep Tab
     // cycling within it instead of escaping onto the page beneath.
     panel.addEventListener("keydown", (e) => {
@@ -652,17 +705,92 @@ return baseclass.extend({
     this.searchResults = results;
   },
 
-  renderSearchResults(value) {
-    const q = value.trim().toLowerCase();
-    this.searchResults.replaceChildren();
-    if (!q) return; // Spotlight manner: quiet until typed.
+  // Greedy left-to-right subsequence scorer: adjacency runs and word starts
+  // score up, longer targets score down. Retried from every occurrence of
+  // the query's first character — a single greedy pass would anchor "dns"
+  // to the first d of "Dhcp and dNS" and scatter, scoring it below shorter
+  // near-misses like "Diagnostics". Query arrives lowercased; spaces only
+  // reset the adjacency run.
+  fuzzyMatch(q, text) {
+    const low = String(text).toLowerCase();
+    let best = null;
 
-    const matches = this.searchIndex.filter(
-      (page) =>
-        page.title.toLowerCase().includes(q) ||
-        page.name.toLowerCase().includes(q) ||
-        page.group?.toLowerCase().includes(q),
-    );
+    for (
+      let from = low.indexOf(q[0]);
+      from >= 0;
+      from = low.indexOf(q[0], from + 1)
+    ) {
+      let ti = from;
+      let score = 0;
+      let run = 0;
+      const ranges = [];
+
+      for (const c of q) {
+        if (c === " ") {
+          run = 0;
+          continue;
+        }
+        const at = low.indexOf(c, ti);
+        if (at < 0) {
+          ranges.length = 0;
+          break;
+        }
+
+        run = at === ti && ranges.length ? run + 1 : 1;
+        score +=
+          1 +
+          run +
+          (at === ti && ranges.length ? 4 : 0) +
+          (at === 0 || low[at - 1] === " " || low[at - 1] === "/" ? 3 : 0);
+
+        const last = ranges[ranges.length - 1];
+        if (last && last[1] === at) last[1] = at + 1;
+        else ranges.push([at, at + 1]);
+        ti = at + 1;
+      }
+
+      score -= low.length * 0.02;
+      if (ranges.length && (!best || score > best.score))
+        best = { score, ranges };
+    }
+
+    return best;
+  },
+
+  // Empty query matches everything at score 0 (the browse list); title hits
+  // outrank name/path and group hits and are the only ones highlighted.
+  matchSearchEntry(q, page) {
+    if (!q) return { score: 0, ranges: null };
+
+    const title = this.fuzzyMatch(q, page.title);
+    if (title) return { score: title.score + 12, ranges: title.ranges };
+
+    const rest =
+      this.fuzzyMatch(q, page.name) ||
+      (page.group ? this.fuzzyMatch(q, page.group) : null);
+    return rest && { score: rest.score, ranges: null };
+  },
+
+  renderSearchResults(value) {
+    let q = value.trim().toLowerCase();
+    // A leading ">" scopes the list to the command rows (the prototype's
+    // command-only mode); "＞" covers CJK IMEs emitting the full-width form.
+    const cmdOnly = q[0] === ">" || q[0] === "＞";
+    if (cmdOnly) q = q.slice(1).trim();
+    const theme = localStorage.getItem("aurora.theme") || "device";
+    const matches = [];
+
+    for (const page of this.searchIndex) {
+      if (cmdOnly && !page.mode) continue;
+      const m = this.matchSearchEntry(q, page);
+      if (m) matches.push({ page, score: m.score, ranges: m.ranges });
+    }
+    // sort() is spec-stable: equal scores keep menu order (and the browse
+    // list stays in menu order by skipping the sort entirely).
+    if (q) matches.sort((a, b) => b.score - a.score);
+
+    this.searchInput.removeAttribute("aria-activedescendant");
+    this.searchResults.replaceChildren();
 
     if (!matches.length) {
       this.searchResults.appendChild(
@@ -671,43 +799,67 @@ return baseclass.extend({
       return;
     }
 
-    matches.forEach((page, i) => {
+    matches.forEach(({ page, ranges }, i) => {
+      const current = page.mode && page.mode === theme;
+      const attributes = {
+        class: "header-search-result",
+        id: `header-search-option-${i}`,
+        role: "option",
+        "aria-selected": "false",
+        href: page.href || "#",
+      };
+      if (page.mode) attributes["data-mode"] = page.mode;
+      if (current) attributes["aria-current"] = "true";
+
       this.searchResults.appendChild(
-        E(
-          "a",
-          {
-            class: `header-search-result${i ? "" : " is-selected"}`,
-            href: page.href,
-          },
-          [
-            E(
-              "span",
-              { class: "result-title" },
-              this.highlightSearchMatch(page.title, q),
-            ),
-            page.group ? E("span", { class: "result-group" }, [page.group]) : "",
-          ],
-        ),
+        E("a", attributes, [
+          E(
+            "span",
+            { class: "result-title" },
+            this.highlightSearchMatch(page.title, ranges),
+          ),
+          current
+            ? // The ✓ is decorative (aria-current carries the state); mark
+              // reuses the highlight colour without any new CSS.
+              E("span", { class: "result-group", "aria-hidden": "true" }, [
+                E("mark", {}, ["✓"]),
+              ])
+            : page.group
+              ? E("span", { class: "result-group" }, [page.group])
+              : "",
+        ]),
       );
     });
+
+    this.setSearchSelection(this.searchResults.firstChild);
   },
 
-  highlightSearchMatch(title, q) {
-    const at = title.toLowerCase().indexOf(q);
-    if (at < 0) return [title];
+  highlightSearchMatch(title, ranges) {
+    // Ranges were measured on the lowercased copy; case folding can change
+    // string length ("İ" → "i̇"), skewing offsets into the original — skip
+    // highlighting rather than mis-slice.
+    if (!ranges || title.toLowerCase().length !== title.length) return [title];
 
-    return [
-      title.slice(0, at),
-      E("mark", {}, [title.slice(at, at + q.length)]),
-      title.slice(at + q.length),
-    ];
+    const parts = [];
+    let last = 0;
+    ranges.forEach(([from, to]) => {
+      parts.push(
+        title.slice(last, from),
+        E("mark", {}, [title.slice(from, to)]),
+      );
+      last = to;
+    });
+    parts.push(title.slice(last));
+    return parts;
   },
 
   setSearchSelection(row) {
-    this.searchResults
-      .querySelector(".is-selected")
-      ?.classList.remove("is-selected");
+    const prev = this.searchResults.querySelector(".is-selected");
+    prev?.classList.remove("is-selected");
+    prev?.setAttribute("aria-selected", "false");
     row.classList.add("is-selected");
+    row.setAttribute("aria-selected", "true");
+    this.searchInput.setAttribute("aria-activedescendant", row.id);
   },
 
   moveSearchSelection(delta) {
@@ -737,7 +889,7 @@ return baseclass.extend({
     this.searchToggle.setAttribute("aria-expanded", "true");
     this.searchPanel.hidden = false;
     this.searchInput.value = "";
-    this.searchResults.replaceChildren();
+    this.renderSearchResults("");
     this.searchInput.focus();
     document.addEventListener("pointerdown", this.onSearchAway);
   },

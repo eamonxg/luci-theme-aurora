@@ -4,7 +4,10 @@
  * right edge next to #indicators; ⌘K / Ctrl+K toggles the panel globally.
  *
  * The panel is built lazily by menu-aurora.js on first open; its index is
- * the navigation model the menus already render from (no extra requests).
+ * the navigation model the menus already render from (no extra requests)
+ * plus three theme-mode command rows. An empty query browses the whole
+ * index; typed queries rank via a fuzzy subsequence scorer; a leading ">"
+ * (or full-width "＞") scopes the list to the command rows.
  */
 
 .header-search-toggle {
