@@ -495,20 +495,20 @@ return baseclass.extend({
     });
   },
 
-  // Route search (all nav types): a Spotlight-style palette on ⌘K / Ctrl+K
-  // or the header toggle. The index is the navigation model the menus
-  // already render from — no extra requests, no DOM scraping — and the
-  // panel DOM is built lazily on first open, so pages where search is never
-  // used pay nothing beyond this flat array.
-  initSearch(items) {
-    const toggle = document.querySelector("#header-search-toggle");
-    if (!toggle || this.searchIndex) return;
+  // Command palette (all nav types): a Spotlight-style panel on ⌘K / Ctrl+K
+  // or the header trigger, holding routes and theme-mode commands. The index
+  // is the navigation model the menus already render from — no extra
+  // requests, no DOM scraping — and the panel DOM is built lazily on first
+  // open, so pages where it is never used pay nothing beyond this flat array.
+  initPalette(items) {
+    const toggle = document.querySelector("#cmdk-trigger");
+    if (!toggle || this.paletteIndex) return;
 
-    this.searchIndex = [];
+    this.paletteIndex = [];
     items.forEach((item) => {
       if (item.isLogout) return;
       if (!item.hasChildren) {
-        this.searchIndex.push({
+        this.paletteIndex.push({
           title: item.title,
           name: item.name,
           group: null,
@@ -517,97 +517,137 @@ return baseclass.extend({
         return;
       }
       item.pages.forEach((page) =>
-        this.searchIndex.push({
+        this.paletteIndex.push({
           title: page.title,
-          name: page.name,
+          // Section-qualified: "status/overview" keeps English dispatch
+          // segments matchable under any UI language, and the "/" is what
+          // arms the scorer's segment-start bonus.
+          name: `${item.name}/${page.name}`,
           group: item.title,
           href: page.href,
         }),
       );
     });
 
+    // The only non-navigation commands: theme modes. They ride the same
+    // index — matched and rendered like pages, grouped under _("Design")
+    // (the System → Language and Style label) — but execute header.ut's
+    // global setTheme() instead of navigating, so the panel stays open and
+    // previews the switch live. luci-base has no Light/Dark msgids — they
+    // stay English literals, wrapped in _() so a future catalog entry would
+    // take effect (the same trade the icon-only switcher makes).
+    [
+      ["light", _("Light")],
+      ["dark", _("Dark")],
+      ["device", _("Automatic")],
+    ].forEach(([mode, title]) =>
+      this.paletteIndex.push({
+        title,
+        name: `theme ${mode}`,
+        group: _("Design"),
+        mode,
+      }),
+    );
+
     // Only msgids that already exist in the luci-base catalog are used —
     // the theme intentionally ships no translations of its own.
     const isMac = /Mac|iP(ad|hone|od)/.test(navigator.platform);
-    this.searchKey = isMac ? "⌘K" : "Ctrl+K";
+    this.paletteKey = isMac ? "⌘K" : "Ctrl+K";
     toggle.setAttribute("aria-keyshortcuts", isMac ? "Meta+K" : "Control+K");
     toggle.setAttribute("aria-expanded", "false");
-    toggle.addEventListener("click", () => this.toggleSearch());
-    this.searchToggle = toggle;
+    toggle.addEventListener("click", () => this.togglePalette());
+    this.paletteTrigger = toggle;
 
     document.addEventListener("keydown", (e) => {
       // An IME swallows these keys while composing (Esc cancels the
       // composition, not the panel); keyCode 229 covers engines that
       // don't set isComposing on the trailing keydown.
       if (e.isComposing || e.keyCode === 229) return;
+      // Platform-exact modifier — only the advertised shortcut, with every
+      // other modifier rejected so combinations like Ctrl+Cmd+K fall through.
+      // On macOS, Ctrl+K is kill-to-end-of-line in text fields and must keep
+      // working.
       if (
-        (e.metaKey || e.ctrlKey) &&
+        (isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey) &&
         !e.altKey &&
         !e.shiftKey &&
         (e.key || "").toLowerCase() === "k"
       ) {
         e.preventDefault();
-        this.toggleSearch();
+        this.togglePalette();
       } else if (
         e.key === "Escape" &&
-        this.searchPanel &&
-        !this.searchPanel.hidden
+        this.palettePanel &&
+        !this.palettePanel.hidden
       ) {
-        this.closeSearch();
+        this.closePalette();
       }
     });
 
-    // Registered only while the panel is open (see openSearch/closeSearch).
-    this.onSearchAway = (e) => {
-      if (!this.searchPanel.contains(e.target) && !toggle.contains(e.target))
-        this.closeSearch();
+    // Registered only while the panel is open (see openPalette/closePalette).
+    this.onPaletteAway = (e) => {
+      if (!this.palettePanel.contains(e.target) && !toggle.contains(e.target))
+        this.closePalette();
     };
   },
 
-  buildSearchPanel() {
+  buildPalette() {
+    // type=search gets WebKit's native clear button for free; the combobox
+    // wiring (with role=option rows) is what makes arrow-key selection
+    // audible to screen readers — visually it's CSS-only .is-selected.
     const input = E("input", {
-      class: "header-search-input",
-      type: "text",
+      class: "cmdk-input",
+      type: "search",
+      enterkeyhint: "go",
       placeholder: _("Type to filter…"),
       "aria-label": _("Type to filter…"),
       autocomplete: "off",
       spellcheck: "false",
+      role: "combobox",
+      "aria-expanded": "true",
+      "aria-autocomplete": "list",
+      "aria-controls": "cmdk-list",
     });
-    const results = E("div", { class: "header-search-results" });
+    const results = E("div", {
+      class: "cmdk-list",
+      id: "cmdk-list",
+      role: "listbox",
+    });
     // Mobile-only exit (the full-screen takeover leaves no outside to tap
     // and touch devices have no Escape) — hidden on md+ via CSS.
     const cancel = E(
       "button",
-      { class: "header-search-cancel", type: "button" },
+      { class: "cmdk-cancel", type: "button" },
       [_("Cancel")],
     );
-    cancel.addEventListener("click", () => this.closeSearch());
+    cancel.addEventListener("click", () => this.closePalette());
     const panel = E(
       "div",
       {
-        id: "header-search-panel",
-        class: "header-search-panel",
+        id: "cmdk-panel",
+        class: "cmdk-panel",
         role: "dialog",
         "aria-modal": "true",
         "aria-label": _("Navigation"),
         hidden: "",
       },
       [
-        E("div", { class: "header-search-box" }, [input, cancel]),
+        E("div", { class: "cmdk-inputrow" }, [input, cancel]),
         results,
-        E("div", { class: "header-search-hint" }, [
+        E("div", { class: "cmdk-footer" }, [
           E("kbd", {}, ["↑↓"]),
           E("kbd", {}, ["↵"]),
+          E("kbd", {}, [">"]),
           E("kbd", {}, ["esc"]),
-          E("span", { class: "header-search-hint-key" }, [
-            E("kbd", {}, [this.searchKey]),
+          E("span", { class: "cmdk-hint-close" }, [
+            E("kbd", {}, [this.paletteKey]),
           ]),
         ]),
       ],
     );
 
     input.addEventListener("input", () =>
-      this.renderSearchResults(input.value),
+      this.renderPaletteResults(input.value),
     );
     input.addEventListener("keydown", (e) => {
       // Mid-composition these keys belong to the IME: Enter commits the
@@ -616,7 +656,7 @@ return baseclass.extend({
       if (e.isComposing || e.keyCode === 229) return;
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
-        this.moveSearchSelection(e.key === "ArrowDown" ? 1 : -1);
+        this.movePaletteSelection(e.key === "ArrowDown" ? 1 : -1);
       } else if (e.key === "Enter") {
         results.querySelector(".is-selected")?.click();
       }
@@ -625,9 +665,24 @@ return baseclass.extend({
     // stationary pointer, which fires mouseover and would snap the
     // selection back to whatever the mouse happens to rest on.
     results.addEventListener("mousemove", (e) => {
-      const row = e.target?.closest?.(".header-search-result");
+      const row = e.target?.closest?.(".cmdk-row");
       if (row && !row.classList.contains("is-selected"))
-        this.setSearchSelection(row);
+        this.setPaletteSelection(row);
+    });
+    // Theme rows execute instead of navigate: hand the mode to header.ut's
+    // global setTheme/syncSwitchers, keep the panel open so the switch
+    // previews live, and re-render so the ✓ follows. Refocus the input —
+    // the clicked anchor is replaced by the re-render, which would strand
+    // focus on <body> with the dialog still open.
+    results.addEventListener("click", (e) => {
+      const mode = e.target?.closest?.(".cmdk-row")?.dataset.mode;
+      if (!mode) return;
+      e.preventDefault();
+      setTheme(mode);
+      syncSwitchers();
+      this.renderPaletteResults(input.value);
+      this.setPaletteSelection(results.querySelector(`[data-mode="${mode}"]`));
+      input.focus();
     });
     // The dialog is modal (full-screen takeover on mobile): keep Tab
     // cycling within it instead of escaping onto the page beneath.
@@ -646,73 +701,176 @@ return baseclass.extend({
     });
 
     document.body.appendChild(panel);
-    this.searchToggle.setAttribute("aria-controls", panel.id);
-    this.searchPanel = panel;
-    this.searchInput = input;
-    this.searchResults = results;
+    this.paletteTrigger.setAttribute("aria-controls", panel.id);
+    this.palettePanel = panel;
+    this.paletteInput = input;
+    this.paletteList = results;
   },
 
-  renderSearchResults(value) {
-    const q = value.trim().toLowerCase();
-    this.searchResults.replaceChildren();
-    if (!q) return; // Spotlight manner: quiet until typed.
+  // Greedy left-to-right subsequence scorer: adjacency runs and word starts
+  // score up, longer targets score down. Retried from every occurrence of
+  // the query's first character — a single greedy pass would anchor "dns"
+  // to the first d of "Dhcp and dNS" and scatter, scoring it below shorter
+  // near-misses like "Diagnostics". Query arrives lowercased; spaces only
+  // reset the adjacency run.
+  fuzzyMatch(q, text) {
+    const low = String(text).toLowerCase();
+    let best = null;
 
-    const matches = this.searchIndex.filter(
-      (page) =>
-        page.title.toLowerCase().includes(q) ||
-        page.name.toLowerCase().includes(q) ||
-        page.group?.toLowerCase().includes(q),
-    );
+    for (
+      let from = low.indexOf(q[0]);
+      from >= 0;
+      from = low.indexOf(q[0], from + 1)
+    ) {
+      let ti = from;
+      let score = 0;
+      let run = 0;
+      const ranges = [];
+
+      for (const c of q) {
+        if (c === " ") {
+          run = 0;
+          continue;
+        }
+        const at = low.indexOf(c, ti);
+        if (at < 0) {
+          ranges.length = 0;
+          break;
+        }
+
+        run = at === ti && ranges.length ? run + 1 : 1;
+        score +=
+          1 +
+          run +
+          (at === ti && ranges.length ? 4 : 0) +
+          (at === 0 || low[at - 1] === " " || low[at - 1] === "/" ? 3 : 0);
+
+        // c is a code point, so it can be two UTF-16 units wide (emoji, CJK
+        // Ext-B); advancing by c.length keeps the ranges — which index the
+        // original string — from slicing a surrogate pair in half.
+        const end = at + c.length;
+        const last = ranges[ranges.length - 1];
+        if (last && last[1] === at) last[1] = end;
+        else ranges.push([at, end]);
+        ti = end;
+      }
+
+      score -= low.length * 0.02;
+      if (ranges.length && (!best || score > best.score))
+        best = { score, ranges };
+    }
+
+    return best;
+  },
+
+  // Empty query matches everything at score 0 (the browse list); title hits
+  // outrank name/path and group hits and are the only ones highlighted.
+  matchPaletteEntry(q, page) {
+    if (!q) return { score: 0, ranges: null };
+
+    const title = this.fuzzyMatch(q, page.title);
+    if (title) return { score: title.score + 12, ranges: title.ranges };
+
+    const rest =
+      this.fuzzyMatch(q, page.name) ||
+      (page.group ? this.fuzzyMatch(q, page.group) : null);
+    return rest && { score: rest.score, ranges: null };
+  },
+
+  renderPaletteResults(value) {
+    let q = value.trim().toLowerCase();
+    // A leading ">" scopes the list to the command rows (the prototype's
+    // command-only mode); "＞" covers CJK IMEs emitting the full-width form.
+    const cmdOnly = q[0] === ">" || q[0] === "＞";
+    if (cmdOnly) q = q.slice(1).trim();
+    const theme = localStorage.getItem("aurora.theme") || "device";
+    const matches = [];
+
+    for (const page of this.paletteIndex) {
+      if (cmdOnly && !page.mode) continue;
+      const m = this.matchPaletteEntry(q, page);
+      if (m) matches.push({ page, score: m.score, ranges: m.ranges });
+    }
+    // sort() is spec-stable: equal scores keep menu order (and the browse
+    // list stays in menu order by skipping the sort entirely).
+    if (q) matches.sort((a, b) => b.score - a.score);
+
+    this.paletteInput.removeAttribute("aria-activedescendant");
+    this.paletteList.replaceChildren();
 
     if (!matches.length) {
-      this.searchResults.appendChild(
-        E("div", { class: "header-search-empty" }, [_("No entries available")]),
+      this.paletteList.appendChild(
+        E("div", { class: "cmdk-empty" }, [_("No entries available")]),
       );
       return;
     }
 
-    matches.forEach((page, i) => {
-      this.searchResults.appendChild(
-        E(
-          "a",
-          {
-            class: `header-search-result${i ? "" : " is-selected"}`,
-            href: page.href,
-          },
-          [
-            E(
-              "span",
-              { class: "result-title" },
-              this.highlightSearchMatch(page.title, q),
-            ),
-            page.group ? E("span", { class: "result-group" }, [page.group]) : "",
-          ],
-        ),
+    matches.forEach(({ page, ranges }, i) => {
+      const current = page.mode && page.mode === theme;
+      const attributes = {
+        class: "cmdk-row",
+        id: `cmdk-option-${i}`,
+        role: "option",
+        "aria-selected": "false",
+        href: page.href || "#",
+      };
+      if (page.mode) attributes["data-mode"] = page.mode;
+      if (current) attributes["aria-current"] = "true";
+
+      this.paletteList.appendChild(
+        E("a", attributes, [
+          E(
+            "span",
+            { class: "cmdk-title" },
+            this.highlightPaletteMatch(page.title, ranges),
+          ),
+          current
+            ? // The ✓ is decorative (aria-current carries the state); mark
+              // reuses the highlight colour without any new CSS.
+              E("span", { class: "cmdk-group-name", "aria-hidden": "true" }, [
+                E("mark", {}, ["✓"]),
+              ])
+            : page.group
+              ? E("span", { class: "cmdk-group-name" }, [page.group])
+              : "",
+        ]),
       );
     });
+
+    this.setPaletteSelection(this.paletteList.firstChild);
   },
 
-  highlightSearchMatch(title, q) {
-    const at = title.toLowerCase().indexOf(q);
-    if (at < 0) return [title];
+  highlightPaletteMatch(title, ranges) {
+    // Ranges were measured on the lowercased copy; case folding can change
+    // string length ("İ" → "i̇"), skewing offsets into the original — skip
+    // highlighting rather than mis-slice.
+    if (!ranges || title.toLowerCase().length !== title.length) return [title];
 
-    return [
-      title.slice(0, at),
-      E("mark", {}, [title.slice(at, at + q.length)]),
-      title.slice(at + q.length),
-    ];
+    const parts = [];
+    let last = 0;
+    ranges.forEach(([from, to]) => {
+      parts.push(
+        title.slice(last, from),
+        E("mark", {}, [title.slice(from, to)]),
+      );
+      last = to;
+    });
+    parts.push(title.slice(last));
+    return parts;
   },
 
-  setSearchSelection(row) {
-    this.searchResults
-      .querySelector(".is-selected")
-      ?.classList.remove("is-selected");
+  setPaletteSelection(row) {
+    const prev = this.paletteList.querySelector(".is-selected");
+    prev?.classList.remove("is-selected");
+    prev?.setAttribute("aria-selected", "false");
     row.classList.add("is-selected");
+    row.setAttribute("aria-selected", "true");
+    this.paletteInput.setAttribute("aria-activedescendant", row.id);
   },
 
-  moveSearchSelection(delta) {
+  movePaletteSelection(delta) {
     const rows = [
-      ...this.searchResults.querySelectorAll(".header-search-result"),
+      ...this.paletteList.querySelectorAll(".cmdk-row"),
     ];
     if (!rows.length) return;
 
@@ -721,33 +879,33 @@ return baseclass.extend({
     );
     const next = rows[(current + delta + rows.length) % rows.length];
 
-    this.setSearchSelection(next);
+    this.setPaletteSelection(next);
     next.scrollIntoView({ block: "nearest" });
   },
 
-  toggleSearch() {
-    if (!this.searchPanel) this.buildSearchPanel();
+  togglePalette() {
+    if (!this.palettePanel) this.buildPalette();
 
-    if (this.searchPanel.hidden) this.openSearch();
-    else this.closeSearch();
+    if (this.palettePanel.hidden) this.openPalette();
+    else this.closePalette();
   },
 
-  openSearch() {
-    this.searchReturnFocus = document.activeElement;
-    this.searchToggle.setAttribute("aria-expanded", "true");
-    this.searchPanel.hidden = false;
-    this.searchInput.value = "";
-    this.searchResults.replaceChildren();
-    this.searchInput.focus();
-    document.addEventListener("pointerdown", this.onSearchAway);
+  openPalette() {
+    this.paletteReturnFocus = document.activeElement;
+    this.paletteTrigger.setAttribute("aria-expanded", "true");
+    this.palettePanel.hidden = false;
+    this.paletteInput.value = "";
+    this.renderPaletteResults("");
+    this.paletteInput.focus();
+    document.addEventListener("pointerdown", this.onPaletteAway);
   },
 
-  closeSearch() {
-    this.searchToggle.setAttribute("aria-expanded", "false");
-    this.searchPanel.hidden = true;
-    document.removeEventListener("pointerdown", this.onSearchAway);
-    if (this.searchReturnFocus?.isConnected) this.searchReturnFocus.focus();
-    this.searchReturnFocus = null;
+  closePalette() {
+    this.paletteTrigger.setAttribute("aria-expanded", "false");
+    this.palettePanel.hidden = true;
+    document.removeEventListener("pointerdown", this.onPaletteAway);
+    if (this.paletteReturnFocus?.isConnected) this.paletteReturnFocus.focus();
+    this.paletteReturnFocus = null;
   },
 
   // Shared scaffolding for the two desktop dropdown modes (mega-menu and
@@ -1152,7 +1310,7 @@ return baseclass.extend({
       );
       this.renderMainMenu(activeChild, activeChild.name, 0, navigationItems);
       this.renderMobileMenu(navigationItems);
-      this.initSearch(navigationItems);
+      this.initPalette(navigationItems);
     }
 
     if (ul?.children.length > 1) {
