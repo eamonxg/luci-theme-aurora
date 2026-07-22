@@ -6,10 +6,10 @@
 import tailwindcss from "@tailwindcss/vite";
 import browserslist from "browserslist";
 import { exec } from "child_process";
-import { existsSync, readdirSync } from "fs";
+import { existsSync, readdirSync, statSync } from "fs";
 import { mkdir, readdir, readFile, writeFile } from "fs/promises";
 import { browserslistToTargets } from "lightningcss";
-import { basename, dirname, join, relative, resolve } from "path";
+import { basename, dirname, join, relative, resolve, sep } from "path";
 import { minify as terserMinify } from "terser";
 import { promisify } from "util";
 import {
@@ -73,6 +73,30 @@ function createLuciJsCompressPlugin(): Plugin {
 const PATCH_PUBLIC_PREFIX = "/luci-static/aurora/patches/";
 const PATCH_SRC_DIR = resolve(CURRENT_DIR, "src/media/patches");
 
+// Theme assets (public/aurora/**: images, fonts): serve the copy in this
+// checkout at /luci-static/aurora/<path>. Without this, header.ut's logo,
+// favicon, webmanifest and font references fall through to the OpenWrt proxy
+// and resolve against the *installed* package, so an icon or font added here
+// 404s until the package is rebuilt and reinstalled. Only files that exist
+// locally are rewritten — everything else still proxies through.
+const ASSET_PUBLIC_PREFIX = "/luci-static/aurora/";
+const ASSET_SRC_DIR = resolve(CURRENT_DIR, "public/aurora");
+
+// Resolves a request path under public/aurora/, or null when it escapes the
+// directory (../) or names something that is not a file there.
+function localAsset(relPath: string): string | null {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(relPath);
+  } catch {
+    return null;
+  }
+  const file = resolve(ASSET_SRC_DIR, decoded);
+  if (!file.startsWith(ASSET_SRC_DIR + sep)) return null;
+
+  return existsSync(file) && statSync(file).isFile() ? decoded : null;
+}
+
 function createLocalServePlugin(): Plugin {
   const cssRoutes: Record<string, string> = {
     "/luci-static/aurora/main.css": "/src/media/main.css",
@@ -115,6 +139,13 @@ function createLocalServePlugin(): Plugin {
           if (existsSync(join(PATCH_SRC_DIR, file))) {
             req.url =
               `/src/media/patches/${file}` + (search ? `?${search}` : "");
+            return next();
+          }
+        }
+        if (pathname.startsWith(ASSET_PUBLIC_PREFIX)) {
+          const asset = localAsset(pathname.slice(ASSET_PUBLIC_PREFIX.length));
+          if (asset) {
+            req.url = `/aurora/${asset}` + (search ? `?${search}` : "");
             return next();
           }
         }
