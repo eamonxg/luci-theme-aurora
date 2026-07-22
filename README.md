@@ -136,5 +136,6 @@ Thanks goes to these wonderful people:
 - [luci-theme-bootstrap](https://github.com/openwrt/luci/tree/master/themes/luci-theme-bootstrap)
 - [Vite](https://vitejs.dev/)
 - [Tailwind CSS](https://tailwindcss.com/)
+- [Tabler Icons](https://tabler.io/icons) — the interface icon set
 - [Claude Code](https://claude.ai/code)
 - [Apple](https://www.apple.com/) and [Vercel](https://vercel.com/) — design inspiration

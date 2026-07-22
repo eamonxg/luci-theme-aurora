@@ -312,8 +312,10 @@ header {
   #indicators {
     @apply flex shrink-0 flex-row-reverse gap-5 md:gap-8;
 
+    /* Same hover language as .navigation-toggle and .cmdk-trigger: a scale
+       nudge, never a background plate. */
     & span[data-indicator] {
-      @apply before:text-text size-5 cursor-pointer text-[0px] before:absolute before:size-5 before:bg-current;
+      @apply before:text-text size-5 cursor-pointer text-[0px] transition-transform duration-150 before:absolute before:size-5 before:bg-current hover:scale-105 active:scale-95;
 
       &[data-indicator="media_error"] {
         @apply before:[mask:url('@assets/icons/error.svg')_center/cover_no-repeat];
@@ -330,7 +332,7 @@ header {
       }
 
       &[data-indicator="uci-changes"] {
-        @apply relative before:[mask:url('@assets/icons/setting.svg')_center/cover_no-repeat];
+        @apply relative before:[mask:url('@assets/icons/settings.svg')_center/cover_no-repeat];
 
         &[data-count]:not([data-count="0"]) {
           @apply after:bg-danger after:text-on-brand after:absolute after:-top-0.5 after:-right-0.5 after:z-10 after:flex after:min-h-3 after:min-w-3 after:items-center after:justify-center after:rounded-full after:px-0.5 after:text-[8px] after:leading-none after:font-bold after:shadow-sm after:content-[attr(data-count)];

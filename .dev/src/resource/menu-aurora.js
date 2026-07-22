@@ -592,12 +592,15 @@ return baseclass.extend({
   },
 
   buildPalette() {
-    // type=search gets WebKit's native clear button for free; the combobox
+    // type=text, not search: WebKit's search variant draws its own clear
+    // glyph at its own weight, which reads foreign next to the theme's
+    // Tabler set (and Firefox draws none at all) — .cmdk-clear below is the
+    // themed replacement, matching luci-theme-shadcn's palette. The combobox
     // wiring (with role=option rows) is what makes arrow-key selection
     // audible to screen readers — visually it's CSS-only .is-selected.
     const input = E("input", {
       class: "cmdk-input",
-      type: "search",
+      type: "text",
       enterkeyhint: "go",
       placeholder: _("Type to filter…"),
       "aria-label": _("Type to filter…"),
@@ -612,6 +615,18 @@ return baseclass.extend({
       class: "cmdk-list",
       id: "cmdk-list",
       role: "listbox",
+    });
+    // Visibility is CSS-only (:placeholder-shown on the input), so nothing
+    // here has to mirror the query state.
+    const clear = E("button", {
+      class: "cmdk-clear",
+      type: "button",
+      "aria-label": _("Clear"),
+    });
+    clear.addEventListener("click", () => {
+      input.value = "";
+      this.renderPaletteResults("");
+      input.focus();
     });
     // Mobile-only exit (the full-screen takeover leaves no outside to tap
     // and touch devices have no Escape) — hidden on md+ via CSS.
@@ -632,7 +647,7 @@ return baseclass.extend({
         hidden: "",
       },
       [
-        E("div", { class: "cmdk-inputrow" }, [input, cancel]),
+        E("div", { class: "cmdk-inputrow" }, [input, clear, cancel]),
         results,
         E("div", { class: "cmdk-footer" }, [
           E("kbd", {}, ["↑↓"]),
@@ -690,6 +705,7 @@ return baseclass.extend({
       if (e.key !== "Tab") return;
       const focusables = [
         input,
+        clear,
         ...results.querySelectorAll("a"),
         cancel,
       ].filter((el) => el.getClientRects().length);

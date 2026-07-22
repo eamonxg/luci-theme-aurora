@@ -13,7 +13,10 @@
  */
 
 .cmdk-trigger {
-  @apply text-text relative mr-4 grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg border-0 bg-transparent p-0 shadow-none transition-colors duration-150;
+  /* Hover is a scale nudge with no plate behind it — the header's own
+     language, set by .navigation-toggle and shared with #indicators. The
+     size-8 box stays as the touch target; it just never paints. */
+  @apply text-text relative mr-4 grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg border-0 bg-transparent p-0 shadow-none transition-transform duration-150;
 
   /* Non-sidebar headers have no mr-auto crumb absorbing the slack — pull the
      toggle right so it docks next to #indicators instead of landing in the
@@ -22,12 +25,20 @@
     @apply ml-auto;
   }
 
+  /* size-5 (not the button's own size): the same box #indicators gives its
+     glyphs, so the shared 24×24 Tabler canvas scales identically and the
+     search icon carries the same stroke weight as the poll/changes ones
+     sitting next to it. */
   &::before {
-    @apply size-4.5 bg-current content-[''] [mask:url('@assets/icons/search.svg')_center/contain_no-repeat];
+    @apply size-5 bg-current content-[''] [mask:url('@assets/icons/search.svg')_center/contain_no-repeat];
   }
 
   &:hover {
-    @apply bg-hover-faint;
+    @apply scale-105;
+  }
+
+  &:active {
+    @apply scale-95;
   }
 
   &:focus-visible {
@@ -53,6 +64,24 @@
 
     & .cmdk-input {
       @apply text-text placeholder-text-subtle w-full min-w-0 flex-1 rounded-none border-0 bg-transparent p-0 text-base shadow-none focus:ring-0 focus:outline-none;
+    }
+
+    /* Shown only while the field holds a query: :placeholder-shown is true
+       exactly when the input is empty, so the state needs no JS mirror. */
+    & .cmdk-clear {
+      @apply text-text-subtle grid size-5 shrink-0 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 shadow-none transition-colors duration-150;
+
+      &::before {
+        @apply size-4 bg-current content-[''] [mask:url('@assets/icons/x.svg')_center/contain_no-repeat];
+      }
+
+      &:hover {
+        @apply text-text;
+      }
+
+      .cmdk-input:placeholder-shown ~ & {
+        @apply hidden;
+      }
     }
 
     & .cmdk-cancel {
