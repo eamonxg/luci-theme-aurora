@@ -234,7 +234,7 @@
 				{% if (nav_type == 'sidebar'): %}
 				<ol class="header-crumb" id="header-crumb"></ol>
 				{% endif %}
-				<button class="header-search-toggle" id="header-search-toggle" type="button" aria-label="{{ _('Navigation') }}"></button>
+				<button class="cmdk-trigger" id="cmdk-trigger" type="button" aria-label="{{ _('Navigation') }}"></button>
 				<div id="indicators" class="pull-right"></div>
 		</div>
 

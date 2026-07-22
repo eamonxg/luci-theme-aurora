@@ -38,7 +38,7 @@
 @import "./components/_form.css";
 @import "./components/_segmented.css";
 @import "./components/_tab.css";
-@import "./components/_search.css";
+@import "./components/_palette.css";
 
 @import "./_utilities.css";
 @import "./_reduced-motion.css";
