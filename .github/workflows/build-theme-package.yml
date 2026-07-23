@@ -50,7 +50,7 @@ jobs:
           GH_TOKEN: ${{ secrets.FEED_DISPATCH_TOKEN }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error::FEED_DISPATCH_TOKEN is not set, so openwrt-feed was never told about this release." >&2
+            echo "::error::FEED_DISPATCH_TOKEN is not set, so openwrt-feed was never told about this release."
             echo "The feed's releases channel only rebuilds on this dispatch — without it the tag" >&2
             echo "ships to GitHub Releases but never reaches the feed. Create a fine-grained PAT" >&2
             echo "scoped to eamonxg/openwrt-feed with Contents: read and write, then store it as" >&2
