@@ -38,3 +38,23 @@ jobs:
             bin/packages/$ARCH/base/*luci-theme-aurora*.[ai]pk
           release_body_repo: eamonxg/assets
           release_body_path: aurora/docs/theme/changelog/${{ github.ref_name }}.md
+
+  notify-feed:
+    name: notify openwrt-feed
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref_type == 'tag'
+    steps:
+      - name: Dispatch feed rebuild
+        env:
+          GH_TOKEN: ${{ secrets.FEED_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "FEED_DISPATCH_TOKEN not set — skipping feed dispatch"
+            exit 0
+          fi
+          gh api repos/eamonxg/openwrt-feed/dispatches \
+            -f event_type=package-released \
+            -f 'client_payload[repo]=${{ github.repository }}' \
+            -f 'client_payload[tag]=${{ github.ref_name }}'
+
