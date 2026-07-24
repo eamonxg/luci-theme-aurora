@@ -25,9 +25,7 @@
   .cbi-section-table-titles.named {
     @apply before:bg-surface-sunken before:rounded-tl-2xl before:border-b! before:border-hairline!;
 
-    & th:first-child {
-      @apply !rounded-tl-none;
-    }
+
   }
 }
 
@@ -141,16 +139,7 @@
   }
 }
 
-[data-page="admin-modem-qmodem-network_config"] {
-  .cbi-section-table-titles.named th:first-child {
-    @apply rounded-tl-2xl!;
-  }
-}
-
 [data-page="admin-modem-qmodem-settings"] {
-  .cbi-section-table-titles.named th:first-child {
-    @apply rounded-tl-2xl!;
-  }
 
   .cbi-section-table-descr.named {
     @apply before:bg-surface-sunken before:content-['']!;
