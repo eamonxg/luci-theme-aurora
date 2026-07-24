@@ -1,0 +1,158 @@
+/*
+  PATCH: admin-modem-qmodem (luci-app-qmodem)
+  Unified per-application patch — loaded on all admin/modem/qmodem/* pages.
+  Prefix-matched by header.ut: admin-modem-qmodem(-overview|-sms|…).
+*/
+@reference "../main.css";
+
+[data-page^="admin-modem-qmodem"] {
+  .copyright-section {
+    @apply text-text-muted! text-center! bg-surface-sunken border-hairline border-1;
+  }
+
+  fieldset.cbi-section > legend {
+    @apply border-hairline text-text float-left mb-4 w-full border-b px-0 pb-3 leading-tight;
+  }
+
+  fieldset.cbi-section {
+    @apply flow-root;
+  }
+
+  fieldset.cbi-section > :not(legend) {
+    @apply clear-both;
+  }
+
+  .cbi-section-table-titles.named {
+    @apply before:bg-surface-sunken before:rounded-tl-2xl before:border-b! before:border-hairline!;
+
+    & th:first-child {
+      @apply !rounded-tl-none;
+    }
+  }
+}
+
+[data-page^="admin-modem-qmodem-sms-conversation"] {
+  #sms-messages-area {
+    @apply border-hairline! border-1 bg-surface-sunken! text-text!;
+  }
+
+  .sms-message-bubble {
+    @apply border-hairline! border-1 bg-surface-overlay! text-text!;
+  }
+
+  .sms-message-content {
+    @apply text-text!;
+  }
+
+  .sms-message-meta {
+    @apply text-text-muted!;
+  }
+}
+
+[data-page="admin-modem-qmodem-config_advanced"] {
+  /* NOTE: targets <li> directly (not li > a) because qmodem's tab markup
+     has no <a> inside tabs — so this won't auto-update with the shared
+     _segmented.css conventions. */
+  .cbi-tabmenu {
+    & li {
+      @apply text-text-muted hover:text-text hover:bg-hover-faint cursor-pointer rounded-4xl px-4 py-2 text-center text-sm font-medium whitespace-nowrap transition-colors duration-150;
+
+      &.cbi-tab {
+        @apply bg-text text-surface font-semibold shadow-sm;
+      }
+    }
+  }
+}
+
+[data-page="admin-modem-qmodem-sms"] {
+  .td > div {
+    @apply text-text-muted! mt-1.5! text-xs! leading-relaxed!;
+  }
+
+  .td > span[style*="margin-left"] {
+    @apply text-text ml-2!;
+  }
+
+  .sms-conversations {
+    @apply mt-5 mb-0;
+
+    & > .cbi-section {
+      @apply m-0! border-0! bg-transparent! p-0! shadow-none!;
+    }
+
+    & fieldset.cbi-section {
+      @apply mb-0;
+    }
+
+    & .table.cbi-section-table {
+      @apply mb-0 overflow-hidden;
+    }
+  }
+
+  .cbi-section-table-row.tr {
+    @apply text-text transition-colors duration-150;
+
+    & > .td,
+    & > td {
+      @apply text-text;
+    }
+
+    & > .td:nth-child(2),
+    & > td:nth-child(2) {
+      @apply text-text-muted;
+    }
+
+    &:hover {
+      @apply bg-hover-faint! text-text!;
+
+      & > .td,
+      & > td {
+        @apply text-text! bg-transparent!;
+      }
+    }
+  }
+
+  .sms-unread-conversation {
+    @apply bg-brand-subtle! font-semibold;
+  }
+
+  .sms-unread-badge {
+    @apply bg-danger! text-on-brand! ml-2! rounded-full! px-2! py-0.5! text-xs! font-semibold!;
+  }
+}
+
+[data-page="admin-modem-qmodem-sms_sim"] {
+  .cbi-section-table-row.tr {
+    @apply text-text transition-colors duration-150;
+
+    & > .td,
+    & > td {
+      @apply text-text;
+    }
+
+    &:hover {
+      @apply bg-hover-faint!;
+
+      & > .td,
+      & > td {
+        @apply text-text! bg-transparent!;
+      }
+    }
+  }
+}
+
+[data-page="admin-modem-qmodem-network_config"] {
+  .cbi-section-table-titles.named th:first-child {
+    @apply rounded-tl-2xl!;
+  }
+}
+
+[data-page="admin-modem-qmodem-settings"] {
+  .cbi-section-table-titles.named th:first-child {
+    @apply rounded-tl-2xl!;
+  }
+
+  .cbi-section-table-descr.named {
+    @apply before:bg-surface-sunken before:content-['']!;
+  }
+}
