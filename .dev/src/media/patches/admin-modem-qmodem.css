@@ -7,7 +7,7 @@
 
 [data-page^="admin-modem-qmodem"] {
   .copyright-section {
-    @apply text-text-muted! text-center! bg-surface-sunken border-hairline;
+    @apply text-text-muted! text-center! bg-surface-sunken border-hairline border-1;
   }
 
   fieldset.cbi-section > legend {
@@ -33,11 +33,11 @@
 
 [data-page^="admin-modem-qmodem-sms-conversation"] {
   #sms-messages-area {
-    @apply border-hairline! bg-surface-sunken! text-text!;
+    @apply border-hairline! border-1 bg-surface-sunken! text-text!;
   }
 
   .sms-message-bubble {
-    @apply border-hairline! bg-surface-overlay! text-text!;
+    @apply border-hairline! border-1 bg-surface-overlay! text-text!;
   }
 
   .sms-message-content {
@@ -65,7 +65,7 @@
 }
 
 [data-page="admin-modem-qmodem-sms"] {
-  .td > div[style*="font-size: 12px"] {
+  .td > div {
     @apply text-text-muted! mt-1.5! text-xs! leading-relaxed!;
   }
 
