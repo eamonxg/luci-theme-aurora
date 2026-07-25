@@ -30,7 +30,7 @@
      search icon carries the same stroke weight as the poll/changes ones
      sitting next to it. */
   &::before {
-    @apply size-5 bg-current content-[''] [mask:url('@assets/icons/search.svg')_center/contain_no-repeat];
+    @apply size-5 bg-current content-[''] [mask:var(--icon-search)_center/contain_no-repeat];
   }
 
   &:hover {
@@ -59,7 +59,7 @@
     @apply max-md:border-hairline max-md:bg-surface max-md:border-b max-md:px-4 max-md:py-2.5;
 
     &::before {
-      @apply text-text-subtle size-5 shrink-0 bg-current content-[''] [mask:url('@assets/icons/search.svg')_center/contain_no-repeat];
+      @apply text-text-subtle size-5 shrink-0 bg-current content-[''] [mask:var(--icon-search)_center/contain_no-repeat];
     }
 
     & .cmdk-input {
@@ -72,7 +72,7 @@
       @apply text-text-subtle grid size-5 shrink-0 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 shadow-none transition-colors duration-150;
 
       &::before {
-        @apply size-4 bg-current content-[''] [mask:url('@assets/icons/x.svg')_center/contain_no-repeat];
+        @apply size-4 bg-current content-[''] [mask:var(--icon-x)_center/contain_no-repeat];
       }
 
       &:hover {

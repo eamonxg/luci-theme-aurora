@@ -27,11 +27,11 @@
         @apply relative size-5 cursor-pointer text-[0px] before:absolute before:size-5 before:bg-current before:transition-transform before:duration-150 before:ease-out hover:before:scale-110 active:before:scale-95;
 
         &[data-style="active"] {
-          @apply before:rotate-0 before:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat];
+          @apply before:rotate-0 before:[mask:var(--icon-arrow-right)_center/cover_no-repeat];
         }
 
         &[data-style="inactive"] {
-          @apply before:rotate-90 before:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat];
+          @apply before:rotate-90 before:[mask:var(--icon-arrow-right)_center/cover_no-repeat];
         }
       }
     }

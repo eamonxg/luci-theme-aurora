@@ -108,7 +108,7 @@ test("shared navigation styles own accordion animation without a guide rail", ()
     "after:transition-[transform,opacity]",
     "after:duration-[250ms]",
   ]);
-  assert.match(toggle, /arrow-right\.svg/);
+  assert.match(toggle, /var\(--icon-arrow-right\)/);
   assertIncludesUtilities(region, [
     "grid",
     "grid-rows-[0fr]",
@@ -218,7 +218,8 @@ test("mega-menu category masks use Tailwind arbitrary utilities", () => {
 
   assert.match(
     icon,
-    /@apply[^;]*\[mask:var\(--menu-icon,url\(["']@assets\/icons\/category\.svg["']\)\)_center\/contain_no-repeat\]/,
+    /@apply[^;]*\[mask:var\(--menu-icon\)_center\/contain_no-repeat\]/,
   );
+  assert.match(title, /\[--menu-icon:var\(--icon-category\)\]/);
   assert.doesNotMatch(layoutStyles, /^\s*mask\s*:/m);
 });

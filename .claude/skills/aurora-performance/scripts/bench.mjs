@@ -49,11 +49,19 @@ const CURL_FORMAT = "%{time_starttransfer}\\t%{time_total}\\t%{size_download}\\t
 // unauthenticated bench can measure, and TTFB comparisons must compare like
 // with like (spec: error handling / edge cases).
 const TARGETS = [
-  { label: "GET /cgi-bin/luci (login page)", path: "/cgi-bin/luci" },
+  {
+    label: "GET /cgi-bin/luci (login page)",
+    path: "/cgi-bin/luci",
+    allowedStatuses: [403],
+  },
   { label: "main.css (identity)", path: "/luci-static/aurora/main.css" },
-  { label: "main.css (gzip negotiated)", path: "/luci-static/aurora/main.css", gzip: true },
-  { label: "login.css (gzip negotiated)", path: "/luci-static/aurora/login.css", gzip: true },
-  { label: "menu-aurora.js (gzip negotiated)", path: "/luci-static/resources/menu-aurora.js", gzip: true },
+  { label: "login.css (identity)", path: "/luci-static/aurora/login.css" },
+  { label: "menu-aurora.js (identity)", path: "/luci-static/resources/menu-aurora.js" },
+  {
+    label: "Lato regular font (identity)",
+    path: "/luci-static/aurora/fonts/lato-v24-latin-regular.woff2",
+  },
+  { label: "logo.svg (identity)", path: "/luci-static/aurora/images/logo.svg" },
 ];
 
 async function measureOnce(target) {
@@ -63,10 +71,12 @@ async function measureOnce(target) {
     "-w", CURL_FORMAT,
     "--max-time", "30",
   ];
-  if (target.gzip) args.push("-H", "Accept-Encoding: gzip");
   args.push(`${HOST}${target.path}`);
   const { stdout } = await execFileAsync("curl", args);
-  return assertOkStatus(parseCurlMetrics(stdout));
+  return assertOkStatus(
+    parseCurlMetrics(stdout),
+    target.allowedStatuses ?? [],
+  );
 }
 
 async function measureTarget(target) {

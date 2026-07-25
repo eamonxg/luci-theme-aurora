@@ -23,15 +23,19 @@ or returns an HTTP error status mid-run, it aborts with a one-line message
 naming the target that failed — it does not silently skip it.
 
 **What it measures.** `BENCH_RUNS` (default 10) samples per target via
-`curl`, reduced to a median, against 5 fixed targets:
+`curl`, reduced to a median, against 6 fixed targets. All static assets use
+identity transfer because the target `uhttpd` cannot serve gzip:
 
 1. `GET /cgi-bin/luci` (the login page) — the honest unauthenticated target:
    it's the one page a bench script can hit without a session, and TTFB
    comparisons must compare like with like.
-2. `main.css`, identity (no `Accept-Encoding`)
-3. `main.css`, gzip-negotiated
-4. `login.css`, gzip-negotiated
-5. the theme's menu script, gzip-negotiated (example: aurora's `menu-aurora.js`)
+   A 403 is accepted for this target only because some LuCI builds render the
+   login form with that status; other error responses still abort the run.
+2. `main.css`, identity
+3. `login.css`, identity
+4. the theme's menu script, identity (example: aurora's `menu-aurora.js`)
+5. the default first-paint font, identity
+6. the default logo, identity
 
 Per target it reports TTFB, total time, transferred bytes, and HTTP status,
 summarized as a Markdown table on stdout.

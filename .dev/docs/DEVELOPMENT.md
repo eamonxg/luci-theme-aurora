@@ -103,8 +103,8 @@ This will be compiled to standard CSS that works in all browsers.
 
 The theme has two independent Tailwind CSS v4 entry points, both sourced from `.dev/src/media/`:
 
-- **`main.css`** — the LuCI admin UI. It contains no rules of its own; it's a pure import manifest that pulls in (in order) `_tokens.css` (OKLCH theme tokens, mapped via `@theme inline`), `_base.css`, `_elements.css`, `_layout.css`, every file in `components/` (one partial per UI component — buttons, cards, modals, tables, etc.), and `_utilities.css`.
-- **`login.css`** — the standalone login page (`sysauth.ut`). Self-contained: imports Tailwind and `_tokens.css` directly.
+- **`main.css`** — the LuCI admin UI. It is an import manifest that disables Tailwind's automatic source scan (`source(none)`) and pulls in (in order) `_tokens.css` (OKLCH theme tokens, mapped via `@theme inline`), shared `_icons.css`, `_base.css`, `_elements.css`, `_layout.css`, every file in `components/` (one partial per UI component — buttons, cards, modals, tables, etc.), and `_utilities.css`.
+- **`login.css`** — the standalone login page (`sysauth.ut`). Self-contained: imports Tailwind theme/utilities with `source(none)`, omits full Preflight in favor of a tiny local reset, and imports `_tokens.css` directly.
 
 Third-party compatibility patches are **not** bundled into `main.css` — they are split into per-page files under `media/patches/` and loaded on demand (see [On-Demand Third-Party Patches](#on-demand-third-party-patches) below).
 

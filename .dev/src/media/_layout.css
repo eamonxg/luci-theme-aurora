@@ -110,13 +110,13 @@ header {
           @apply self-start max-lg:hidden;
 
           & .desktop-nav-title {
-            @apply text-text flex items-center gap-2.5 text-2xl font-semibold tracking-tight;
+            @apply text-text flex items-center gap-2.5 text-2xl font-semibold tracking-tight [--menu-icon:var(--icon-category)];
 
             /* First-level icon: mask + currentColor so it follows the theme.
                --menu-icon comes from the shared name → icon map in
                components/_nav.css; unmapped → default. */
             &::before {
-              @apply size-6 shrink-0 bg-current content-[''] [mask:var(--menu-icon,url('@assets/icons/category.svg'))_center/contain_no-repeat];
+              @apply size-6 shrink-0 bg-current content-[''] [mask:var(--menu-icon)_center/contain_no-repeat];
             }
           }
         }
@@ -165,19 +165,19 @@ header {
           }
 
           & .board-line-host::before {
-            @apply [mask:url('@assets/icons/router.svg')_center/contain_no-repeat];
+            @apply [mask:var(--icon-router)_center/contain_no-repeat];
           }
 
           & .board-line-model::before {
-            @apply [mask:url('@assets/icons/cpu.svg')_center/contain_no-repeat];
+            @apply [mask:var(--icon-cpu)_center/contain_no-repeat];
           }
 
           & .board-line-firmware::before {
-            @apply [mask:url('@assets/icons/package.svg')_center/contain_no-repeat];
+            @apply [mask:var(--icon-package)_center/contain_no-repeat];
           }
 
           & .board-line-kernel::before {
-            @apply [mask:url('@assets/icons/tag.svg')_center/contain_no-repeat];
+            @apply [mask:var(--icon-tag)_center/contain_no-repeat];
           }
         }
       }
@@ -318,21 +318,21 @@ header {
       @apply before:text-text size-5 cursor-pointer text-[0px] transition-transform duration-150 before:absolute before:size-5 before:bg-current hover:scale-105 active:scale-95;
 
       &[data-indicator="media_error"] {
-        @apply before:[mask:url('@assets/icons/error.svg')_center/cover_no-repeat];
+        @apply before:[mask:var(--icon-error)_center/cover_no-repeat];
       }
 
       &[data-indicator="poll-status"] {
         &[data-style="active"] {
-          @apply before:[mask:url('@assets/icons/refresh.svg')_center/cover_no-repeat];
+          @apply before:[mask:var(--icon-refresh)_center/cover_no-repeat];
         }
 
         &[data-style="inactive"] {
-          @apply before:[mask:url('@assets/icons/refresh-off.svg')_center/cover_no-repeat];
+          @apply before:[mask:var(--icon-refresh-off)_center/cover_no-repeat];
         }
       }
 
       &[data-indicator="uci-changes"] {
-        @apply relative before:[mask:url('@assets/icons/settings.svg')_center/cover_no-repeat];
+        @apply relative before:[mask:var(--icon-settings)_center/cover_no-repeat];
 
         &[data-count]:not([data-count="0"]) {
           @apply after:bg-danger after:text-on-brand after:absolute after:-top-0.5 after:-right-0.5 after:z-10 after:flex after:min-h-3 after:min-w-3 after:items-center after:justify-center after:rounded-full after:px-0.5 after:text-[8px] after:leading-none after:font-bold after:shadow-sm after:content-[attr(data-count)];
@@ -349,9 +349,9 @@ body[data-nav-type="sidebar"] {
      reads as the content area's toolbar, not a page-wide bar.
      A CSS grid (not flex-wrap) keeps the header row at its natural height —
      so collapsing the sidebar never stretches it — lets the sidebar column
-     animate to zero, and lets #maincontent fluidly reclaim the freed space.
+     collapse to zero, and lets #maincontent reclaim the freed space.
      overflow-x-clip keeps the sliding sidebar out of horizontal overflow. */
-  @apply md:grid md:grid-cols-[17rem_minmax(0,1fr)] md:grid-rows-[auto_minmax(0,1fr)] md:overflow-x-clip md:transition-[grid-template-columns] md:duration-[250ms] md:ease-out;
+  @apply md:grid md:grid-cols-[17rem_minmax(0,1fr)] md:grid-rows-[auto_minmax(0,1fr)] md:overflow-x-clip;
 
   &.sidebar-collapsed {
     @apply md:grid-cols-[0_minmax(0,1fr)];
@@ -396,8 +396,9 @@ body[data-nav-type="sidebar"] {
     @apply border-hairline sticky top-0 hidden h-dvh w-full overflow-hidden rounded-none border-r transition-[visibility] duration-[250ms] md:block;
   }
 
-  /* Visibility flips at the end of the slide so collapsed controls leave the
-     tab order without clipping the animation. */
+  /* The grid column snaps closed to avoid a full-page layout animation.
+     Visibility removes collapsed controls from the tab order; on expansion,
+     the inner panel still enters via compositor-only translate + opacity. */
   &.sidebar-collapsed .sidebar-panel {
     @apply invisible;
   }

@@ -1,5 +1,7 @@
 .mobile-menu-overlay {
-  @apply max-md:bg-mega-menu-bg max-md:invisible max-md:fixed max-md:inset-0 max-md:z-60 max-md:opacity-0 max-md:backdrop-blur-lg max-md:backdrop-saturate-150 md:hidden;
+  /* The mobile surface is opaque, so filtering pixels behind it has no visual
+     effect and only adds a full-screen paint/compositing cost. */
+  @apply max-md:bg-mega-menu-bg max-md:invisible max-md:fixed max-md:inset-0 max-md:z-60 max-md:opacity-0 md:hidden;
 
   /* Transitions live on the OPEN state only: opening fades in, closing cuts
      instantly. Link taps close into a full-page navigation, and any close

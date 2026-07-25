@@ -45,7 +45,7 @@ label, fixing a typo, adjusting a translation string).
 - **S4** — Memory has a ceiling. → references/server.md
 - **L1** — Kill render-blocking requests. → references/loading.md
 - **L2** — Download once, cache forever. → references/loading.md
-- **L3** — Ship compressed. → references/loading.md
+- **L3** — Make identity-transfer assets compact. → references/loading.md
 - **R1** — Animate compositor properties only. → references/runtime.md
 - **R2** — JS must not force synchronous layout. → references/runtime.md
 - **R3** — Accessibility is functionality. → references/runtime.md

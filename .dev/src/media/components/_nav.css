@@ -11,7 +11,7 @@
   /* hover:no-underline: the global `a:hover { underline }` in _elements.css
      outranks a bare class (a:hover is 0,1,1), so nav rows must opt out at
      the same specificity tier. */
-  @apply text-text hover:bg-hover-faint block rounded-xl px-3 py-1.5 no-underline transition-all duration-150 hover:no-underline;
+  @apply text-text hover:bg-hover-faint block rounded-xl px-3 py-1.5 no-underline transition-colors duration-150 hover:no-underline;
 }
 
 .navigation-direct {
@@ -33,7 +33,7 @@
 }
 
 .navigation-group-toggle {
-  @apply after:size-3.5 after:shrink-0 after:bg-current after:opacity-55 after:transition-[transform,opacity] after:duration-[250ms] after:content-[''] after:[mask:url('@assets/icons/arrow-right.svg')_center/cover_no-repeat] hover:after:opacity-100;
+  @apply after:size-3.5 after:shrink-0 after:bg-current after:opacity-55 after:transition-[transform,opacity] after:duration-[250ms] after:content-[''] after:[mask:var(--icon-arrow-right)_center/cover_no-repeat] hover:after:opacity-100;
 }
 
 .nav-category-label {
@@ -90,38 +90,38 @@
    The only maintenance point: add new first-level sections here; anything
    unmapped falls back to the default icon at the consumer. */
 .desktop-nav-title[data-section="status"] {
-  @apply [--menu-icon:url('@assets/icons/activity.svg')];
+  @apply [--menu-icon:var(--icon-activity)];
 }
 .desktop-nav-title[data-section="statistics"] {
-  @apply [--menu-icon:url('@assets/icons/chart-bar.svg')];
+  @apply [--menu-icon:var(--icon-chart-bar)];
 }
 .desktop-nav-title[data-section="nlbw"] {
-  @apply [--menu-icon:url('@assets/icons/gauge.svg')];
+  @apply [--menu-icon:var(--icon-gauge)];
 }
 .desktop-nav-title[data-section="system"] {
-  @apply [--menu-icon:url('@assets/icons/settings.svg')];
+  @apply [--menu-icon:var(--icon-settings)];
 }
 .desktop-nav-title[data-section="services"] {
-  @apply [--menu-icon:url('@assets/icons/apps.svg')];
+  @apply [--menu-icon:var(--icon-apps)];
 }
 .desktop-nav-title[data-section="nas"] {
-  @apply [--menu-icon:url('@assets/icons/server.svg')];
+  @apply [--menu-icon:var(--icon-server)];
 }
 .desktop-nav-title[data-section="control"] {
-  @apply [--menu-icon:url('@assets/icons/adjustments.svg')];
+  @apply [--menu-icon:var(--icon-adjustments)];
 }
 .desktop-nav-title[data-section="network"] {
-  @apply [--menu-icon:url('@assets/icons/world.svg')];
+  @apply [--menu-icon:var(--icon-world)];
 }
 .desktop-nav-title[data-section="vpn"] {
-  @apply [--menu-icon:url('@assets/icons/shield.svg')];
+  @apply [--menu-icon:var(--icon-shield)];
 }
 .desktop-nav-title[data-section="docker"] {
-  @apply [--menu-icon:url('@assets/icons/box.svg')];
+  @apply [--menu-icon:var(--icon-box)];
 }
 /* "asterisk" covers VoIP/PBX apps (e.g. luci-app-asterisk forks) — no
    official OpenWrt package registers a verified menu.d node under this
    name, so this is a best-effort key. */
 .desktop-nav-title[data-section="asterisk"] {
-  @apply [--menu-icon:url('@assets/icons/phone.svg')];
+  @apply [--menu-icon:var(--icon-phone)];
 }

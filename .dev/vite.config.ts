@@ -7,7 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
 import browserslist from "browserslist";
 import { exec } from "child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";
-import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "fs/promises";
 import type { IncomingMessage, ServerResponse } from "http";
 import { browserslistToTargets } from "lightningcss";
 import { basename, dirname, join, relative, resolve, sep } from "path";
@@ -48,8 +48,10 @@ function createLuciJsCompressPlugin(): Plugin {
             const sourceCode = await readFile(join(srcDir, relPath), "utf-8");
             const compressed = await terserMinify(sourceCode, {
               parse: { bare_returns: true },
-              compress: false,
-              mangle: false,
+              /* LuCI dependency declarations are string directives. Keep
+                 them while enabling normal compression and local mangling. */
+              compress: { directives: false, passes: 2 },
+              mangle: true,
               format: { comments: false, beautify: false },
             });
             const outputPath = join(outDir, "resources", normalized);
@@ -62,6 +64,29 @@ function createLuciJsCompressPlugin(): Plugin {
           }
         }),
       );
+    },
+  };
+}
+
+async function removeMacOsMetadata(dir: string): Promise<void> {
+  if (!existsSync(dir)) return;
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) await removeMacOsMetadata(path);
+    else if (entry.name === ".DS_Store") await rm(path, { force: true });
+  }
+}
+
+function createPackageHygienePlugin(): Plugin {
+  return {
+    name: "package-hygiene",
+    apply: "build",
+    enforce: "post",
+    async closeBundle() {
+      await Promise.all([
+        removeMacOsMetadata(resolve(PROJECT_ROOT, "htdocs")),
+        removeMacOsMetadata(resolve(PROJECT_ROOT, "ucode")),
+      ]);
     },
   };
 }
@@ -789,6 +814,7 @@ export default defineConfig(({ mode }) => {
       createMockPlugin(),
       createUtSyncPlugin(OPENWRT_SSH_HOST),
       createLuciJsCompressPlugin(),
+      createPackageHygienePlugin(),
     ],
     css: {
       lightningcss: {

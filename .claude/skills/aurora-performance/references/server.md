@@ -11,20 +11,18 @@ same 1–2 cores and 64–512 MB of RAM as the rest of OpenWrt. Nothing here is
 is already slow. Anything that can be computed once, at build time, should
 never run again inside a request handler.
 
-**Do / Don't.** Precompress assets at build time and let `uhttpd` serve the
-precompressed file verbatim when the client sends `Accept-Encoding: gzip` —
-this makes the request-time cost *decrease*, since `uhttpd` has no dynamic
-compression of its own. Generate derived CSS/config/tokens at build time,
-never per-request (example: aurora's generated `_tokens.css`, built from
-`.dev/tokens/` and never touched at runtime). When a genuinely per-request
-computation is unavoidable, record the accepted exception with its rationale
-in the theme budget sheet (`aurora-budgets.md`) so a future session doesn't re-litigate it
-(example: aurora's per-request `lsdir()` patch discovery in `header.ut` — one
-cheap readdir, measured negligible and accepted as-is).
+**Do / Don't.** Generate and minify derived CSS, JS, config, tokens and image
+assets at build time, never per-request (example: aurora's generated
+`_tokens.css`). This deployment uses stock `uhttpd` without gzip support, so
+raw file size is the wire size: do not add `.gz` files that the server will
+never select. When a genuinely per-request computation is unavoidable,
+record the accepted exception with its rationale in the theme budget sheet
+(`aurora-budgets.md`) so a future session doesn't re-litigate it (example:
+aurora's per-request `lsdir()` patch discovery in `header.ut` — one cheap
+readdir, measured negligible and accepted as-is).
 
-**Verify.** `top` on the device shows no request-time compression process;
-`curl -H 'Accept-Encoding: gzip' -w '%{size_download}'` against the asset
-shows the byte drop versus an uncompressed request.
+**Verify.** A production build is deterministic and already minified; the
+identity-transfer rows in `bench.mjs` match the files' raw byte sizes.
 
 **Quantify.** Transferred bytes; package/flash size delta.
 
@@ -55,10 +53,10 @@ the branch against the base.
 slow link, and it costs it on every page view — this is not "just bandwidth,"
 it's compute on the same constrained cores serving the request.
 
-**Do / Don't.** Set (and respect) a per-page transferred-bytes budget.
-Prefer gzip-negotiated transfer over raw bytes wherever the client supports
-it (example: aurora's `main.css` is 211,725 B raw but ~28 KB gzip — always
-measure and budget the negotiated size, not the raw one).
+**Do / Don't.** Set (and respect) a per-page transferred-bytes budget. On this
+stock `uhttpd` deployment, measure identity responses and optimize the raw
+files themselves: restrict Tailwind source detection, remove unused framework
+layers/plugins, minify JS, deduplicate inlined SVGs, and resize raster assets.
 
 **Verify.** The `bench.mjs` bytes column, compared against the theme's own
 budget table.
@@ -85,5 +83,5 @@ after the change.
 |---|---|---|
 | TTFB | `bench.mjs` | `aurora-budgets.md` |
 | ubus/uci/fs call count | diff review | `aurora-budgets.md` |
-| Transferred bytes (gzip) | `bench.mjs` | `aurora-budgets.md` |
+| Transferred bytes (identity/raw) | `bench.mjs` | `aurora-budgets.md` |
 | uhttpd VmRSS | `bench.mjs` device report | `aurora-budgets.md` |

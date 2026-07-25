@@ -11,8 +11,12 @@ address, so they stay local).
 
 | Metric | Budget | Track | Source |
 |---|---|---|---|
-| main.css (gzip-transferred) | ≤ 30 KB | size | measured 2026-07 (28 KB) |
-| Per-page cold transfer (all theme assets, gzip) | ≤ 60 KB | size | sum of current gzip sizes + headroom |
+| main.css (identity/raw) | ≤ 190 KB | size | production build, 2026-07 (183,820 B) |
+| login.css (identity/raw) | ≤ 17 KB | size | production build, 2026-07 (15,397 B) |
+| menu-aurora.js (identity/raw) | ≤ 20 KB | size | production build, 2026-07 (19,100 B) |
+| Default logo (identity/raw) | ≤ 16 KB | size | production build, 2026-07 (15,057 B) |
+| Core admin cold theme assets (identity/raw) | ≤ 250 KB | size | main CSS + menu JS + default font + logo, 2026-07 (241,557 B) |
+| Login cold theme assets, excluding configured background (identity/raw) | ≤ 60 KB | size | login CSS + default font + logo, 2026-07 (54,034 B) |
 | Blocking requests before first paint | ≤ 4 | count | current waterfall |
 | Repeat-visit asset requests | ≈ 0 | count | target state; package-built CSS/JS URLs are versioned, but long-lived cache headers still need live verification |
 | TTFB, login page (device) | proposed: ≤ 130 ms | latency | local device baseline, 2026-07 |
@@ -25,16 +29,20 @@ Budget revisions require a new baseline entry under `../baselines/`.
 ## Optimization ledger
 
 ### Landed
-(compositor animation rework; mega-menu idle pre-measurement; on-demand
-patches; `font-display: swap`)
+
+- Compositor animation rework; mega-menu idle pre-measurement; on-demand
+  patches; `font-display: swap` and inline `@font-face` CSS.
+- Tailwind `source(none)`, login-only Preflight removal, native scrollbar
+  styling, and local fade animation; unused CSS plugins removed.
+- Shared SVG custom properties prevent repeated mask payloads.
+- Terser compression/mangling with LuCI loader directives preserved.
+- Default logo raster resized inside its compatibility SVG wrapper.
+- Login template reuses its board/UCI reads when including `header.ut`.
+- Package-root `.DS_Store` metadata removed and covered by a regression test.
 
 ### Pending
 | Item | Principle | Estimated gain |
 |---|---|---|
-| Precompressed `.gz` assets | S1+L3 | ~260 KB → ~35 KB cold |
-| Terser `compress`+`mangle` in `vite.config.ts` | L3 | ~20 KB → ~10 KB |
-| Inline `@font-face` + preload woff2 | L1 | −1 blocking RTT |
-| SVGO `logo.svg` | L3 | 45 KB → est. < 20 KB |
 | Long-lived cache headers for versioned CSS/JS | L2 | after LuCI build-time `?v=$(PKG_VERSION)`, kills per-click 304s if headers permit disk/memory cache reuse |
 | `defer` head scripts | L1 | needs on-device timing verification |
 
@@ -50,6 +58,9 @@ patches; `font-display: swap`)
   `/luci-static/aurora/login.css?v=1.0.7`. Do not re-propose manual
   cache-versioning for these links unless inspecting the installed package
   or live HTML proves the rewrite did not happen.
+- **No gzip on the target uhttpd** — budgets and the bench harness use raw
+  identity bytes. Do not add precompressed sidecars unless the deployed HTTP
+  server is changed and live response headers prove negotiation works.
 
 ### Accepted exceptions
 

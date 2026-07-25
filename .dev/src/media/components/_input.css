@@ -27,11 +27,11 @@ input[type="checkbox"] {
 }
 
 input[type="radio"] {
-  @apply before:rounded-full after:[mask:url('@assets/icons/radio.svg')_center/cover_no-repeat];
+  @apply before:rounded-full after:[mask:var(--icon-radio)_center/cover_no-repeat];
 }
 
 input[type="checkbox"] {
-  @apply before:rounded after:[mask:url('@assets/icons/check.svg')_center/cover_no-repeat];
+  @apply before:rounded after:[mask:var(--icon-check)_center/cover_no-repeat];
 }
 
 .cbi-checkbox {

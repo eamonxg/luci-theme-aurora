@@ -114,7 +114,10 @@ test("mega-menu reveal is compositor-only and the frost never overlaps it", () =
   // The curtain carries the blur permanently (Apple's globalnav-curtain) and
   // fades it with opacity/visibility. Close must start that fade immediately;
   // delaying the curtain left blur visible after the sheet had collapsed.
-  assert.ok(overlay.includes("max-md:backdrop-blur-lg"), "mobile overlay blur");
+  assert.ok(
+    !overlay.includes("max-md:backdrop-blur-lg"),
+    "opaque mobile overlay must not blur hidden pixels",
+  );
   const curtain = overlay
     .split("\n")
     .find((l) => l.includes("bg-mega-menu-scrim"));

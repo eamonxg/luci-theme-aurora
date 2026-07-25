@@ -28,7 +28,7 @@
       @apply text-text-muted relative mt-1 pl-4 leading-none wrap-break-word;
 
       &:not(:empty) {
-        @apply before:bg-info before:absolute before:-left-0.5 before:inline-block before:size-4 before:[mask:url('@assets/icons/info.svg')_center/cover_no-repeat];
+        @apply before:bg-info before:absolute before:-left-0.5 before:inline-block before:size-4 before:[mask:var(--icon-info)_center/cover_no-repeat];
       }
     }
   }

@@ -44,6 +44,11 @@ test("assertOkStatus: rejects 404 samples", () => {
   );
 });
 
+test("assertOkStatus: permits an explicitly expected login-page 403", () => {
+  const sample = parseCurlMetrics("0.010000\t0.020000\t5788\t403\n");
+  assert.equal(assertOkStatus(sample, [403]), sample);
+});
+
 test("summarize: medians of times, first sample's bytes/status, run count", () => {
   const s = summarize([
     { ttfbMs: 50, totalMs: 200, bytes: 1000, status: 200 },

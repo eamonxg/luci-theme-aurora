@@ -1,0 +1,32 @@
+/* Shared encoded icon payloads. Referencing these variables from masks keeps
+   Vite from inlining the same SVG once per selector and vendor declaration. */
+:root {
+  @apply [--icon-activity:url('@assets/icons/activity.svg')];
+  @apply [--icon-adjustments:url('@assets/icons/adjustments.svg')];
+  @apply [--icon-apps:url('@assets/icons/apps.svg')];
+  @apply [--icon-arrow-down:url('@assets/icons/arrow-down.svg')];
+  @apply [--icon-arrow-down-dark:url('@assets/icons/arrow-down-dark.svg')];
+  @apply [--icon-arrow-right:url('@assets/icons/arrow-right.svg')];
+  @apply [--icon-box:url('@assets/icons/box.svg')];
+  @apply [--icon-category:url('@assets/icons/category.svg')];
+  @apply [--icon-chart-bar:url('@assets/icons/chart-bar.svg')];
+  @apply [--icon-check:url('@assets/icons/check.svg')];
+  @apply [--icon-cpu:url('@assets/icons/cpu.svg')];
+  @apply [--icon-error:url('@assets/icons/error.svg')];
+  @apply [--icon-gauge:url('@assets/icons/gauge.svg')];
+  @apply [--icon-info:url('@assets/icons/info.svg')];
+  @apply [--icon-package:url('@assets/icons/package.svg')];
+  @apply [--icon-phone:url('@assets/icons/phone.svg')];
+  @apply [--icon-radio:url('@assets/icons/radio.svg')];
+  @apply [--icon-refresh:url('@assets/icons/refresh.svg')];
+  @apply [--icon-refresh-off:url('@assets/icons/refresh-off.svg')];
+  @apply [--icon-router:url('@assets/icons/router.svg')];
+  @apply [--icon-search:url('@assets/icons/search.svg')];
+  @apply [--icon-server:url('@assets/icons/server.svg')];
+  @apply [--icon-settings:url('@assets/icons/settings.svg')];
+  @apply [--icon-shield:url('@assets/icons/shield.svg')];
+  @apply [--icon-spinning:url('@assets/icons/spinning.svg')];
+  @apply [--icon-tag:url('@assets/icons/tag.svg')];
+  @apply [--icon-world:url('@assets/icons/world.svg')];
+  @apply [--icon-x:url('@assets/icons/x.svg')];
+}

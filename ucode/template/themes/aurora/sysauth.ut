@@ -14,7 +14,11 @@ const themeTokens = cursor().get_all('aurora', 'theme') || {};
 const loginLogoSvg = themeTokens.logo_svg || 'logo.svg';
 const loginIconVer = themeTokens.icon_cache_version || '0';
 -%}
-{% include('header', { blank_page: true }) %}
+{% include('header', {
+	blank_page: true,
+	prefetched_boardinfo: boardinfo,
+	prefetched_tokens: themeTokens
+}) %}
 
 {% if (themeTokens.struct_login_bg): %}
 <div class="login-bg" aria-hidden="true"></div>

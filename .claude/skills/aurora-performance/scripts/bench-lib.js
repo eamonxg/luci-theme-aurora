@@ -20,8 +20,12 @@ export function parseCurlMetrics(line) {
   };
 }
 
-export function assertOkStatus(sample) {
-  if (!Number.isInteger(sample.status) || sample.status < 200 || sample.status >= 400) {
+export function assertOkStatus(sample, allowedStatuses = []) {
+  if (
+    !Number.isInteger(sample.status) ||
+    (!(sample.status >= 200 && sample.status < 400) &&
+      !allowedStatuses.includes(sample.status))
+  ) {
     throw new Error(`HTTP ${sample.status}`);
   }
   return sample;

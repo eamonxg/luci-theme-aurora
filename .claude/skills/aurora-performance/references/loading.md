@@ -54,21 +54,23 @@ served from disk/memory cache).
 
 **Quantify.** Repeat-visit request count.
 
-## L3 — Ship compressed
+## L3 — Make identity-transfer assets compact
 
-**Why.** An uncompressed asset costs both wire time on the slow link (see
-The Wire) and CPU on the slow server (see server.md S1) — compression is the
-one change that helps both planes at once.
+**Why.** This deployment's stock `uhttpd` serves identity responses even when
+the browser advertises gzip. Raw output size is therefore both flash cost and
+wire cost; minification and dead-code removal must do the work that transfer
+compression normally would.
 
-**Do / Don't.** Precompress at build time so `uhttpd` can serve `foo.gz`
-verbatim (cross-reference server.md S1). Run shipped SVGs through SVGO
-(example: aurora's `logo.svg`, which doubles as the favicon, ships at 45 KB —
-an unoptimized SVG is a common place for dead editor metadata to hide).
-Choose sane image formats (WebP/AVIF over unoptimized PNG/JPEG) for anything
-that isn't vector.
+**Do / Don't.** Disable broad Tailwind content scanning when all utilities are
+declared with `@apply`; omit Preflight from isolated entries that only need a
+small reset; remove unused plugins; minify and mangle JS while preserving
+LuCI's loader directives; define repeated SVG data URLs once as custom
+properties. Resize or re-encode raster assets at their real display needs and
+keep generated metadata out of package roots. Do not ship precompressed
+sidecars when the target server cannot negotiate them.
 
-**Verify.** `bench.mjs`'s gzip-negotiated rows; `du` on the build output
-directory to catch anything that grew.
+**Verify.** `bench.mjs`'s identity rows, automated raw-size budgets, and `du`
+on the build output directory to catch anything that grew.
 
 **Quantify.** Per-page transferred bytes (cold load); individual asset
 sizes.
@@ -79,5 +81,5 @@ sizes.
 |---|---|---|
 | Blocking requests before first paint | DevTools Network (Slow 4G) | `aurora-budgets.md` |
 | Repeat-visit request count | DevTools Network | `aurora-budgets.md` |
-| Transferred bytes (cold, gzip) | `bench.mjs` | `aurora-budgets.md` |
+| Transferred bytes (cold, identity/raw) | `bench.mjs` | `aurora-budgets.md` |
 | Individual asset size | `du` / `bench.mjs` | `aurora-budgets.md` |

@@ -1,9 +1,9 @@
 *:not(html) {
-  @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-transparent scrollbar-thumb-text-muted;
+  @apply [scrollbar-color:var(--text-muted)_transparent] [scrollbar-width:thin];
 }
 
 html {
-  @apply scrollbar-thumb-rounded-full scrollbar-thin scrollbar-track-surface scrollbar-thumb-text-muted;
+  @apply [scrollbar-color:var(--text-muted)_var(--surface)] [scrollbar-width:thin];
 
   body {
     @apply text-text relative flex min-h-dvh flex-col text-sm leading-relaxed font-normal;
