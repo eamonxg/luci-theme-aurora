@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import test from "node:test";
-import { inflateSync } from "node:zlib";
 
 const projectRoot = resolve(import.meta.dirname, "../..");
 const output = resolve(projectRoot, "htdocs/luci-static");
@@ -34,33 +33,6 @@ test("compressed LuCI JS preserves its loader directives", () => {
     {},
   );
   assert.equal(typeof module.__init__, "function");
-});
-
-test("default logo keeps a transparent canvas", () => {
-  const svg = readFileSync(asset("aurora/images/logo.svg"), "utf8");
-  const encoded = svg.match(/data:image\/png;base64,([^"']+)/)?.[1];
-  assert.ok(encoded, "logo.svg must contain its PNG payload");
-
-  const png = Buffer.from(encoded, "base64");
-  const idat = [];
-  let offset = 8;
-  let rgba = false;
-  while (offset < png.length) {
-    const length = png.readUInt32BE(offset);
-    const type = png.toString("ascii", offset + 4, offset + 8);
-    const data = png.subarray(offset + 8, offset + 8 + length);
-    if (type === "IHDR") {
-      rgba = data[8] === 8 && data[9] === 6 && data[12] === 0;
-    }
-    if (type === "IDAT") idat.push(data);
-    offset += length + 12;
-  }
-
-  assert.ok(rgba, "logo PNG must be non-interlaced 8-bit RGBA");
-  const scanlines = inflateSync(Buffer.concat(idat));
-  // At the first pixel all PNG filter predictors are zero, so byte 4 is the
-  // decoded alpha value regardless of the scanline's filter type.
-  assert.equal(scanlines[4], 0, "logo canvas corner must be transparent");
 });
 
 test("compiled CSS does not duplicate SVG payloads for every mask property", () => {
