@@ -25,6 +25,8 @@
   }
 
   body,
+  hr,
+  p,
   button,
   input {
     @apply m-0;
@@ -33,6 +35,10 @@
   button,
   input {
     @apply [font:inherit];
+  }
+
+  a {
+    @apply no-underline;
   }
 
   [hidden] {

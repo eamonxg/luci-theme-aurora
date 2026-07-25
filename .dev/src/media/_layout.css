@@ -110,13 +110,16 @@ header {
           @apply self-start max-lg:hidden;
 
           & .desktop-nav-title {
-            @apply text-text flex items-center gap-2.5 text-2xl font-semibold tracking-tight [--menu-icon:var(--icon-category)];
+            @apply text-text flex items-center gap-2.5 text-2xl font-semibold tracking-tight;
 
             /* First-level icon: mask + currentColor so it follows the theme.
                --menu-icon comes from the shared name → icon map in
-               components/_nav.css; unmapped → default. */
+               components/_nav.css; unmapped → the var() fallback. The default
+               must live in the fallback, not as a --menu-icon declaration
+               here: this nested chain compiles to (0,5,1) and would outrank
+               every (0,2,0) [data-section] mapping. */
             &::before {
-              @apply size-6 shrink-0 bg-current content-[''] [mask:var(--menu-icon)_center/contain_no-repeat];
+              @apply size-6 shrink-0 bg-current content-[''] [mask:var(--menu-icon,var(--icon-category))_center/contain_no-repeat];
             }
           }
         }

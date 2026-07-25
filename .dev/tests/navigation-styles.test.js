@@ -218,8 +218,11 @@ test("mega-menu category masks use Tailwind arbitrary utilities", () => {
 
   assert.match(
     icon,
-    /@apply[^;]*\[mask:var\(--menu-icon\)_center\/contain_no-repeat\]/,
+    /@apply[^;]*\[mask:var\(--menu-icon,var\(--icon-category\)\)_center\/contain_no-repeat\]/,
   );
-  assert.match(title, /\[--menu-icon:var\(--icon-category\)\]/);
+  // The default lives in the var() fallback only. Declaring --menu-icon on
+  // the title compiles into a (0,5,1) selector chain that outranks every
+  // .desktop-nav-title[data-section=…] (0,2,0) mapping in _nav.css.
+  assert.doesNotMatch(title, /--menu-icon:/);
   assert.doesNotMatch(layoutStyles, /^\s*mask\s*:/m);
 });
