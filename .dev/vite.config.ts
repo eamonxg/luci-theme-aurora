@@ -9,7 +9,7 @@ import { exec } from "child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import { mkdir, readdir, readFile, rm, writeFile } from "fs/promises";
 import type { IncomingMessage, ServerResponse } from "http";
-import { browserslistToTargets } from "lightningcss";
+import { browserslistToTargets, transform as lightningcssTransform } from "lightningcss";
 import { basename, dirname, join, relative, resolve, sep } from "path";
 import { minify as terserMinify } from "terser";
 import { promisify } from "util";
@@ -26,6 +26,10 @@ const execAsync = promisify(exec);
 const CURRENT_DIR = process.cwd();
 const PROJECT_ROOT = resolve(CURRENT_DIR, "..");
 const BUILD_OUTPUT = resolve(PROJECT_ROOT, "htdocs/luci-static");
+
+const LIGHTNINGCSS_TARGETS = browserslistToTargets(
+  browserslist("last 4 versions, Firefox ESR, not dead"),
+);
 
 function createLuciJsCompressPlugin(): Plugin {
   let outDir: string;
@@ -75,6 +79,71 @@ async function removeMacOsMetadata(dir: string): Promise<void> {
     if (entry.isDirectory()) await removeMacOsMetadata(path);
     else if (entry.name === ".DS_Store") await rm(path, { force: true });
   }
+}
+
+/* login.css imports the full shared token sheet but the login page consumes
+   only a fraction of it. Prune every custom-property declaration (and --tw-*
+   @property registration) that no var() reference can reach, following
+   declaration-value chains (--a: var(--b) keeps --b alive). --login-bg and
+   --login-bg-lqip stay consumed-without-declaration by design: header.ut
+   injects them from UCI at render time, so pruning never touches consumers. */
+function createLoginCssPrunePlugin(): Plugin {
+  return {
+    name: "login-css-prune",
+    apply: "build",
+    enforce: "post",
+    async closeBundle() {
+      const path = resolve(BUILD_OUTPUT, "aurora/login.css");
+      if (!existsSync(path)) return;
+      const css = await readFile(path, "utf-8");
+
+      // Roots are vars consumed by normal declarations; custom-property
+      // declarations only contribute edges to the reachability walk.
+      const VALUE = `(?:"[^"]*"|'[^']*'|[^;{}"'])*`;
+      const roots = new Set<string>();
+      const edges = new Map<string, Set<string>>();
+      for (const [, name, value] of css.matchAll(
+        new RegExp(`(?<=[{;])(--[\\w-]+|[a-zA-Z-]+):(${VALUE})`, "g"),
+      )) {
+        const refs = [...value.matchAll(/var\(\s*(--[\w-]+)/g)].map((m) => m[1]);
+        if (!name.startsWith("--")) refs.forEach((r) => roots.add(r));
+        else {
+          const deps = edges.get(name) ?? new Set<string>();
+          refs.forEach((r) => deps.add(r));
+          edges.set(name, deps);
+        }
+      }
+      const keep = new Set(roots);
+      const stack = [...roots];
+      while (stack.length) {
+        for (const dep of edges.get(stack.pop()!) ?? []) {
+          if (!keep.has(dep)) {
+            keep.add(dep);
+            stack.push(dep);
+          }
+        }
+      }
+
+      const pruned = css
+        .replace(
+          new RegExp(`(?<=[{;])(--[\\w-]+):${VALUE};?`, "g"),
+          (decl, name) => (keep.has(name) ? decl : ""),
+        )
+        .replace(/@property\s+(--[\w-]+)\{[^{}]*\}/g, (rule, name) =>
+          keep.has(name) ? rule : "",
+        );
+
+      // Re-minify with the shared targets: validates the edited syntax and
+      // drops any rule the pruning emptied out.
+      const { code } = lightningcssTransform({
+        filename: "login.css",
+        code: Buffer.from(pruned),
+        minify: true,
+        targets: LIGHTNINGCSS_TARGETS,
+      });
+      await writeFile(path, code);
+    },
+  };
 }
 
 function createPackageHygienePlugin(): Plugin {
@@ -814,13 +883,12 @@ export default defineConfig(({ mode }) => {
       createMockPlugin(),
       createUtSyncPlugin(OPENWRT_SSH_HOST),
       createLuciJsCompressPlugin(),
+      createLoginCssPrunePlugin(),
       createPackageHygienePlugin(),
     ],
     css: {
       lightningcss: {
-        targets: browserslistToTargets(
-          browserslist("last 4 versions, Firefox ESR, not dead"),
-        ),
+        targets: LIGHTNINGCSS_TARGETS,
       },
     },
     build: {

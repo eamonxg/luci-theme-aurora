@@ -18,11 +18,11 @@ test("production assets stay within raw-transfer budgets", () => {
   const logo = bytes("aurora/images/logo.svg");
 
   assert.ok(main <= 190_000, "main.css exceeds 190 KB");
-  assert.ok(login <= 17_000, "login.css exceeds 17 KB");
+  assert.ok(login <= 12_000, "login.css exceeds 12 KB");
   assert.ok(menu <= 20_000, "menu-aurora.js exceeds 20 KB");
   assert.ok(logo <= 16_000, "logo.svg exceeds 16 KB");
   assert.ok(main + menu + font + logo <= 250_000, "admin assets exceed 250 KB");
-  assert.ok(login + font + logo <= 60_000, "login assets exceed 60 KB");
+  assert.ok(login + font + logo <= 55_000, "login assets exceed 55 KB");
 });
 
 test("compressed LuCI JS preserves its loader directives", () => {
@@ -74,6 +74,43 @@ test("compiled CSS does not duplicate SVG payloads for every mask property", () 
     "duplicate SVG data URL",
   );
   assert.ok(encodedBytes <= 17_000, `SVG data URLs occupy ${encodedBytes} B`);
+});
+
+test("pruned login.css keeps every consumed variable resolvable", () => {
+  const css = readFileSync(asset("aurora/login.css"), "utf8");
+  const declared = new Set(
+    [...css.matchAll(/[{;](--[\w-]+):/g)].map((m) => m[1]),
+  );
+  const registered = new Set(
+    [...css.matchAll(/@property\s+(--[\w-]+)/g)].map((m) => m[1]),
+  );
+  // header.ut injects these from UCI at render time — consumed here, never
+  // declared here.
+  const injected = new Set(["--login-bg", "--login-bg-lqip"]);
+
+  const unresolvable = [];
+  for (const [, name, delim] of css.matchAll(/var\(\s*(--[\w-]+)\s*([,)])/g)) {
+    const hasFallback = delim === ",";
+    if (
+      !declared.has(name) &&
+      !registered.has(name) &&
+      !injected.has(name) &&
+      !hasFallback
+    ) {
+      unresolvable.push(name);
+    }
+  }
+  assert.deepEqual(unresolvable, []);
+
+  // The prune must actually strip admin-only tokens from the shared sheet.
+  for (const adminOnly of ["--mega-menu-bg", "--icon-", "--sidebar"]) {
+    assert.ok(!css.includes(adminOnly), `${adminOnly} should be pruned`);
+  }
+  // And the login page's own consumed tokens must survive, light and dark.
+  for (const kept of ["--surface:", "--brand:", "--control-bg:"]) {
+    const count = css.split(kept).length - 1;
+    assert.ok(count >= 2, `${kept} should be declared for both modes`);
+  }
 });
 
 test("package roots contain no macOS metadata", () => {

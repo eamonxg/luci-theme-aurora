@@ -12,11 +12,11 @@ address, so they stay local).
 | Metric | Budget | Track | Source |
 |---|---|---|---|
 | main.css (identity/raw) | ≤ 190 KB | size | production build, 2026-07 (183,820 B) |
-| login.css (identity/raw) | ≤ 17 KB | size | production build, 2026-07 (15,397 B) |
+| login.css (identity/raw) | ≤ 12 KB | size | production build, 2026-07 (10,935 B, token-pruned) |
 | menu-aurora.js (identity/raw) | ≤ 20 KB | size | production build, 2026-07 (19,100 B) |
 | Default logo (identity/raw) | ≤ 16 KB | size | production build, 2026-07 (15,057 B) |
 | Core admin cold theme assets (identity/raw) | ≤ 250 KB | size | main CSS + menu JS + default font + logo, 2026-07 (241,557 B) |
-| Login cold theme assets, excluding configured background (identity/raw) | ≤ 60 KB | size | login CSS + default font + logo, 2026-07 (54,034 B) |
+| Login cold theme assets, excluding configured background (identity/raw) | ≤ 55 KB | size | login CSS + default font + logo, 2026-07 (49,572 B) |
 | Blocking requests before first paint | ≤ 4 | count | current waterfall |
 | Repeat-visit asset requests | ≈ 0 | count | target state; package-built CSS/JS URLs are versioned, but long-lived cache headers still need live verification |
 | TTFB, login page (device) | proposed: ≤ 130 ms | latency | local device baseline, 2026-07 |
@@ -39,6 +39,8 @@ Budget revisions require a new baseline entry under `../baselines/`.
 - Default logo raster resized inside its compatibility SVG wrapper.
 - Login template reuses its board/UCI reads when including `header.ut`.
 - Package-root `.DS_Store` metadata removed and covered by a regression test.
+- login.css pruned to its reachable custom properties at build time (the
+  shared token sheet is admin-sized; the login page consumes a fraction).
 
 ### Pending
 | Item | Principle | Estimated gain |
