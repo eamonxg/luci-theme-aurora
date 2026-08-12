@@ -33,7 +33,7 @@ Vocabulary used below:
 |---|---|---|---|
 | 1 | One dispatcher run on the router (menu tree + ACL + template render) — the TTFB | hideable | speculation-rules prefetch inside the hover→click gap (N2) |
 | 2 | Menu JSON fetch | already removed upstream | `ui.menu.load()` serves the tree from `sessionStorage` after the session's first page (`session.getLocalData('menu')`); `rpcBaseURL` and `features` are cached the same way — never re-fetch these (N3) |
-| 3 | Translations catalog (`admin/translations/<lang>`) — a second dispatcher run per page, render-blocking in `<head>`, and uncacheable (the action emits only a Content-Type: no `Cache-Control`, `ETag`, or `Last-Modified`, so the full catalog re-transfers on every click) | upstream-only | a theme cannot add response headers, and document prefetch does not cover subresources. Do **not** defer the script as a workaround: on warm loads the menu module can render off microtasks before deferred scripts run, so menus race a deferred catalog and silently fall back to msgids. The real fix is a tiny luci-base change (validators + a versioned URL, like luci.js already has) |
+| 3 | Translations catalog (`admin/translations/<lang>`) — a second dispatcher run per page, render-blocking in `<head>`, and effectively uncacheable (`Cache-Control: no-cache` with no `ETag`/`Last-Modified`, so revalidation is impossible and the full catalog re-transfers on every click; live-measured 2026-08: a zh-cn catalog is 229,688 B at ~64 ms TTFB — 36× the login page's HTML) | upstream-only | a theme cannot add response headers, and document prefetch does not cover subresources. Do **not** defer the script as a workaround: on warm loads the menu module can render off microtasks before deferred scripts run, so menus race a deferred catalog and silently fall back to msgids. The real fix is a tiny luci-base change (validators + a versioned URL, like luci.js already has) |
 | 4 | Asset refetch / revalidation | mostly removed | `?v=` versioning (loading.md L2) plus browser caching; heuristic freshness only — verify on device |
 | 5 | JS parse | mostly removed | browser bytecode cache on stable URLs |
 | 6 | JS top-level re-execution (luci.js, ui.js, form.js, …) | **floor** | — (tens of ms on phone-class CPUs) |
@@ -117,9 +117,12 @@ of them again pays a dispatcher run for nothing.
 
 **Do / Don't.** Never register `unload`/`beforeunload` (verified absent
 from luci-base resources and this theme as of 2026-08 — treat introducing
-one as a regression). Never add `no-store`/`no-cache` to HTML or assets;
-dispatcher HTML currently ships no `Cache-Control` at all, which is exactly
-what keeps it bfcache- and prefetch-eligible. Never re-fetch what
+one as a regression). Never add `no-store`: dynamic responses already
+default to `Cache-Control: no-cache` + `Expires: 0` (luci-base `http.uc`
+`write_headers()`, live-verified 2026-08), which still permits bfcache and
+speculation-rules prefetch — `no-store` is the header that forfeits both.
+Static assets get `ETag`/`Last-Modified` from uhttpd; a conditional request
+answers 304 with zero body bytes (live-verified). Never re-fetch what
 `session.getLocalData` already holds. Add a `pageshow` handler: when
 `event.persisted`, run one immediate poll step so a restored page shows
 fresh data. Pause polling on `visibilitychange` → hidden and resume on

@@ -56,8 +56,8 @@ Budget revisions require a new baseline entry under `../baselines/`.
 | Item | Principle | Estimated gain |
 |---|---|---|
 | Long-lived cache headers for versioned CSS/JS | L2 | after LuCI build-time `?v=$(PKG_VERSION)`, kills per-click 304s if headers permit disk/memory cache reuse |
-| Upstream micro-PR: cache validators + versioned URL on `admin/translations` | N1 | the only navigation cost a theme cannot touch — a second per-page dispatcher run, render-blocking and fully uncacheable today (see the defer post-mortem below); ~5 lines in luci-base's `action_translations`, benefits every theme |
-| On-device verification of the 2026-08 navigation batch | N2/N3/N4 | prefetch waterfall (hover rows, no logout row, click served from prefetch cache); DevTools bfcache Test passes and restored pages refresh in one step; screen recording shows no blank frame; TTFB/nav-median A/B via bench.mjs |
+| Upstream micro-PR: cache validators + versioned URL on `admin/translations` | N1 | the only navigation cost a theme cannot touch — a second per-page dispatcher run, render-blocking and effectively uncacheable (live-measured 2026-08: zh-cn catalog **229,688 B at ~64 ms TTFB, re-transferred every navigation** — vs 6,280 B for the whole login page); ~5 lines in luci-base's `action_translations`, benefits every theme |
+| Browser half of the navigation-batch verification | N2/N3/N4 | HTTP half landed 2026-08-12 (see `../baselines/2026-08-12-mpa-navigation-ab.md`: login TTFB 83→84 ms median n=15 — zero server regression; served bytes match the build; VmRSS 1,284→1,292 kB; 304 = 0 B verified). Remaining, DevTools-only: prefetch waterfall (hover row, no logout row, click hits prefetch cache), bfcache Test + restored-page repoll, transition recording |
 | Hover view-module prewarm (transitive require closure) | N2 | cold-navigation RTTs; **measure first** — est. 1–1.5 KB JS far exceeds menu-aurora.js's remaining 217 B headroom, needs its own deferred file or a budget revision with a new baseline |
 
 Headroom check (2026-08 build): main.css 190,263 / 192,000 B; login.css
@@ -114,11 +114,13 @@ revision with a new baseline, not optimism.
   is **two** dispatcher runs: the page itself, plus the uncacheable
   `admin/translations` catalog (see Pending / Strategy decisions). Do not
   re-propose menu caching, and never re-fetch these directly.
-- **Dispatcher HTML ships no `Cache-Control`** (verified on luci master,
-  2026-08): that is what keeps pages bfcache- and prefetch-eligible — never
-  add `no-store`. Static assets carry only `ETag`/`Last-Modified`, so
-  repeat-visit behavior rests on heuristic freshness; verify the ≈0
-  repeat-request budget row on the device before trusting it.
+- **Dynamic responses default to `Cache-Control: no-cache` + `Expires: 0`**
+  (luci-base `http.uc` `write_headers()`; live-verified on the device,
+  2026-08 — supersedes an earlier note claiming no header at all). This is
+  **not** `no-store`, so bfcache and prefetch stay eligible; never add
+  `no-store`. Static assets carry `ETag`/`Last-Modified` and a conditional
+  request answers **304 with 0 body bytes** (live-verified) — repeat-visit
+  cost is at most one cheap conditional round trip per asset.
 - **No `unload`/`beforeunload` listeners exist** in luci-base resources or
   this theme (verified 2026-08). Introducing one forfeits bfcache — treat
   it as a performance regression in review.
