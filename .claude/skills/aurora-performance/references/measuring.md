@@ -50,6 +50,51 @@ still print.
 **Output.** The whole report is Markdown: paste it straight into a PR
 description, or archive it (see below).
 
+## `bench-browser.mjs` — real-browser navigation bench (CDP)
+
+`bench.mjs` measures what curl can see; navigation-plane gains (prefetch
+hits, bfcache restores, hidden-tab polling) exist only inside a browser.
+`bench-browser.mjs` drives headless Chrome over raw CDP — zero npm
+dependencies, node ≥ 22:
+
+```bash
+curl -k -c jar.txt -d 'luci_username=root&luci_password=…' https://<device>/cgi-bin/luci/
+HOST=https://<device> COOKIE_NAME=sysauth_https COOKIE_VALUE=<from jar> \
+  node ../.claude/skills/aurora-performance/scripts/bench-browser.mjs <label>
+```
+
+Scenarios: S1 document navigation timing (median of `RUNS`); S2 hover→click
+vs immediate click (`deliveryType: navigational-prefetch` proves a hit);
+S3 back/forward bfcache restore + time-to-first-`/ubus` (poll freshness);
+S4 polling rate visible vs hidden. `ONLY=doc|click|back|polling` runs one
+scenario. Output is JSON; run once per state (base/branch) and diff.
+
+Two caveats that will otherwise produce false conclusions:
+
+- **Speculation Rules are a secure-context API.** Over plain HTTP the rules
+  parse but never fire — S2 shows an empty deliveryType and unchanged TTFB.
+  Bench prefetch against `https://` (a self-signed uhttpd cert is
+  sufficient; the harness ignores certificate errors).
+- **Headless Chrome suspends background tabs wholesale**, zeroing S4 for
+  both states. The harness therefore keeps the tab active and dispatches a
+  synthetic `visibilitychange`, which keeps timers running and isolates the
+  theme's own pause handler — label such results "synthetic" in reports.
+
+## Chrome DevTools MCP (interactive layer)
+
+The scripts above are the source of budget numbers — deterministic medians,
+diffable JSON, CI-able. For *interactive* investigation (eyeballing a
+waterfall, recording a trace, chasing a one-off), register the DevTools MCP
+server so an agent session can drive a visible browser directly:
+
+```bash
+claude mcp add chrome-devtools -- npx chrome-devtools-mcp@latest
+```
+
+Division of labor: numbers that gate a merge come from the scripts;
+exploration and diagnosis go through the MCP. Don't hand-transcribe MCP
+readings into the budget table — reproduce them with a script first.
+
 ## Measurement discipline
 
 - **Median of ≥10 runs**, never a single sample — router-side variance

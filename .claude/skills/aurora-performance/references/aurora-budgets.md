@@ -51,13 +51,21 @@ Budget revisions require a new baseline entry under `../baselines/`.
 - Poll lifecycle in menu-aurora.js (N3): hidden-tab pause (resumes only
   its own pause) + bfcache `pageshow` stop/start for an immediate
   `step()`; +255 B → 19,783 B of the 20,000 B budget.
+- Real-browser A/B of the navigation batch (`bench-browser.mjs`, headless
+  Chrome × device, 2026-08-12): hover-prefetch document arrival
+  **88 → 6 ms (−93 %**, `deliveryType: navigational-prefetch`; HTTPS only —
+  inert over plain HTTP, secure-context API); back/forward bfcache restores
+  in ~40 ms with first poll after restore **4,077 → 39 ms (−99 %)**;
+  hidden-tab polling **4 → 0 requests / 20 s** (synthetic-visibility
+  isolation); speculationrules inline cost measured **+185 B** per page
+  HTML. Full report in `../baselines/`.
 
 ### Pending
 | Item | Principle | Estimated gain |
 |---|---|---|
 | Long-lived cache headers for versioned CSS/JS | L2 | after LuCI build-time `?v=$(PKG_VERSION)`, kills per-click 304s if headers permit disk/memory cache reuse |
 | Upstream micro-PR: cache validators + versioned URL on `admin/translations` | N1 | the only navigation cost a theme cannot touch — a second per-page dispatcher run, render-blocking and effectively uncacheable (live-measured 2026-08: zh-cn catalog **229,688 B at ~64 ms TTFB, re-transferred every navigation** — vs 6,280 B for the whole login page); ~5 lines in luci-base's `action_translations`, benefits every theme |
-| Browser half of the navigation-batch verification | N2/N3/N4 | HTTP half landed 2026-08-12 (see `../baselines/2026-08-12-mpa-navigation-ab.md`: login TTFB 83→84 ms median n=15 — zero server regression; served bytes match the build; VmRSS 1,284→1,292 kB; 304 = 0 B verified). Remaining, DevTools-only: prefetch waterfall (hover row, no logout row, click hits prefetch cache), bfcache Test + restored-page repoll, transition recording |
+| View-transition visual check | N4 | the one remaining manual item of the navigation-batch verification (HTTP + browser halves landed 2026-08-12, see Landed and `../baselines/`): a screen recording of the crossfade, plus the `prefers-reduced-motion` off-switch cross-check |
 | Hover view-module prewarm (transitive require closure) | N2 | cold-navigation RTTs; **measure first** — est. 1–1.5 KB JS far exceeds menu-aurora.js's remaining 217 B headroom, needs its own deferred file or a budget revision with a new baseline |
 
 Headroom check (2026-08 build): main.css 190,263 / 192,000 B; login.css

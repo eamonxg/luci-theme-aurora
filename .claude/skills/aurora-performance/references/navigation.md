@@ -99,12 +99,23 @@ with a regex that is **not** line-anchored (shipped files are minified onto
 one line), and skip the class names luci-base seeds without files
 (`baseclass`, `dom`, `poll`, `request`, `session`, `view`).
 
-**Verify.** Network panel: prefetch rows appear on hover, the click's
-document is served from the prefetch cache, and no prefetch row ever hits
-logout. Warm-navigation median A/B via bench.mjs.
+**Know the activation boundary.** Speculation Rules are a secure-context
+API: on a plain-HTTP router UI the rules parse but never fire — verified
+live (hover produced no prefetch over `http://`, empty deliveryType,
+unchanged TTFB; the identical click over `https://` hit
+`navigational-prefetch` with document arrival 88 → 6 ms). Any LuCI served
+over HTTPS — a self-signed uhttpd certificate included — is a secure
+context, so the ~200 B of rules are the right bet as shipped defaults; just
+never claim the win on an HTTP deployment. Related live observation: the
+uhttpd TLS handshake itself costs ~+160 ms document TTFB on router-class
+CPUs, which prefetch also hides on the hover path.
 
-**Quantify.** TTFB hidden per click vs. mispredicted dispatcher runs per
-session.
+**Verify.** `bench-browser.mjs` S2 (see measuring.md): hover click must
+report `deliveryType: navigational-prefetch`; no prefetch request may ever
+hit logout. Warm-navigation median A/B via bench.mjs.
+
+**Quantify.** Document-arrival ms, hover-hit vs plain (live A/B 2026-08:
+88 → 6 ms, −93%); mispredicted dispatcher runs per session.
 
 ## N3 — Protect the free caches
 
