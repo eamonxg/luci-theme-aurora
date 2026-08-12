@@ -56,7 +56,7 @@ Budget revisions require a new baseline entry under `../baselines/`.
 | Item | Principle | Estimated gain |
 |---|---|---|
 | Long-lived cache headers for versioned CSS/JS | L2 | after LuCI build-time `?v=$(PKG_VERSION)`, kills per-click 304s if headers permit disk/memory cache reuse |
-| `defer` head scripts | L1 | needs on-device timing verification; weight rises under the MPA strategy (paid on every navigation) |
+| Upstream micro-PR: cache validators + versioned URL on `admin/translations` | N1 | the only navigation cost a theme cannot touch — a second per-page dispatcher run, render-blocking and fully uncacheable today (see the defer post-mortem below); ~5 lines in luci-base's `action_translations`, benefits every theme |
 | On-device verification of the 2026-08 navigation batch | N2/N3/N4 | prefetch waterfall (hover rows, no logout row, click served from prefetch cache); DevTools bfcache Test passes and restored pages refresh in one step; screen recording shows no blank frame; TTFB/nav-median A/B via bench.mjs |
 | Hover view-module prewarm (transitive require closure) | N2 | cold-navigation RTTs; **measure first** — est. 1–1.5 KB JS far exceeds menu-aurora.js's remaining 217 B headroom, needs its own deferred file or a budget revision with a new baseline |
 
@@ -80,6 +80,17 @@ revision with a new baseline, not optimism.
 - **Prerender rejected** (2026-08). Speculative prerender executes the
   target page's JS — its full RPC load — on the router's 1–2 shared cores
   for pages never opened. Prefetch only (N2).
+- **`defer` on the two head scripts rejected** (2026-08, closes the old
+  pending item). `cbi.js`: fatal — luci-base's inline `new LuCI(env)`
+  captures `window.cbi_init` synchronously and `initDOM()` calls the
+  captured value **unguarded**, so a deferred `cbi.js` leaves it undefined
+  and the page dies at DOMContentLoaded (no `Poll.start()`, no
+  `luci-loaded`). `admin/translations`: unsafe — on warm loads the menu
+  module can render off microtasks before deferred scripts execute, racing
+  a deferred catalog into silent msgid fallback; and since the response is
+  uncacheable, defer would not remove its per-click transfer anyway. The
+  real translations fix is the upstream micro-PR in Pending. Do not
+  re-propose either defer without a changed luci-base contract.
 
 ### Notes
 
@@ -100,8 +111,9 @@ revision with a new baseline, not optimism.
   `ui.menu.load()` returns the tree from `sessionStorage` after the
   session's first page (`session.getLocalData('menu')`), and `rpcBaseURL` /
   `features` are cached the same way. The true per-navigation server cost
-  is a single dispatcher run. Do not re-propose menu caching, and never
-  re-fetch these directly.
+  is **two** dispatcher runs: the page itself, plus the uncacheable
+  `admin/translations` catalog (see Pending / Strategy decisions). Do not
+  re-propose menu caching, and never re-fetch these directly.
 - **Dispatcher HTML ships no `Cache-Control`** (verified on luci master,
   2026-08): that is what keeps pages bfcache- and prefetch-eligible — never
   add `no-store`. Static assets carry only `ETag`/`Last-Modified`, so

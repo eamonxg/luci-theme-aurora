@@ -33,17 +33,27 @@ Vocabulary used below:
 |---|---|---|---|
 | 1 | One dispatcher run on the router (menu tree + ACL + template render) — the TTFB | hideable | speculation-rules prefetch inside the hover→click gap (N2) |
 | 2 | Menu JSON fetch | already removed upstream | `ui.menu.load()` serves the tree from `sessionStorage` after the session's first page (`session.getLocalData('menu')`); `rpcBaseURL` and `features` are cached the same way — never re-fetch these (N3) |
-| 3 | Asset refetch / revalidation | mostly removed | `?v=` versioning (loading.md L2) plus browser caching; heuristic freshness only — verify on device |
-| 4 | JS parse | mostly removed | browser bytecode cache on stable URLs |
-| 5 | JS top-level re-execution (luci.js, ui.js, form.js, …) | **floor** | — (tens of ms on phone-class CPUs) |
-| 6 | Document rebuild + first full paint | **floor**, maskable | cross-document View Transitions (N4) |
-| 7 | View module fetch (cold navigations only) | removable | hover prewarm of the module and its require closure (N2, measure first) |
-| 8 | Data RPCs | **floor** under every model | — |
+| 3 | Translations catalog (`admin/translations/<lang>`) — a second dispatcher run per page, render-blocking in `<head>`, and uncacheable (the action emits only a Content-Type: no `Cache-Control`, `ETag`, or `Last-Modified`, so the full catalog re-transfers on every click) | upstream-only | a theme cannot add response headers, and document prefetch does not cover subresources. Do **not** defer the script as a workaround: on warm loads the menu module can render off microtasks before deferred scripts run, so menus race a deferred catalog and silently fall back to msgids. The real fix is a tiny luci-base change (validators + a versioned URL, like luci.js already has) |
+| 4 | Asset refetch / revalidation | mostly removed | `?v=` versioning (loading.md L2) plus browser caching; heuristic freshness only — verify on device |
+| 5 | JS parse | mostly removed | browser bytecode cache on stable URLs |
+| 6 | JS top-level re-execution (luci.js, ui.js, form.js, …) | **floor** | — (tens of ms on phone-class CPUs) |
+| 7 | Document rebuild + first full paint | **floor**, maskable | cross-document View Transitions (N4) |
+| 8 | View module fetch (cold navigations only) | removable | hover prewarm of the module and its require closure (N2, measure first) |
+| 9 | Data RPCs | **floor** under every model | — |
 
-Rows 5, 6 and 8 are the whole price of staying MPA. Everything else can be
-removed or hidden for a few hundred bytes — which is why a client-side
-router, whose entire yield is rows 5–6 minus its own overhead, does not buy
-its cost here.
+Rows 6, 7 and 9 are the whole price of staying MPA (row 3 is an upstream
+repair, not a theme cost to carry). Everything else can be removed or
+hidden for a few hundred bytes — which is why a client-side router, whose
+entire yield is rows 6–7 minus its own overhead, does not buy its cost
+here.
+
+A load-order constraint that bounds `defer` ambitions: luci-base includes
+the theme header first, then loads luci.js and runs `new LuCI(env)`
+**synchronously** — and that constructor captures `window.cbi_init` at
+call time, while `initDOM()` later invokes the captured value unguarded.
+`cbi.js` therefore must stay a synchronous script that executes before the
+inline `new LuCI(env)` call; deferring it leaves the capture undefined and
+kills the page at DOMContentLoaded (no `Poll.start()`, no `luci-loaded`).
 
 ## N1 — Navigation is MPA plus platform enhancements
 
