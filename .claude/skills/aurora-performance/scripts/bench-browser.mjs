@@ -7,7 +7,8 @@
  * can (prefetch hits, bfcache restores, polling behavior).
  *
  * env: HOST (default http://192.168.1.1), COOKIE_NAME, COOKIE_VALUE,
- *      RUNS (default 7), ONLY (doc|click|back|polling — run one scenario)
+ *      CHROME_BIN, RUNS (default 10),
+ *      ONLY (doc|click|back|polling|vt — run one scenario)
  *
  * Auth: obtain a session cookie first, then pass it in:
  *   curl -k -c jar.txt -d 'luci_username=root&luci_password=…' $HOST/cgi-bin/luci/
@@ -37,42 +38,79 @@
  *     until the menu opens and cannot be hovered by coordinates).
  */
 import { spawn } from "node:child_process";
-import { mkdtempSync, readFileSync, existsSync } from "node:fs";
+import { once } from "node:events";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import {
+  assertAuthenticatedPage,
+  authCookie,
+  chromeExecutable,
+  median,
+  normalizeHttpOrigin,
+  parseRunCount,
+  parseScenario,
+  rejectPendingRequests,
+  withCleanup,
+} from "./bench-lib.js";
 
-const HOST = process.env.HOST ?? "http://192.168.1.1";
+const HOST = normalizeHttpOrigin(process.env.HOST ?? "http://192.168.1.1");
 const LABEL = process.argv[2] ?? "run";
-const RUNS = +(process.env.RUNS ?? 7);
-const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const PAGE_A = `${HOST}/cgi-bin/luci/admin/system/system`;
-const PAGE_B_MATCH = "/admin/system/admin";
+const RUNS = parseRunCount(process.env.RUNS);
+const ONLY = parseScenario(process.env.ONLY);
+const CHROME = chromeExecutable(process.env, process.platform);
+const COOKIE = authCookie(process.env.COOKIE_NAME, process.env.COOKIE_VALUE, HOST);
+const PAGE_A_PATH = "/cgi-bin/luci/admin/system/system";
+const PAGE_B_PATH = "/cgi-bin/luci/admin/system/admin";
+const PAGE_A = new URL(PAGE_A_PATH, HOST).href;
+const PAGE_B = new URL(PAGE_B_PATH, HOST).href;
+const PAGE_B_MATCH = PAGE_B_PATH.replace("/cgi-bin/luci", "");
 
+let chrome = null;
+let pending = new Map();
+let profile = null;
+let waiters = new Set();
+let ws = null;
+
+await withCleanup(async () => {
 /* ---------- launch chrome ---------- */
-const profile = mkdtempSync(join(tmpdir(), "cdp-aurora-"));
-const chrome = spawn(
+profile = mkdtempSync(join(tmpdir(), "cdp-aurora-"));
+chrome = spawn(
   CHROME,
   ["--headless=new", "--remote-debugging-port=0", `--user-data-dir=${profile}`,
    "--no-first-run", "--no-default-browser-check",
    "--ignore-certificate-errors", "about:blank"],
   { stdio: ["ignore", "ignore", "ignore"] },
 );
+let launchError = null;
+chrome.once("error", (error) => { launchError = error; });
 let port = null;
 for (let i = 0; i < 100 && !port; i++) {
   await sleep(100);
+  if (launchError)
+    throw new Error(`chrome: failed to launch ${CHROME}: ${launchError.message}`);
   const f = join(profile, "DevToolsActivePort");
   if (existsSync(f)) port = +readFileSync(f, "utf8").split("\n")[0];
 }
-if (!port) { chrome.kill(); throw new Error("chrome: no DevToolsActivePort"); }
+if (!port) throw new Error("chrome: no DevToolsActivePort");
 const { webSocketDebuggerUrl } = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
 
 /* ---------- minimal CDP client ---------- */
-const ws = new WebSocket(webSocketDebuggerUrl);
-await new Promise((r) => ws.addEventListener("open", r));
+ws = new WebSocket(webSocketDebuggerUrl);
+await new Promise((resolve, reject) => {
+  ws.addEventListener("open", resolve, { once: true });
+  ws.addEventListener("error", () => reject(new Error("CDP connection failed")), { once: true });
+});
 let mid = 0;
-const pending = new Map();
 const handlers = new Set();
+const disconnect = () => {
+  const error = new Error("CDP disconnected");
+  rejectPendingRequests(pending, error);
+  rejectPendingRequests(waiters, error);
+};
+ws.addEventListener("close", disconnect);
+ws.addEventListener("error", disconnect);
 ws.addEventListener("message", (ev) => {
   const m = JSON.parse(ev.data);
   if (m.id && pending.has(m.id)) {
@@ -89,13 +127,17 @@ const send = (method, params = {}, sessionId) =>
   });
 const waitEvent = (method, sessionId, timeout = 25000) =>
   new Promise((res, rej) => {
-    const t = setTimeout(() => { handlers.delete(h); rej(new Error(`timeout ${method}`)); }, timeout);
-    const h = (m) => {
-      if (m.method === method && m.sessionId === sessionId) {
-        clearTimeout(t); handlers.delete(h); res(m.params);
-      }
+    let timer, handler, waiter;
+    const finish = (callback, value) => {
+      clearTimeout(timer); handlers.delete(handler); waiters.delete(waiter); callback(value);
     };
-    handlers.add(h);
+    timer = setTimeout(() => finish(rej, new Error(`timeout ${method}`)), timeout);
+    waiter = { rej: (error) => finish(rej, error) };
+    handler = (m) => {
+      if (m.method === method && m.sessionId === sessionId) finish(res, m.params);
+    };
+    handlers.add(handler);
+    waiters.add(waiter);
   });
 
 async function newPage() {
@@ -111,29 +153,42 @@ async function evaljs(sessionId, expression) {
   if (r.exceptionDetails) throw new Error(r.exceptionDetails.text ?? "evaluate failed");
   return r.result.value;
 }
+async function assertAuthenticated(sessionId) {
+  const state = await evaljs(sessionId, `JSON.stringify({
+    hasLoginForm:!!document.querySelector('input[name="luci_username"]'),
+    hasMainContent:!!document.querySelector('#maincontent'),url:location.href})`);
+  assertAuthenticatedPage(JSON.parse(state));
+}
 async function nav(sessionId, url) {
   const load = waitEvent("Page.loadEventFired", sessionId);
   await send("Page.navigate", { url }, sessionId);
   await load;
+  await assertAuthenticated(sessionId);
+}
+async function waitForValue(sessionId, expression, timeout = 5000) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try {
+      const value = await evaljs(sessionId, expression);
+      if (value != null) return value;
+    } catch { /* transient during document swap */ }
+    await sleep(50);
+  }
+  throw new Error("timed out waiting for page state");
 }
 const navEntry = (sessionId) =>
   evaljs(sessionId, `(()=>{const e=performance.getEntriesByType('navigation')[0];
     return JSON.stringify({ttfb:e.responseStart,dur:e.duration,transfer:e.transferSize,
       type:e.type,delivery:e.deliveryType??''})})()`).then(JSON.parse);
-const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? +s[Math.floor(s.length / 2)].toFixed(1) : null; };
+const roundedMedian = (values) => +median(values).toFixed(1);
 
 /* ---------- auth cookie ---------- */
-if (process.env.COOKIE_NAME) {
-  await send("Storage.setCookies", { cookies: [{
-    name: process.env.COOKIE_NAME, value: process.env.COOKIE_VALUE,
-    domain: HOST.replace(/^https?:\/\//, "").replace(/:.*/, ""), path: "/cgi-bin/luci",
-  }] });
-}
+await send("Storage.setCookies", { cookies: [COOKIE] });
 
 const out = { label: LABEL };
 
 /* ---------- S1: document navigation timing ---------- */
-if (!process.env.ONLY || process.env.ONLY === "doc") {
+if (!ONLY || ONLY === "doc") {
   const p = await newPage();
   const t = [], d = [], tr = [];
   for (let i = 0; i < RUNS; i++) {
@@ -141,23 +196,21 @@ if (!process.env.ONLY || process.env.ONLY === "doc") {
     const e = await navEntry(p.sessionId);
     t.push(e.ttfb); d.push(e.dur); tr.push(e.transfer);
   }
-  out.doc = { ttfb: median(t), loadDur: median(d), transfer: median(tr), n: t.length };
+  out.doc = { ttfb: roundedMedian(t), loadDur: roundedMedian(d),
+    transfer: roundedMedian(tr), n: t.length };
   await send("Target.closeTarget", { targetId: p.targetId });
 }
 
 /* ---------- S2: hover-prefetch click vs immediate click ---------- */
 async function clickNav(sessionId, hoverMs) {
   await nav(sessionId, PAGE_A);
-  await sleep(900); // menus render client-side
-  const raw = await evaljs(sessionId, `(()=>{
-    const a=document.querySelector('#maincontent a[href*="${PAGE_B_MATCH}"]')
-         ??[...document.querySelectorAll('a[href*="${PAGE_B_MATCH}"]')]
-             .find(x=>x.getBoundingClientRect().width>0);
+  const raw = await waitForValue(sessionId, `(()=>{
+    const a=[...document.querySelectorAll('a[href*="${PAGE_B_MATCH}"]')]
+      .find(x=>x.getBoundingClientRect().width>0);
     if(!a)return null; a.scrollIntoView({block:'center'});
     const r=a.getBoundingClientRect();
     return JSON.stringify({x:r.x+r.width/2,y:r.y+r.height/2,w:r.width,h:r.height});})()`);
-  const rect = raw && JSON.parse(raw);
-  if (!rect || !rect.w) return null;
+  const rect = JSON.parse(raw);
   if (hoverMs) {
     await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: rect.x, y: rect.y }, sessionId);
     await sleep(hoverMs);
@@ -166,30 +219,31 @@ async function clickNav(sessionId, hoverMs) {
   await send("Input.dispatchMouseEvent", { type: "mousePressed", x: rect.x, y: rect.y, button: "left", clickCount: 1 }, sessionId);
   await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: rect.x, y: rect.y, button: "left", clickCount: 1 }, sessionId);
   await load;
+  await assertAuthenticated(sessionId);
   return navEntry(sessionId);
 }
-if (!process.env.ONLY || process.env.ONLY === "click") {
+if (!ONLY || ONLY === "click") {
   const p = await newPage();
   const hov = [], plain = [];
   let hovDelivery = "", plainDelivery = "";
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < RUNS; i++) {
     const e = await clickNav(p.sessionId, 450);
-    if (e) { hov.push(e.ttfb); if (e.delivery) hovDelivery = e.delivery; }
+    hov.push(e.ttfb); if (e.delivery) hovDelivery = e.delivery;
   }
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < RUNS; i++) {
     const e = await clickNav(p.sessionId, 0);
-    if (e) { plain.push(e.ttfb); if (e.delivery) plainDelivery = e.delivery; }
+    plain.push(e.ttfb); if (e.delivery) plainDelivery = e.delivery;
   }
   out.click = {
-    hoverTtfb: median(hov), hoverDelivery: hovDelivery || "(none)",
-    plainTtfb: median(plain), plainDelivery: plainDelivery || "(none)",
+    hoverTtfb: roundedMedian(hov), hoverDelivery: hovDelivery || "(none)",
+    plainTtfb: roundedMedian(plain), plainDelivery: plainDelivery || "(none)",
     n: [hov.length, plain.length],
   };
   await send("Target.closeTarget", { targetId: p.targetId });
 }
 
 /* ---------- S3: back/forward + poll freshness ---------- */
-if (!process.env.ONLY || process.env.ONLY === "back") {
+if (!ONLY || ONLY === "back") {
   const p = await newPage();
   await send("Page.addScriptToEvaluateOnNewDocument", {
     source: "window.__ps=null;addEventListener('pageshow',e=>{window.__ps={p:e.persisted,t:Date.now()}})",
@@ -202,7 +256,7 @@ if (!process.env.ONLY || process.env.ONLY === "back") {
   handlers.add(netH);
   await nav(p.sessionId, PAGE_A);
   await sleep(1200);
-  await nav(p.sessionId, `${HOST}/cgi-bin/luci/admin/system/admin`);
+  await nav(p.sessionId, PAGE_B);
   await sleep(1200);
   const backAt = Date.now();
   await evaljs(p.sessionId, "history.back()");
@@ -215,6 +269,8 @@ if (!process.env.ONLY || process.env.ONLY === "back") {
       if (v && v.t >= backAt - 5) { restored = v; break; }
     } catch { /* transient during swap */ }
   }
+  if (!restored) throw new Error("back navigation did not produce pageshow");
+  await assertAuthenticated(p.sessionId);
   let firstUbus = null;
   if (restored) {
     for (let i = 0; i < 120 && firstUbus == null; i++) {
@@ -238,7 +294,7 @@ if (!process.env.ONLY || process.env.ONLY === "back") {
  * handler under test. A synthetic visibilitychange on the active tab
  * keeps timers running, so only the theme's own pause handler (if any)
  * can stop the polling. */
-if (!process.env.ONLY || process.env.ONLY === "polling") {
+if (!ONLY || ONLY === "polling") {
   const p = await newPage();
   let count = 0;
   const netH = (m) => {
@@ -266,7 +322,7 @@ if (!process.env.ONLY || process.env.ONLY === "polling") {
 }
 
 /* ---------- S5: view-transition activation ---------- */
-if (!process.env.ONLY || process.env.ONLY === "vt") {
+if (!ONLY || ONLY === "vt") {
   const p = await newPage();
   await send("Page.addScriptToEvaluateOnNewDocument", {
     source: "addEventListener('pagereveal',e=>{window.__vt = !!e.viewTransition})",
@@ -279,9 +335,10 @@ if (!process.env.ONLY || process.env.ONLY === "vt") {
     const load = waitEvent("Page.loadEventFired", p.sessionId);
     await evaljs(p.sessionId, `location.assign(${JSON.stringify(url)})`);
     await load;
+    await assertAuthenticated(p.sessionId);
   };
   await nav(p.sessionId, PAGE_A);
-  await scriptNav(`${HOST}/cgi-bin/luci/admin/system/admin`);
+  await scriptNav(PAGE_B);
   const vtNormal = await evaljs(p.sessionId, "window.__vt === true");
   out.vtDiag = JSON.parse(await evaljs(p.sessionId, `JSON.stringify({
     vtRaw: String(window.__vt),
@@ -303,5 +360,14 @@ if (!process.env.ONLY || process.env.ONLY === "vt") {
 }
 
 console.log(JSON.stringify(out, null, 2));
-chrome.kill();
-process.exit(0);
+}, async () => {
+  rejectPendingRequests(pending, new Error("benchmark cleanup"));
+  rejectPendingRequests(waiters, new Error("benchmark cleanup"));
+  if (ws && ws.readyState < WebSocket.CLOSING) ws.close();
+  if (chrome?.pid && chrome.exitCode == null && chrome.signalCode == null) {
+    const exited = once(chrome, "exit");
+    chrome.kill();
+    await Promise.race([exited, sleep(2000)]);
+  }
+  if (profile) rmSync(profile, { recursive: true, force: true });
+});

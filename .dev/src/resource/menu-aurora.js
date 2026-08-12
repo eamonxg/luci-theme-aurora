@@ -12,25 +12,45 @@ return baseclass.extend({
   },
 
   // Hidden tabs keep hammering ubus, and bfcache restores show stale data
-  // until the next tick. Poll.start() runs one step() synchronously, so a
-  // stop/start pair is an immediate refresh. stop() returns false when
-  // polling wasn't active — which is what keeps a poll the user paused via
-  // the indicator paused: we only ever resume a pause this handler took.
+  // until the next tick. Poll.start() runs one step() synchronously, so
+  // resuming a visibility pause is an immediate refresh. We only resume a
+  // pause this handler still owns; another stop transfers that ownership.
   initPollLifecycle() {
     let pausedWhileHidden = false;
+    let stoppingForVisibility = false;
+    const pause = () => {
+      if (!document.hidden) return;
+
+      stoppingForVisibility = true;
+      pausedWhileHidden = poll.stop() || pausedWhileHidden;
+      stoppingForVisibility = false;
+    };
+    const resume = () => {
+      if (!pausedWhileHidden || document.hidden) return;
+
+      pausedWhileHidden = false;
+      poll.start();
+    };
+
+    // Poll is a global singleton. A successful stop from another caller
+    // transfers ownership, so this handler must not restart it later.
+    document.addEventListener("poll-stop", () => {
+      if (!stoppingForVisibility) pausedWhileHidden = false;
+    });
 
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        pausedWhileHidden = poll.stop();
-      } else if (pausedWhileHidden) {
-        pausedWhileHidden = false;
-        poll.start();
-      }
+      if (document.hidden) pause();
+      else resume();
     });
 
     window.addEventListener("pageshow", (ev) => {
-      if (ev.persisted && poll.stop()) poll.start();
+      if (ev.persisted) resume();
     });
+
+    // LuCI starts Poll after modules initialize. Catch that first start when
+    // a page was opened in an already-hidden tab, and any later hidden start.
+    document.addEventListener("poll-start", pause);
+    pause();
   },
 
   initUciIndicator() {

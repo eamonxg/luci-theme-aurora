@@ -1,5 +1,5 @@
 /**
- * Pure helpers for the on-device bench harness (scripts/bench.mjs).
+ * Pure helpers for the HTTP and browser bench harnesses.
  * Everything here is deterministic and unit-tested; all I/O lives in the CLI.
  */
 
@@ -68,4 +68,85 @@ export function formatMarkdownTable(rows) {
     ),
   ];
   return lines.join("\n");
+}
+
+export function parseRunCount(value, fallback = 10) {
+  const runs = value == null ? fallback : Number(value);
+
+  if (!Number.isInteger(runs) || runs < 10)
+    throw new Error("RUNS must be an integer greater than or equal to 10");
+
+  return runs;
+}
+
+export function normalizeHttpOrigin(value) {
+  let url;
+
+  try {
+    url = new URL(String(value).trim());
+  } catch {
+    throw new Error("HOST must be an absolute HTTP(S) origin");
+  }
+
+  if (
+    !["http:", "https:"].includes(url.protocol) ||
+    url.username ||
+    url.password ||
+    (url.pathname && url.pathname !== "/") ||
+    url.search ||
+    url.hash
+  ) {
+    throw new Error("HOST must be an absolute HTTP(S) origin");
+  }
+
+  return url.origin;
+}
+
+export function authCookie(name, value, origin) {
+  if (!name || !value)
+    throw new Error("COOKIE_NAME and COOKIE_VALUE must both be set");
+
+  return {
+    name,
+    value,
+    url: new URL("/cgi-bin/luci/", origin).href,
+  };
+}
+
+export function parseScenario(value) {
+  if (value == null || value === "") return null;
+
+  const allowed = ["doc", "click", "back", "polling", "vt"];
+  if (!allowed.includes(value))
+    throw new Error(`ONLY must be one of: ${allowed.join(", ")}`);
+
+  return value;
+}
+
+export function chromeExecutable(env, platform) {
+  if (env.CHROME_BIN) return env.CHROME_BIN;
+  if (platform === "darwin")
+    return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  if (platform === "win32") return "chrome.exe";
+  return "google-chrome";
+}
+
+export function assertAuthenticatedPage(state) {
+  if (state.hasLoginForm || !state.hasMainContent)
+    throw new Error(`authentication failed at ${state.url}`);
+
+  return state;
+}
+
+export async function withCleanup(action, cleanup) {
+  try {
+    return await action();
+  } finally {
+    await cleanup();
+  }
+}
+
+export function rejectPendingRequests(pending, error) {
+  for (const request of pending.values()) request.rej(error);
+  pending.clear();
 }

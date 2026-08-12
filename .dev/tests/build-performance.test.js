@@ -47,10 +47,14 @@ test("cross-document view transitions survive the build in both entries", () => 
   // reach main.css AND login.css — and survive lightningcss minification.
   for (const sheet of ["aurora/main.css", "aurora/login.css"]) {
     const css = readFileSync(asset(sheet), "utf8");
-    assert.match(css, /@view-transition/, `${sheet} lost @view-transition`);
     assert.match(
       css,
-      /prefers-reduced-motion/,
+      /@view-transition\{navigation:auto\}/,
+      `${sheet} lost the navigation opt-in`,
+    );
+    assert.match(
+      css,
+      /@media \(prefers-reduced-motion:reduce\)\{@view-transition\{navigation:none\}\}/,
       `${sheet} lost the reduced-motion opt-out`,
     );
   }

@@ -42,23 +42,27 @@ Budget revisions require a new baseline entry under `../baselines/`.
 - login.css pruned to its reachable custom properties at build time (the
   shared token sheet is admin-sized; the login page consumes a fraction).
 - Speculation Rules document prefetch in `header.ut` (N2): hover-triggered,
-  `*/logout*` excluded, prerender never used; ~200 B of inline HTML per
-  page view, no asset growth. Guarded by tests (`speculative prefetch
-  stays side-effect-safe`).
+  restricted to theme navigation containers, root-relative logout exclusion,
+  prerender never used; inline HTML only, no asset growth. Guarded by tests
+  (`speculation rules are valid JSON`, root-relative logout exclusion, and
+  navigation-selector coverage).
 - Cross-document View Transitions opt-in in `_base.css` (N4): +106 B in
   main.css and +106 B in login.css (2026-08 build); survival in both
   entries guarded by a build test.
 - Poll lifecycle in menu-aurora.js (N3): hidden-tab pause (resumes only
-  its own pause) + bfcache `pageshow` stop/start for an immediate
-  `step()`; +255 B → 19,783 B of the 20,000 B budget.
+  its own pause), initial-hidden `poll-start` interception, and idempotent
+  bfcache/visibility resume for one immediate `step()`; +419 B → 19,947 B
+  of the 20,000 B budget.
 - Real-browser A/B of the navigation batch (`bench-browser.mjs`, headless
   Chrome × device, 2026-08-12): hover-prefetch document arrival
   **88 → 6 ms (−93 %**, `deliveryType: navigational-prefetch`; HTTPS only —
   inert over plain HTTP, secure-context API); back/forward bfcache restores
   in ~40 ms with first poll after restore **4,077 → 39 ms (−99 %)**;
   hidden-tab polling **4 → 0 requests / 20 s** (synthetic-visibility
-  isolation); speculationrules inline cost measured **+185 B** per page
-  HTML. Full report in `../baselines/`.
+  isolation); speculationrules inline cost is now estimated at **+337 B**
+  per page HTML (the previous live +185 B measurement plus the exact +152 B
+  rendered-rule delta from selector and logout hardening). Full report in
+  `../baselines/`.
 - View-transition activation proven live (bench-browser.mjs S5):
   `pagereveal.viewTransition` non-null on a script-initiated hop, and null
   under emulated `prefers-reduced-motion` — the opt-in and its off-switch
@@ -71,10 +75,10 @@ Budget revisions require a new baseline entry under `../baselines/`.
 |---|---|---|
 | Long-lived cache headers for versioned CSS/JS | L2 | after LuCI build-time `?v=$(PKG_VERSION)`, kills per-click 304s if headers permit disk/memory cache reuse |
 | Upstream micro-PR: cache validators + versioned URL on `admin/translations` | N1 | the only navigation cost a theme cannot touch — a second per-page dispatcher run, render-blocking and effectively uncacheable (live-measured 2026-08: zh-cn catalog **229,688 B at ~64 ms TTFB, re-transferred every navigation** — vs 6,280 B for the whole login page); ~5 lines in luci-base's `action_translations`, benefits every theme |
-| Hover view-module prewarm (transitive require closure) | N2 | cold-navigation RTTs; **measure first** — est. 1–1.5 KB JS far exceeds menu-aurora.js's remaining 217 B headroom, needs its own deferred file or a budget revision with a new baseline |
+| Hover view-module prewarm (transitive require closure) | N2 | cold-navigation RTTs; **measure first** — est. 1–1.5 KB JS far exceeds menu-aurora.js's remaining 53 B headroom, needs its own deferred file or a budget revision with a new baseline |
 
 Headroom check (2026-08 build): main.css 190,263 / 192,000 B; login.css
-11,805 / 12,000 B; menu-aurora.js 19,783 / 20,000 B. All three budgets are
+11,805 / 12,000 B; menu-aurora.js 19,947 / 20,000 B. All three budgets are
 nearly exhausted — the next feature of any size needs a trim or a budget
 revision with a new baseline, not optimism.
 

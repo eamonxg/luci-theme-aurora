@@ -63,6 +63,14 @@ HOST=https://<device> COOKIE_NAME=sysauth_https COOKIE_VALUE=<from jar> \
   node ../.claude/skills/aurora-performance/scripts/bench-browser.mjs <label>
 ```
 
+`HOST` must be an HTTP(S) origin with no path; both cookie variables are
+required because every scenario targets authenticated admin pages. Set
+`CHROME_BIN` when Chrome is not installed at the platform default. `RUNS`
+defaults to 10 and rejects smaller, empty, fractional, or non-numeric values.
+The harness also aborts if navigation lands on the login form — unauthenticated
+responses are never accepted as measurements — and always closes Chrome and
+removes its temporary profile on success or failure.
+
 Scenarios: S1 document navigation timing (median of `RUNS`); S2 hover→click
 vs immediate click (`deliveryType: navigational-prefetch` proves a hit);
 S3 back/forward bfcache restore + time-to-first-`/ubus` (poll freshness);

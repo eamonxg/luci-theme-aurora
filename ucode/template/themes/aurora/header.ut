@@ -220,7 +220,7 @@
 		 must stay excluded. Prefetch only; prerendering executes page JS.
 		-#}
 		<script type="speculationrules">
-		{"prefetch":[{"where":{"and":[{"href_matches":"{{ dispatcher.build_url('admin') }}/*"},{"not":{"href_matches":"*/logout*"}}]},"eagerness":"moderate"}]}
+		{"prefetch":[{"where":{"and":[{"href_matches":"{{ dispatcher.build_url('admin') }}/*"},{"selector_matches":"#topmenu a, .desktop-menu-canvas a, #sidebar-list a, #mobile-nav-list a, #tabmenu a, #cmdk-list a, #modemenu a"},{"not":{"href_matches":"{{ dispatcher.build_url('admin') }}/logout*"}}]},"eagerness":"moderate"}]}
 		</script>
 		{% endif %}
 	</head>

@@ -89,8 +89,10 @@ full RPC load for pages never opened, on 1–2 shared cores.
 **Do / Don't.** Prefetch documents with an inline
 `<script type="speculationrules">`: `"eagerness": "moderate"`
 (hover/pointerdown-triggered), match the admin URL space, and exclude
-`*/logout*` — audit for any other state-changing GET before widening the
-match. Never use `prerender`. Don't add a Save-Data gate; Chrome already
+logout with a root-relative admin pattern. Restrict document rules to the
+theme's navigation containers with `selector_matches`; do not prefetch
+arbitrary content links, where third-party applications may expose other
+state-changing GET actions. Never use `prerender`. Don't add a Save-Data gate; Chrome already
 suppresses speculative loading under Save-Data, and unsupporting browsers
 ignore the script type. If cold-navigation measurements justify module
 prewarm: fetch view modules with `{ priority: 'low' }`, discover
@@ -105,7 +107,7 @@ live (hover produced no prefetch over `http://`, empty deliveryType,
 unchanged TTFB; the identical click over `https://` hit
 `navigational-prefetch` with document arrival 88 → 6 ms). Any LuCI served
 over HTTPS — a self-signed uhttpd certificate included — is a secure
-context, so the ~200 B of rules are the right bet as shipped defaults; just
+context, so the ~340 B of rules are the right bet as shipped defaults; just
 never claim the win on an HTTP deployment. Related live observation: the
 uhttpd TLS handshake itself costs ~+160 ms document TTFB on router-class
 CPUs, which prefetch also hides on the hover path.
@@ -135,10 +137,12 @@ speculation-rules prefetch — `no-store` is the header that forfeits both.
 Static assets get `ETag`/`Last-Modified` from uhttpd; a conditional request
 answers 304 with zero body bytes (live-verified). Never re-fetch what
 `session.getLocalData` already holds. Add a `pageshow` handler: when
-`event.persisted`, run one immediate poll step so a restored page shows
-fresh data. Pause polling on `visibilitychange` → hidden and resume on
-visible — but only resume a poll the theme itself paused, never one the
-user paused through the poll indicator.
+`event.persisted`, resume a visibility pause once so `Poll.start()` runs one
+immediate step; if polling was already paused by the user or another caller,
+leave it paused. Make `pageshow` and `visibilitychange` share one idempotent
+resume path, preserve pause ownership across repeated hidden events, and
+catch `poll-start` while hidden so tabs opened in the background do not keep
+polling.
 
 **Verify.** DevTools → Application → Back/forward cache → Test succeeds on
 the device; repeat-visit waterfall shows ≈ 0 asset requests; a restored
