@@ -10,3 +10,17 @@ html {
     @apply bg-bg min-h-dvh;
   }
 }
+
+/* Cross-document view transitions (perf skill N4): same-origin navigations
+   crossfade instead of flashing blank. Lives here because BOTH documents
+   must opt in for a hop to animate — main.css and login.css each import
+   this file, which is what makes the login→admin hop transition too. */
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}

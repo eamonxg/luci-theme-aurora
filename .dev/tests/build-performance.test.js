@@ -29,13 +29,31 @@ test("production assets stay within raw-transfer budgets", () => {
 
 test("compressed LuCI JS preserves its loader directives", () => {
   const js = readFileSync(asset("resources/menu-aurora.js"), "utf8");
-  assert.match(js, /["']require baseclass["'];["']require ui["'];/);
+  assert.match(
+    js,
+    /["']require baseclass["'];["']require ui["'];["']require poll["'];/,
+  );
 
-  const module = new Function("baseclass", "ui", js)(
+  const module = new Function("baseclass", "ui", "poll", js)(
     { extend: (value) => value },
+    {},
     {},
   );
   assert.equal(typeof module.__init__, "function");
+});
+
+test("cross-document view transitions survive the build in both entries", () => {
+  // Both documents of a navigation must opt in, so the at-rule has to
+  // reach main.css AND login.css — and survive lightningcss minification.
+  for (const sheet of ["aurora/main.css", "aurora/login.css"]) {
+    const css = readFileSync(asset(sheet), "utf8");
+    assert.match(css, /@view-transition/, `${sheet} lost @view-transition`);
+    assert.match(
+      css,
+      /prefers-reduced-motion/,
+      `${sheet} lost the reduced-motion opt-out`,
+    );
+  }
 });
 
 test("compiled CSS does not duplicate SVG payloads for every mask property", () => {

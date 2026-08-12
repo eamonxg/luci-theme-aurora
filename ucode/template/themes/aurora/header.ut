@@ -214,6 +214,14 @@
 		{% if (!blank_page): %}
 		<script src="{{ dispatcher.build_url('admin/translations', dispatcher.lang) }}"></script>
 		<script src="{{ resource }}/cbi.js"></script>
+		{#
+		 Speculative document prefetch (perf skill N2). A prefetch is a real
+		 GET carrying session cookies, so logout — a state-changing GET —
+		 must stay excluded. Prefetch only; prerendering executes page JS.
+		-#}
+		<script type="speculationrules">
+		{"prefetch":[{"where":{"and":[{"href_matches":"{{ dispatcher.build_url('admin') }}/*"},{"not":{"href_matches":"*/logout*"}}]},"eagerness":"moderate"}]}
+		</script>
 		{% endif %}
 	</head>
 

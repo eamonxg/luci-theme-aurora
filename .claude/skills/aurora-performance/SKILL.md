@@ -1,6 +1,6 @@
 ---
 name: aurora-performance
-description: Use when developing an OpenWrt LuCI theme — editing ucode (.ut) templates, adding or loading CSS/JS/font/image assets, writing CSS animations or menu/drawer interactions, reviewing a theme PR for performance, or measuring TTFB, transfer size, memory, or dropped frames on router-served pages.
+description: Use when developing an OpenWrt LuCI theme — editing ucode (.ut) templates, adding or loading CSS/JS/font/image assets, writing CSS animations or menu/drawer interactions, tuning page-to-page navigation (prefetch/speculation hints, cross-document transitions, back/forward cache, polling across tab visibility), reviewing a theme PR for performance, or measuring TTFB, transfer size, memory, or dropped frames on router-served pages.
 ---
 
 # Aurora Theme Performance
@@ -22,19 +22,22 @@ justification.
 - Editing a `.ut` template, or anything that adds a `ubus`/`uci`/`fs` call
 - Adding or changing what loads in `<head>` — CSS, JS, fonts, images
 - Writing a CSS animation, transition, or JS-driven interaction
+- Changing how pages are entered or left — prefetch/speculation hints, view
+  transitions, history/back-forward behavior, polling across tab visibility
 - Reviewing a theme PR for performance impact
 - Measuring TTFB, transfer size, memory, or dropped frames
 
 Not for: pure content/copy changes with no runtime surface (rewording a
 label, fixing a typo, adjusting a translation string).
 
-## The three planes
+## The planes
 
 | Touching | Read |
 |---|---|
 | `.ut` templates, ubus/uci/fs calls, shipped file sizes | references/server.md |
 | `<head>` links/scripts, assets, caching, compression | references/loading.md |
 | CSS animations, JS interactions, transitions | references/runtime.md |
+| Page-to-page navigation — prefetch, transitions, history/bfcache | references/navigation.md |
 | Verifying/quantifying any of the above | references/measuring.md |
 
 ## Non-negotiables (quick reference)
@@ -49,6 +52,10 @@ label, fixing a typo, adjusting a translation string).
 - **R1** — Animate compositor properties only. → references/runtime.md
 - **R2** — JS must not force synchronous layout. → references/runtime.md
 - **R3** — Accessibility is functionality. → references/runtime.md
+- **N1** — Navigation is MPA plus platform enhancements; no theme router. → references/navigation.md
+- **N2** — Speculative loading must be side-effect-safe. → references/navigation.md
+- **N3** — Protect the free caches (bfcache, session caches). → references/navigation.md
+- **N4** — Mask the document seam, don't fake speed. → references/navigation.md
 
 ## Budgets & ledger
 

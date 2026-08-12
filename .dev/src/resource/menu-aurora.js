@@ -1,12 +1,36 @@
 "use strict";
 "require baseclass";
 "require ui";
+"require poll";
 
 return baseclass.extend({
   __init__() {
     ui.menu.load().then((tree) => this.render(tree));
     this.initNavigationControls();
     this.initUciIndicator();
+    this.initPollLifecycle();
+  },
+
+  // Hidden tabs keep hammering ubus, and bfcache restores show stale data
+  // until the next tick. Poll.start() runs one step() synchronously, so a
+  // stop/start pair is an immediate refresh. stop() returns false when
+  // polling wasn't active — which is what keeps a poll the user paused via
+  // the indicator paused: we only ever resume a pause this handler took.
+  initPollLifecycle() {
+    let pausedWhileHidden = false;
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        pausedWhileHidden = poll.stop();
+      } else if (pausedWhileHidden) {
+        pausedWhileHidden = false;
+        poll.start();
+      }
+    });
+
+    window.addEventListener("pageshow", (ev) => {
+      if (ev.persisted && poll.stop()) poll.start();
+    });
   },
 
   initUciIndicator() {
