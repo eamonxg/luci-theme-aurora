@@ -21,6 +21,9 @@
  *   S3 back/forward: bfcache restore + time to first /ubus request after
  *      restore (poll freshness)
  *   S4 polling rate, visible vs synthetically-hidden (20 s windows)
+ *   S5 cross-document view-transition activation: `pagereveal.viewTransition`
+ *      is non-null only when a transition actually runs — checked normally
+ *      and under emulated prefers-reduced-motion (must be off there)
  *
  * Measurement caveats (learned the hard way — see measuring.md):
  *   - Speculation Rules are a secure-context API: over plain HTTP the
@@ -259,6 +262,43 @@ if (!process.env.ONLY || process.env.ONLY === "polling") {
   await sleep(20000);
   out.polling = { visible20s: visibleCount, hiddenSynthetic20s: count };
   handlers.delete(netH);
+  await send("Target.closeTarget", { targetId: p.targetId });
+}
+
+/* ---------- S5: view-transition activation ---------- */
+if (!process.env.ONLY || process.env.ONLY === "vt") {
+  const p = await newPage();
+  await send("Page.addScriptToEvaluateOnNewDocument", {
+    source: "addEventListener('pagereveal',e=>{window.__vt = !!e.viewTransition})",
+  }, p.sessionId);
+  // Cross-document transitions only run for navigations initiated from
+  // inside the page (link clicks, location.assign) — browser-UI-initiated
+  // ones, which CDP's Page.navigate counts as, are skipped by spec. So the
+  // measured hop must be script-initiated.
+  const scriptNav = async (url) => {
+    const load = waitEvent("Page.loadEventFired", p.sessionId);
+    await evaljs(p.sessionId, `location.assign(${JSON.stringify(url)})`);
+    await load;
+  };
+  await nav(p.sessionId, PAGE_A);
+  await scriptNav(`${HOST}/cgi-bin/luci/admin/system/admin`);
+  const vtNormal = await evaljs(p.sessionId, "window.__vt === true");
+  out.vtDiag = JSON.parse(await evaljs(p.sessionId, `JSON.stringify({
+    vtRaw: String(window.__vt),
+    pagerevealSupported: 'onpagereveal' in window,
+    ruleInCSSOM: [...document.styleSheets].some(s => {
+      try { return [...(s.cssRules || [])].some(r => r.constructor?.name === 'CSSViewTransitionRule'); }
+      catch { return false; }
+    }),
+    reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+    ua: navigator.userAgent.match(/Chrome\\/[\\d.]+/)?.[0] ?? navigator.userAgent,
+  })`));
+  await send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+  }, p.sessionId);
+  await scriptNav(PAGE_A);
+  const vtReduced = await evaljs(p.sessionId, "window.__vt === true");
+  out.viewTransition = { activates: vtNormal, disabledUnderReducedMotion: !vtReduced };
   await send("Target.closeTarget", { targetId: p.targetId });
 }
 

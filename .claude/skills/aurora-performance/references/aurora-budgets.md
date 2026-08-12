@@ -59,13 +59,18 @@ Budget revisions require a new baseline entry under `../baselines/`.
   hidden-tab polling **4 → 0 requests / 20 s** (synthetic-visibility
   isolation); speculationrules inline cost measured **+185 B** per page
   HTML. Full report in `../baselines/`.
+- View-transition activation proven live (bench-browser.mjs S5):
+  `pagereveal.viewTransition` non-null on a script-initiated hop, and null
+  under emulated `prefers-reduced-motion` — the opt-in and its off-switch
+  both work. (Measurement trap recorded in measuring.md: `Page.navigate`
+  counts as browser-UI navigation and never transitions.) Subjective
+  smoothness can be eyeballed via the DevTools MCP when desired.
 
 ### Pending
 | Item | Principle | Estimated gain |
 |---|---|---|
 | Long-lived cache headers for versioned CSS/JS | L2 | after LuCI build-time `?v=$(PKG_VERSION)`, kills per-click 304s if headers permit disk/memory cache reuse |
 | Upstream micro-PR: cache validators + versioned URL on `admin/translations` | N1 | the only navigation cost a theme cannot touch — a second per-page dispatcher run, render-blocking and effectively uncacheable (live-measured 2026-08: zh-cn catalog **229,688 B at ~64 ms TTFB, re-transferred every navigation** — vs 6,280 B for the whole login page); ~5 lines in luci-base's `action_translations`, benefits every theme |
-| View-transition visual check | N4 | the one remaining manual item of the navigation-batch verification (HTTP + browser halves landed 2026-08-12, see Landed and `../baselines/`): a screen recording of the crossfade, plus the `prefers-reduced-motion` off-switch cross-check |
 | Hover view-module prewarm (transitive require closure) | N2 | cold-navigation RTTs; **measure first** — est. 1–1.5 KB JS far exceeds menu-aurora.js's remaining 217 B headroom, needs its own deferred file or a budget revision with a new baseline |
 
 Headroom check (2026-08 build): main.css 190,263 / 192,000 B; login.css

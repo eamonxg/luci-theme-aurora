@@ -66,10 +66,12 @@ HOST=https://<device> COOKIE_NAME=sysauth_https COOKIE_VALUE=<from jar> \
 Scenarios: S1 document navigation timing (median of `RUNS`); S2 hover→click
 vs immediate click (`deliveryType: navigational-prefetch` proves a hit);
 S3 back/forward bfcache restore + time-to-first-`/ubus` (poll freshness);
-S4 polling rate visible vs hidden. `ONLY=doc|click|back|polling` runs one
+S4 polling rate visible vs hidden; S5 view-transition activation
+(`pagereveal.viewTransition`, checked normally and under emulated
+`prefers-reduced-motion`). `ONLY=doc|click|back|polling|vt` runs one
 scenario. Output is JSON; run once per state (base/branch) and diff.
 
-Two caveats that will otherwise produce false conclusions:
+Three caveats that will otherwise produce false conclusions:
 
 - **Speculation Rules are a secure-context API.** Over plain HTTP the rules
   parse but never fire — S2 shows an empty deliveryType and unchanged TTFB.
@@ -79,6 +81,11 @@ Two caveats that will otherwise produce false conclusions:
   both states. The harness therefore keeps the tab active and dispatches a
   synthetic `visibilitychange`, which keeps timers running and isolates the
   theme's own pause handler — label such results "synthetic" in reports.
+- **Cross-document view transitions only run for page-initiated
+  navigations** (link clicks, `location.assign`). Browser-UI navigations —
+  which CDP's `Page.navigate` counts as — are skipped by spec, so a naive
+  harness reports `viewTransition: null` against a perfectly working
+  opt-in. S5 navigates via `location.assign` for this reason.
 
 ## Chrome DevTools MCP (interactive layer)
 
