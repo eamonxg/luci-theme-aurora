@@ -47,7 +47,7 @@ Budget revisions require a new baseline entry under `../baselines/`.
   2026-08-16): view/alias/firstchild/overview navigations become
   same-document swaps on Navigation-API browsers, MPA elsewhere.
   Measured on RE-SS-01 over plain HTTP (`bench-router.mjs`, RUNS=10): click →
-  view painted **262–496 ms → 48–269 ms warm, median −69 %**; walk of
+  view painted **241–544 ms → 49–251 ms warm, median −67 %**; walk of
   51/62 linked pages (mega-menu/sidebar), 42–43 served, **0 divergences** vs
   full loads incl. DOM shape; 65-navigation soak flat after the first lap
   once departed regions are cleared through `dom.content()` (the data-idref

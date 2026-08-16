@@ -27,36 +27,38 @@ transition — each its own section below.
 
 ## Why it pays, measured
 
-One warm navigation on an `ipq60xx` router over plain HTTP, master 1.2.0:
+One full-load navigation on an `ipq60xx` router (RE-SS-01) over plain
+HTTP, median of 10 over the 8 sample pages below, this branch (2026-08-16):
 
 | stage | ms | note |
 |---|--:|---|
-| dispatcher renders the page HTML | ~80 | TTFB; menu tree + ACL + template |
-| `admin/translations/<lang>` | +70 (parallel) | a second dispatcher run, render-blocking, uncacheable |
-| DOMContentLoaded | 167 | |
-| view module + 4 ubus calls | 167→220 | static assets are already 0-byte cache hits |
+| dispatcher renders the page HTML | 106 | TTFB; menu tree + ACL + template |
+| `admin/translations/<lang>` | 106→205 | a second dispatcher run, render-blocking, uncacheable |
+| DOMContentLoaded | 211 | right behind the translations |
+| view module + ubus calls + render | 211→313 | static assets are already 0-byte cache hits |
 
-≈ 150 ms of the 220 is the router-side work of rebuilding a document whose
+≈ 210 ms of the 313 is the router-side work of rebuilding a document whose
 content is rendered client-side anyway. A same-document swap keeps only the
-last row (view module from cache + data RPCs + render). Speculation-rules
-prefetch cannot reach that number on HTTP at all (secure-context API) and on
-HTTPS only hides the first row.
+last row (view module from cache + data RPCs + render): the same 8 pages
+land at a median of 99 ms warm. Speculation-rules prefetch cannot reach
+that number on HTTP at all (secure-context API) and on HTTPS only hides the
+first row.
 
-End to end, click → view painted, median of 10 on an `ipq60xx` (RE-SS-01)
-over plain HTTP (`bench-router.mjs`, 2026-08):
+End to end, click → view painted, median of 10 on the same device
+(`bench-router.mjs timing`, RUNS=10, 2026-08-16):
 
 | page | full load | router (warm) | faster |
 |---|--:|--:|--:|
-| status/routesj | 307 | 140 | 54 % |
-| status/nftables | 335 | 95 | 72 % |
-| status/logs | 375 | 187 | 50 % |
-| status/processes | 451 | 269 | 40 % |
-| status/channel_analysis | 464 | 74 | 84 % |
-| status/realtime | 262 | 48 | 82 % |
-| system/system | 496 | 163 | 67 % |
-| system/admin | 266 | 53 | 80 % |
+| status/routesj | 286 | 112 | 61 % |
+| status/nftables | 277 | 85 | 69 % |
+| status/logs | 309 | 124 | 60 % |
+| status/processes | 455 | 251 | 45 % |
+| status/channel_analysis | 412 | 63 | 85 % |
+| status/realtime | 241 | 49 | 80 % |
+| system/system | 544 | 194 | 64 % |
+| system/admin | 268 | 63 | 76 % |
 
-Median **69 % faster** (40–84 % across the sample). Absolute numbers move
+Median **67 % faster** (45–85 % across the sample). Absolute numbers move
 with CPU, network and page; the ratio is the point — the same-document swap
 skips the router-side rebuild above and keeps only the view render.
 
@@ -79,6 +81,20 @@ writes the URL and history entry, exposes `event.signal` for supersession,
 and (with `scroll: 'after-transition'`) restores scroll on traversal /
 scrolls to top on push, so the router carries no `pushState`/`popstate`
 code, no scroll bookkeeping, and no fragment-vs-navigation heuristics.
+
+Why this API rather than the History API the other themes use:
+
+- **The browser owns URL, history and scroll.** `pushState` puts the
+  router in charge of all three and of keeping them consistent with what
+  it rendered; here it only ever renders.
+- **Supersession is built in.** A newer navigation aborts the older one's
+  `event.signal`; the generation gate below is a check, not a state
+  machine, and no `render` guard is needed to repair a stale paint.
+- **Every navigation kind arrives at one listener** — link click,
+  `location.assign`, back/forward to a same-document entry, our own
+  `navigation.navigate()` — so there is exactly one path to keep correct.
+- **The fallback is free.** Where the API is missing, the theme is the
+  MPA it already was; nothing has to be polyfilled or feature-forked.
 
 **Browsers without the API stay MPA.** Feature-detected at module eval:
 `window.navigation?.addEventListener` and `NavigateEvent.prototype.intercept`.
