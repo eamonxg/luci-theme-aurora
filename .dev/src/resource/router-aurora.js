@@ -7,7 +7,8 @@
 // invariants each step keeps: .dev/docs/spa-router.md.
 const RT = window.L;
 const RENDER_TIMEOUT = 8000;
-const OVERVIEW_TEMPLATE = "admin_status/index";
+const PATCH_ATTR = "data-aurora-patch";
+const INSTANTIATE = /instantiateView\(\s*['"]([^'"]+)['"]/;
 
 const supported = () =>
   typeof navigation === "object" &&
@@ -96,8 +97,6 @@ function viewClass(node) {
 
   if (action?.type === "view" && action.path)
     return `view.${action.path.replace(/\//g, ".")}`;
-  if (action?.type === "template" && action.path === OVERVIEW_TEMPLATE)
-    return "view.status.index";
 
   return null;
 }
@@ -124,43 +123,6 @@ const moduleUrl = (name) =>
   `${RT.env.base_url}/${name.replace(/\./g, "/")}.js${
     RT.env.resource_version ? `?v=${RT.env.resource_version}` : ""
   }`;
-
-// luci-mod-status's page helpers, defined by its template on a full load.
-// Only the missing ones are defined; the names stay theirs.
-function ensureOverviewHelpers() {
-  window.progressbar ??= function (query, value, max, byte) {
-    const pg = document.querySelector(query);
-    const vn = parseInt(value) || 0;
-    const mn = parseInt(max) || 100;
-    const fv = byte ? String.format("%1024.2mB", value) : value;
-    const fm = byte ? String.format("%1024.2mB", max) : max;
-    const pc = Math.floor((100 / mn) * vn);
-
-    if (pg) {
-      pg.firstElementChild.style.width = `${pc}%`;
-      pg.setAttribute("title", `${fv} / ${fm} (${pc}%)`);
-    }
-  };
-  window.renderBox ??= function (title, active, childs) {
-    childs = childs || [];
-    childs.unshift(
-      E("span", { class: "ifacebadge large" }, [
-        E("img", { src: L.resource("icons/ethernet.svg") }),
-        active ? "" : E("em", {}, _("Not connected")),
-      ]),
-    );
-    return E("div", { class: "ifacebox" }, [
-      E("div", { class: "ifacebox-head" }, [E("strong", {}, title)]),
-      E("div", { class: "ifacebox-body" }, childs),
-    ]);
-  };
-  window.renderBadge ??= function (icon, title) {
-    return E("span", { class: "ifacebadge" }, [
-      E("img", { src: icon, title: title || "" }),
-      title ? " " + title : "",
-    ]);
-  };
-}
 
 return baseclass.extend({
   __init__() {
@@ -200,8 +162,7 @@ return baseclass.extend({
 
   poisoned() {
     return this.sheets().some(
-      (el) =>
-        !this.knownSheets.has(el) && !el.hasAttribute("data-aurora-patch"),
+      (el) => !this.knownSheets.has(el) && !el.hasAttribute(PATCH_ATTR),
     );
   },
 
@@ -244,12 +205,79 @@ return baseclass.extend({
       .map(decodeURIComponent);
   },
 
-  route(url) {
+  // A view node is served directly. A template node is served once its
+  // server-rendered page is known to be a view shell (its region contains an
+  // instantiateView call): the shell is fetched on hover/focus (onIntent) or
+  // seeded from the document itself, so the decision here stays synchronous
+  // and a Lua template page never costs a wasted fetch or an error path.
+  route(url, { intent = false } = {}) {
     const segs = this.segsFromURL(url);
     const resolved = segs && this.resolve(segs);
-    const className = resolved && viewClass(resolved.node);
+    if (!resolved) return null;
+    const className = viewClass(resolved.node);
+    const path = resolved.node.action?.path;
+    const template =
+      resolved.node.action?.type === "template" &&
+      (intent ? !this.unservable?.has(path) : this.templates?.has(path));
 
-    return className ? { segs, className, ...resolved } : null;
+    return className || template
+      ? { segs, className, template: template && path, url, ...resolved }
+      : null;
+  },
+
+  // Fetch a template page once per document and keep the content region the
+  // server rendered — the page's own helper scripts, <h2>, Lua includes —
+  // instead of re-implementing them by hand. Not a view shell → remembered
+  // as unservable so it is not fetched again this document.
+  async template(r) {
+    this.templates ??= new Map();
+    if (this.templates.has(r.template)) return this.templates.get(r.template);
+
+    const html = await (
+      await fetch(r.url, { credentials: "same-origin" })
+    ).text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const main = doc.getElementById("maincontent");
+    const start = main?.querySelector("#tabmenu");
+    const end = main?.querySelector(":scope > footer");
+    const nodes = [];
+
+    for (let n = start?.nextSibling; n && n !== end; n = n.nextSibling)
+      nodes.push(n);
+
+    return this.rememberShell(r.template, nodes);
+  },
+
+  // Region nodes → { className, nodes, scripts }: inline scripts are split
+  // into the instantiateView call (which names the class) and the helpers,
+  // #view is replaced by an empty shell, everything else is cloned.
+  rememberShell(path, nodes) {
+    const shell = { className: null, nodes: [], scripts: [] };
+
+    for (const n of nodes) {
+      if (n.nodeName === "SCRIPT") {
+        // luci-base's own bootstrap (luci.js + `L = new LuCI(env)`) sits in
+        // this region too; only the template's inline helpers are replayed.
+        const m = n.textContent.match(INSTANTIATE);
+        if (m) shell.className = `view.${m[1].replace(/\//g, ".")}`;
+        else if (
+          !n.src &&
+          n.textContent.trim() &&
+          !/new LuCI\(/.test(n.textContent)
+        )
+          shell.scripts.push(n.textContent);
+      } else if (n.nodeType === 1 && n.id === "view") {
+        shell.nodes.push(E("div", { id: "view" }));
+      } else if (n.nodeType === 1 && n.querySelector("#view")) {
+        shell.className = null;
+        break;
+      } else shell.nodes.push(document.importNode(n, true));
+    }
+
+    if (shell.className) this.templates.set(path, shell);
+    else (this.unservable ??= new Set()).add(path);
+
+    return shell.className ? shell : null;
   },
 
   resolve(segs) {
@@ -269,9 +297,17 @@ return baseclass.extend({
   // router could not have rendered (call/cbi/function pages) carries scripts
   // only a document death retires, so the router never takes over from one.
   trackInitialRender() {
-    const current = this.route(window.location.href);
+    const current = this.route(window.location.href, { intent: true });
 
     if (!current) return false;
+    if (current.template) {
+      // The document IS the rendered template: keep its region as the shell
+      // so a later visit needs no fetch.
+      this.templates ??= new Map();
+      const shell = this.rememberShell(current.template, this.region().nodes);
+      if (!shell) return false;
+      current.className = shell.className;
+    }
     this.seen.add(current.className);
     const title = current.node.title ? _(current.node.title) : "";
     this.titleTail = document.title.startsWith(title)
@@ -307,8 +343,13 @@ return baseclass.extend({
     const a = ev.target?.closest?.("a[href]");
     if (!a || a.target || a.hasAttribute("download")) return;
 
-    const r = this.route(a.href);
-    if (r && !this.seen.has(r.className)) this.warm(r.className);
+    const r = this.route(a.href, { intent: true });
+    if (!r) return;
+    if (r.template)
+      this.template(r)
+        .then((tpl) => tpl && this.warm(tpl.className))
+        .catch(() => {});
+    else if (!this.seen.has(r.className)) this.warm(r.className);
   },
 
   warm(name) {
@@ -357,6 +398,10 @@ return baseclass.extend({
       await previous;
       if (gen !== this.gen || ev.signal.aborted) return;
 
+      const tpl = r.template ? await this.template(r) : null;
+      if (tpl) r.className = tpl.className;
+      if (gen !== this.gen || ev.signal.aborted) return;
+
       this.teardown();
       await this.flushUci();
       if (gen !== this.gen || ev.signal.aborted) return;
@@ -365,7 +410,7 @@ return baseclass.extend({
       this.menu.syncRoute();
       this.applyPatches(r.request);
 
-      const view = this.stage(r);
+      const view = this.stage(tpl);
       const done = this.rendered(view);
       const cold = !this.seen.has(r.className);
       this.seen.add(r.className);
@@ -376,7 +421,7 @@ return baseclass.extend({
       if (!cold) new instance.constructor();
       await done;
       if (gen !== this.gen) return;
-      await this.commit(view, r);
+      await this.commit(view);
       this.mountPatches();
       document.getElementById("maincontent")?.focus({ preventScroll: true });
     } catch (err) {
@@ -445,31 +490,35 @@ return baseclass.extend({
   // first in tree order (getElementById returns the first), so the outgoing
   // page stays on screen until the new one is ready. Laid out, not
   // display:none: views size their graphs from #view.offsetWidth in render().
-  stage(r) {
+  stage(tpl) {
     const { main, start, end } = this.region();
-    const view = E("div", { id: "view", class: "view-staging" });
+    const wrapper = E("div", { class: "view-staging" });
 
     for (const old of main.querySelectorAll(":scope > #view"))
       old.classList.add("view-leaving");
-    main.insertBefore(view, start ? start.nextSibling : (end ?? null));
+    if (tpl) {
+      for (const n of tpl.nodes) wrapper.appendChild(n.cloneNode(true));
+      // Inline scripts of a parsed document never run on adoption; re-create
+      // them so the template's helpers land in global scope as on a full load.
+      for (const text of tpl.scripts)
+        wrapper.appendChild(E("script", {}, text));
+    } else wrapper.appendChild(E("div", { id: "view" }));
+    main.insertBefore(wrapper, start ? start.nextSibling : (end ?? null));
 
-    if (r.className === "view.status.index") ensureOverviewHelpers();
-
-    return view;
+    return wrapper.querySelector("#view");
   },
 
-  commit(view, r) {
+  commit(view) {
+    const wrapper = view.parentNode;
     const swap = () => {
       for (const n of this.region().nodes) {
-        if (n === view) continue;
+        if (n === wrapper) continue;
         // dom.content() drops the data-idref registry entries that would
         // otherwise keep the departed subtree (and its class instances) alive.
         if (n.nodeType === 1) RT.dom.content(n, null);
         n.remove();
       }
-      view.classList.remove("view-staging");
-      if (r.className === "view.status.index")
-        view.before(E("h2", { name: "content" }, _("Status")));
+      wrapper.replaceWith(...wrapper.childNodes);
     };
     const reduce = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -493,12 +542,12 @@ return baseclass.extend({
       const needed = want.has(stem);
 
       if (file.endsWith(".css")) {
-        let link = document.querySelector(`link[data-aurora-patch="${stem}"]`);
+        let link = document.querySelector(`link[${PATCH_ATTR}="${stem}"]`);
         if (!link && needed) {
           link = E("link", {
             rel: "stylesheet",
             href: `${media}/patches/${stem}.css`,
-            "data-aurora-patch": stem,
+            [PATCH_ATTR]: stem,
           });
           document.head.appendChild(link);
         } else if (link) link.disabled = !needed;
@@ -513,14 +562,12 @@ return baseclass.extend({
     const registry = window.aurora?.patches ?? {};
 
     for (const stem of this.pendingPatches ?? []) {
-      const script = document.querySelector(
-        `script[data-aurora-patch="${stem}"]`,
-      );
+      const script = document.querySelector(`script[${PATCH_ATTR}="${stem}"]`);
       if (!script) {
         document.head.appendChild(
           E("script", {
             src: `${RT.env.media}/patches/${stem}.js`,
-            "data-aurora-patch": stem,
+            [PATCH_ATTR]: stem,
           }),
         );
       } else registry[stem]?.mount?.();

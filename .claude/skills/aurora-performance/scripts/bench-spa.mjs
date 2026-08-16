@@ -181,6 +181,10 @@ const SNAPSHOT = `(() => JSON.stringify({
   viewIds: document.querySelectorAll('[id="view"]').length,
   h1: document.querySelector('#view h2, #maincontent > h2')?.textContent ?? null,
   svgLines: document.querySelectorAll('#view svg line').length,
+  // DOM shape of the rendered view: per tag+class, [elements, elements with text].
+  shape: (() => { const m = {}; for (const el of document.querySelectorAll('#view *')) {
+    const k = el.tagName + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).sort().join('.') : '');
+    (m[k] ??= [0, 0]); m[k][0]++; if (el.textContent.trim()) m[k][1]++; } return m; })(),
   marker: window.__spaMarker ?? null,
 }))()`;
 async function snapshot(sessionId) { return JSON.parse(await evaljs(sessionId, SNAPSHOT)); }
@@ -192,6 +196,10 @@ async function spaNavigate(sessionId, url) {
   load.catch(() => {});
   try {
     const r = JSON.parse(await evaljs(sessionId, `(async () => {
+      // A user hovers before clicking; the router prewarms (and, for template
+      // nodes, fetches the shell) on that intent.
+      const link = [...document.querySelectorAll('a[href]')].find(a => a.href === ${JSON.stringify(url)});
+      if (link) { link.dispatchEvent(new Event('pointerover', { bubbles: true })); await new Promise(r => setTimeout(r, 400)); }
       const t0 = performance.now();
       let error = null;
       try {
@@ -257,12 +265,21 @@ if (!ONLY || ONLY === "walk") {
     await fullLoad(p.sessionId, url);
     await sleep(300);
     const full = await snapshot(p.sessionId);
+    // a page's own console errors (missing binaries, 404s) show on both paths
+    const fullErrors = new Set(consoleErrors.map((e) => e.split("\n")[0]));
+    const routerErrors = spaErrors.filter((e) => !fullErrors.has(e.split("\n")[0]));
     const diffs = [];
     for (const k of ["url", "title", "page", "dispatch", "request", "tabs", "activeTab", "activeNav", "footer", "h1", "svgLines"])
       if (String(spa[k]) !== String(full[k])) diffs.push(`${k}: spa=${spa[k]} full=${full[k]}`);
     if (spa.viewIds !== 1) diffs.push(`viewIds=${spa.viewIds}`);
+    for (const k of new Set([...Object.keys(spa.shape), ...Object.keys(full.shape)])) {
+      const a = spa.shape[k] ?? [0, 0], b = full.shape[k] ?? [0, 0];
+      // tolerate small count drift (live tables), flag missing kinds and lost text
+      if (Math.abs(a[0] - b[0]) > Math.max(2, b[0] * 0.25) || (b[1] > 0 && a[1] === 0 && b[0] <= 20 && a[0] > 0))
+        diffs.push(`shape ${k}: spa=${a} full=${b}`);
+    }
     if (spa.viewChildren <= 0 && full.viewChildren > 0) diffs.push("view empty under spa");
-    if (spaErrors.length) diffs.push(`console: ${spaErrors.slice(0, 2).join(" | ").slice(0, 200)}`);
+    if (routerErrors.length) diffs.push(`console: ${routerErrors.slice(0, 2).join(" | ").slice(0, 200)}`);
     (diffs.length ? divergences : ok).push({ url: url.replace(HOST, ""), diffs });
    } catch (e) {
      errors.push({ url: url.replace(HOST, ""), error: e.message });

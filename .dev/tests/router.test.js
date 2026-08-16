@@ -141,12 +141,19 @@ test("firstchild follows the dispatcher's weights and eligibility rules", () => 
 
 test("nested firstchild resolves through the whole descent", () => {
   const router = loadRouter({ tree });
-  const r = router.route("https://r/cgi-bin/luci/");
-
   // status (order 10) beats system (20); inside status the overview template
-  // (order 1) is the lightest eligible child.
-  assert.equal(r.className, "view.status.index");
+  // (order 1) is the lightest eligible child — a template node, routed only
+  // once its page is known to be a view shell (hover fetch or seeded).
+  assert.equal(router.route("https://r/cgi-bin/luci/"), null);
+  const r = router.route("https://r/cgi-bin/luci/", { intent: true });
+  assert.equal(r.className, null);
+  assert.equal(r.template, "admin_status/index");
   assert.deepEqual(r.path, ["admin", "status", "overview"]);
+  router.templates = new Map([["admin_status/index", {}]]);
+  assert.equal(
+    router.route("https://r/cgi-bin/luci/").template,
+    "admin_status/index",
+  );
 });
 
 test("firstchild ignores untitled children", () => {

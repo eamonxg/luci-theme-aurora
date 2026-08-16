@@ -94,24 +94,37 @@ one page while F5 opens another — that is why the resolver is a port.
 |---|---|
 | `view` | yes — `view.<path>` |
 | `alias`, `firstchild` | yes — resolved to a leaf, recursively |
-| `template` = `admin_status/index` (Status → Overview) | yes — special-cased, see below |
-| other `template`, `call`, `function`, `cbi`, `rewrite` | no → full load |
+| `template` whose page is a view shell (Status → Overview) | yes — shell fetched once, see below |
+| Lua `template`, `call`, `function`, `cbi`, `rewrite` | no → full load |
 
 `rewrite` is deliberately not resolved: it is not in the tree and a splice
 mistake opens the wrong page, which is worse than the reload it falls back to.
 
-### The Overview special case
+### Template nodes: the server's own shell, never a hand port
 
-`admin/status/overview` is a `template` whose server side defines three page
+`admin/status/overview` is a `template` whose server side defines page
 globals (`progressbar`, `renderBox`, `renderBadge`), emits an `<h2>` and a
-hidden `div.includes`, and then instantiates `view.status.index`. The router
-reproduces the `<h2>` and defines the helpers idempotently (they are
-luci-mod-status's names, defined only if absent), then instantiates the
-view. Server-rendered Lua includes (`div.includes`, present only with a Lua
-runtime) cannot be reproduced client-side and are the one known gap. Its
-status include modules are singletons carrying `oneshot`/`hide` state that a
-full load would reset — verified against a real full load, not against
-expectation.
+`div.includes` (server-rendered Lua includes), and then instantiates
+`view.status.index`. A first version re-implemented those helpers in the
+router and drifted on the first real page (the network badges lost their
+labels: upstream's `renderBadge` takes extra `L.itemlist` arguments the port
+did not know about). So the router does not port anything: when a link to a
+template node is hovered or focused, its page is **fetched once per
+document**, parsed with `DOMParser`, and the content region between `#tabmenu` and
+`<footer>` is kept as the page's *shell* — every node cloned, `#view`
+replaced by an empty div, the inline `instantiateView('…')` script read for
+the class name, the remaining inline scripts (the helpers) replayed into
+global scope on staging. luci-base's own bootstrap (`luci.js` and
+`L = new LuCI(env)`) also lives in that region and is filtered out. If the
+document *is* that template (the session started on Overview), the shell is
+taken from the live region and no fetch happens. A template node is only
+intercepted once its shell is known — so a Lua template page (no
+`instantiateView` call) is remembered as unservable after one hover fetch
+and never enters the router's error path, and a template clicked without a
+prior hover is a plain full load that seeds the shell for the rest of the
+document. Its status include modules are singletons carrying
+`oneshot`/`hide` state that a full load would reset — verified against a
+real full load, not against expectation.
 
 ## The navigation procedure
 
