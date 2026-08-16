@@ -8,6 +8,23 @@ or to any view** — the router is additive theme JS plus three small template
 hooks (a patch manifest, a `<footer>` boundary, and `data-aurora-*` markers
 on the stylesheets header.ut itself renders).
 
+## Prior art
+
+Other LuCI themes solve the same problem, and reading one of them (credited
+in the README) informed two pieces here: pausing `L.Poll` on a hidden tab,
+and folding a view's read-only state along its dispatch path (both below).
+The rest is independent, and one choice diverges deliberately. The common
+approach drives navigation through the **History API**
+(`pushState`/`popstate`) with its own scroll bookkeeping and a
+`prototype.render` guard to repair stale renders; this router is built on
+the **Navigation API** instead (see "Kernel"), which hands scroll, history
+and supersession to the browser and needs none of that — at the cost of
+running only on newer browsers, where the theme falls back to the plain MPA
+it already is. On top of that shared base this router also adds a
+session-expiry gate, reproduces `template` pages from the server's own shell
+rather than hand-porting them, and cross-fades the swap with a view
+transition — each its own section below.
+
 ## Why it pays, measured
 
 One warm navigation on an `ipq60xx` router over plain HTTP, master 1.2.0:
