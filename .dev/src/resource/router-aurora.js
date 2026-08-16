@@ -690,11 +690,12 @@ return baseclass.extend({
       }
       if (gen !== this.gen) return;
       await this.commit(view);
-      this.mountPatches(patches, gen);
+      this.mountPatches(patches);
       this.status.textContent = document.title;
       document.getElementById("maincontent")?.focus({ preventScroll: true });
     } catch (err) {
       console.error("router-aurora:", err);
+      if (gen !== this.gen) return;
       this.bypass = true;
       window.location.href = ev.destination.url;
       await new Promise(() => {});
@@ -849,8 +850,9 @@ return baseclass.extend({
     return pending;
   },
 
-  mountPatches(pending, gen) {
+  mountPatches(pending) {
     const registry = window.aurora?.patches ?? {};
+    this.live = new Set(pending);
 
     for (const stem of pending) {
       const script = document.querySelector(`script[${PATCH_ATTR}="${stem}"]`);
@@ -860,9 +862,9 @@ return baseclass.extend({
           [PATCH_ATTR]: stem,
         });
         // The patch mounts itself on evaluation; if the user has already
-        // navigated on by then, that mount belongs to a page that is gone.
+        // navigated to a page without it by then, that mount is stale.
         el.addEventListener("load", () => {
-          if (gen !== this.gen) window.aurora?.patches?.[stem]?.unmount?.();
+          if (!this.live.has(stem)) window.aurora?.patches?.[stem]?.unmount?.();
         });
         document.head.appendChild(el);
       } else registry[stem]?.mount?.();
@@ -870,6 +872,7 @@ return baseclass.extend({
   },
 
   unmountPatches() {
+    this.live = new Set();
     for (const stem in window.aurora?.patches ?? {})
       window.aurora.patches[stem].unmount?.();
   },

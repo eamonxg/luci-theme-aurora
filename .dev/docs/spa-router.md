@@ -281,8 +281,9 @@ handler in order:
    the same `?v=PKG_VERSION` luci.mk stamps on the template's own links,
    read from `body[data-asset-version]`, so they hit the same cache entry — a JS patch that registers nothing is simply executed once,
    MPA-style. A patch script mounts itself when it evaluates; if the user
-   has navigated on before it arrives, its `load` handler sees a newer
-   navigation generation and unmounts it again.
+   has navigated on before it arrives, its `load` handler checks whether
+   the current page still wants that stem and unmounts it otherwise (a
+   same-stem page reached meanwhile keeps it mounted).
    A menu.d node's own `css` (`header.ut` links `<resource>/<node.css>` for
    the dispatched node, marked `data-aurora-node-css`) is kept the same
    way: one `<link>` per stylesheet, enabled for the page whose resolved leaf
