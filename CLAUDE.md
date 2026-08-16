@@ -30,7 +30,7 @@ No linter CLI. Formatting uses Prettier with format-on-save (`.vscode/settings.j
 
 **Design tokens**: `_tokens.css` 已随 @eamonxg/luci-theme-tokens 上移——main.css/login.css 直接 @import 包内 dist/aurora/tokens.css。改配色/推导请到 luci-theme-tokens 仓库（aurora/defaults.js、aurora/spec.js），发版后在此 bump 依赖重新构建。
 
-**JavaScript**: LuCI `E()` DOM API (not React/Vue). Minified but not bundled.
+**JavaScript**: LuCI `E()` DOM API (not React/Vue). Minified but not bundled. `router-aurora.js` turns view-page navigation into same-document swaps on Navigation-API browsers (MPA elsewhere) — read `.dev/docs/spa-router.md` before touching navigation, teardown, or page-scoped patches, and verify with `bench-spa.mjs`.
 
 **Dark mode**: `@custom-variant dark` keyed on `[data-darkmode=true]`, switching logic in `header.ut`.
 

@@ -117,6 +117,8 @@ All rules use `@apply` with Tailwind utilities and CSS Nesting — no raw CSS pr
 
 ### On-Demand Third-Party Patches
 
+> Page-scoped JS patches must expose `window.aurora.patches[stem] = { mount, unmount }` (and mount themselves once at eval) so the client-side router can drive them across same-document navigations — see `spa-router.md`.
+
 Some third-party LuCI apps ship markup that doesn't adapt to the theme and needs a narrow compatibility override. Instead of bundling every such patch into `main.css` (which would ship them to **every** page), each patch is a standalone CSS file loaded **only on the page it targets**.
 
 **How it works:**
