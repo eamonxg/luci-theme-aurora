@@ -6,7 +6,7 @@
 // Same-document navigation for LuCI view pages. Design, boundaries and the
 // invariants each step keeps: .dev/docs/spa-router.md.
 const RT = window.L;
-const RENDER_TIMEOUT = 8000;
+const RENDER_TIMEOUT = 15000;
 const PATCH_ATTR = "data-aurora-patch";
 const INSTANTIATE = /instantiateView\(\s*['"]([^'"]+)['"]/;
 
@@ -137,6 +137,7 @@ return baseclass.extend({
     this.hostname =
       document.querySelector(".brand")?.textContent?.trim() || document.title;
     this.hookIntervals();
+    this.hookListeners();
 
     Promise.all([ui.menu.load(), RT.require("menu-aurora")]).then(
       ([tree, menu]) => {
@@ -181,6 +182,67 @@ return baseclass.extend({
       return clear.call(window, id);
     };
     this.nativeClearInterval = clear;
+  },
+
+  // window/document listeners registered while a view renders. A warm render
+  // evaluates no module, so everything it registers is per-render and is
+  // removed on the next teardown. A cold render also evaluates the module,
+  // whose top-level registrations must survive (removing them is one-way),
+  // so its listeners are only credited to the class — and released the
+  // moment a warm render of the same class registers the same target/type,
+  // which proves them per-render too.
+  hookListeners() {
+    const self = this;
+    for (const target of [window, document]) {
+      const add = target.addEventListener;
+      const remove = target.removeEventListener;
+      target.addEventListener = function (type, fn, opts) {
+        self.renderWindow?.push({ target, type, fn, opts });
+        return add.call(this, type, fn, opts);
+      };
+      target.removeEventListener = function (type, fn, opts) {
+        if (self.renderWindow)
+          self.renderWindow = self.renderWindow.filter(
+            (e) => e.fn !== fn || e.type !== type,
+          );
+        return remove.call(this, type, fn, opts);
+      };
+    }
+    this.pageListeners = [];
+    this.coldListeners = new Map();
+  },
+
+  openRenderWindow() {
+    this.renderWindow = [];
+  },
+
+  closeRenderWindow(className, cold) {
+    const entries = this.renderWindow ?? [];
+    this.renderWindow = null;
+    if (cold) {
+      this.coldListeners.set(className, entries);
+      this.pageListeners = [];
+      return;
+    }
+    const stale = this.coldListeners.get(className) ?? [];
+    for (const e of entries)
+      for (const c of stale.filter(
+        (c) => c.target === e.target && c.type === e.type,
+      ))
+        c.target.removeEventListener(c.type, c.fn, c.opts);
+    this.coldListeners.set(
+      className,
+      stale.filter(
+        (c) => !entries.some((e) => e.target === c.target && e.type === c.type),
+      ),
+    );
+    this.pageListeners = entries;
+  },
+
+  clearViewListeners() {
+    for (const e of this.pageListeners)
+      e.target.removeEventListener(e.type, e.fn, e.opts);
+    this.pageListeners = [];
   },
 
   clearViewIntervals() {
@@ -229,23 +291,34 @@ return baseclass.extend({
   // server rendered — the page's own helper scripts, <h2>, Lua includes —
   // instead of re-implementing them by hand. Not a view shell → remembered
   // as unservable so it is not fetched again this document.
-  async template(r) {
+  template(r) {
     this.templates ??= new Map();
-    if (this.templates.has(r.template)) return this.templates.get(r.template);
+    if (this.templates.has(r.template))
+      return Promise.resolve(this.templates.get(r.template));
+    // One request per template per document, however many intent events
+    // (pointerover, pointerdown, focusin) arrive before it resolves.
+    this.templateLoads ??= new Map();
+    if (!this.templateLoads.has(r.template))
+      this.templateLoads.set(
+        r.template,
+        fetch(r.url, { credentials: "same-origin" })
+          .then((res) => res.text())
+          .then((html) => {
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const main = doc.getElementById("maincontent");
+            const start = main?.querySelector("#tabmenu");
+            const end = main?.querySelector(":scope > footer");
+            const nodes = [];
 
-    const html = await (
-      await fetch(r.url, { credentials: "same-origin" })
-    ).text();
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const main = doc.getElementById("maincontent");
-    const start = main?.querySelector("#tabmenu");
-    const end = main?.querySelector(":scope > footer");
-    const nodes = [];
+            for (let n = start?.nextSibling; n && n !== end; n = n.nextSibling)
+              nodes.push(n);
 
-    for (let n = start?.nextSibling; n && n !== end; n = n.nextSibling)
-      nodes.push(n);
+            return this.rememberShell(r.template, nodes);
+          })
+          .finally(() => this.templateLoads.delete(r.template)),
+      );
 
-    return this.rememberShell(r.template, nodes);
+    return this.templateLoads.get(r.template);
   },
 
   // Region nodes → { className, nodes, scripts }: inline scripts are split
@@ -314,7 +387,7 @@ return baseclass.extend({
       ? document.title.slice(title.length)
       : ` - ${this.hostname}`;
     const view = document.getElementById("view");
-    if (view) this.inflight = this.rendered(view);
+    if (view) this.inflight = this.rendered(view).catch(() => {});
     return true;
   },
 
@@ -324,15 +397,21 @@ return baseclass.extend({
       (v.childElementCount === 0 && v.dataset.auroraStarted);
     if (done(view)) return Promise.resolve();
 
-    return new Promise((resolve) => {
-      const timer = setTimeout(finish, RENDER_TIMEOUT);
+    // A render that never completes is a failure, not a completion: committing
+    // a spinner and releasing the serialization would let the still-running
+    // chain paint into a later navigation's #view.
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => finish(reject, new Error("view did not render in time")),
+        RENDER_TIMEOUT,
+      );
       const observer = new MutationObserver(() => {
-        if (done(view)) finish();
+        if (done(view)) finish(resolve);
       });
-      function finish() {
+      function finish(settle, value) {
         clearTimeout(timer);
         observer.disconnect();
-        resolve();
+        settle(value);
       }
       view.dataset.auroraStarted = "1";
       observer.observe(view, { childList: true });
@@ -415,14 +494,19 @@ return baseclass.extend({
       const cold = !this.seen.has(r.className);
       this.seen.add(r.className);
 
-      const instance = await RT.require(r.className);
-      if (!(instance instanceof RT.view))
-        throw new TypeError(`${r.className} is not a LuCI.view`);
-      if (!cold) new instance.constructor();
-      await done;
+      this.openRenderWindow();
+      try {
+        const instance = await RT.require(r.className);
+        if (!(instance instanceof RT.view))
+          throw new TypeError(`${r.className} is not a LuCI.view`);
+        if (!cold) new instance.constructor();
+        await done;
+      } finally {
+        this.closeRenderWindow(r.className, cold);
+      }
       if (gen !== this.gen) return;
       await this.commit(view);
-      this.mountPatches();
+      this.mountPatches(gen);
       document.getElementById("maincontent")?.focus({ preventScroll: true });
     } catch (err) {
       console.error("router-aurora:", err);
@@ -440,6 +524,7 @@ return baseclass.extend({
     poll.start();
     ui.hideIndicator("poll-status");
     this.clearViewIntervals();
+    this.clearViewListeners();
     ui.hideModal();
     this.menu.closeSurfaces();
     this.unmountPatches();
@@ -451,13 +536,18 @@ return baseclass.extend({
     const uci = RT.uci;
     if (!uci?.state) return;
 
-    const loaded = Object.keys(uci.state.values);
+    // uci.loaded keeps a package's request promise — a rejected one too —
+    // until unload(); flush it as well or every later view inherits the
+    // rejection.
+    const loaded = Object.keys({ ...uci.state.values, ...uci.loaded });
     if (loaded.length) uci.unload(loaded);
 
     if (RT.network) {
       const pkgs = ["network", "luci"];
       if (RT.hasSystemFeature?.("wifi")) pkgs.push("wireless");
-      await uci.load(pkgs).catch(() => {});
+      // A failed refill propagates: the catch in navigate() hard-loads the
+      // destination rather than leaving network.js on an empty config.
+      await uci.load(pkgs);
     }
   },
 
@@ -558,18 +648,22 @@ return baseclass.extend({
     }
   },
 
-  mountPatches() {
+  mountPatches(gen) {
     const registry = window.aurora?.patches ?? {};
 
     for (const stem of this.pendingPatches ?? []) {
       const script = document.querySelector(`script[${PATCH_ATTR}="${stem}"]`);
       if (!script) {
-        document.head.appendChild(
-          E("script", {
-            src: `${RT.env.media}/patches/${stem}.js`,
-            [PATCH_ATTR]: stem,
-          }),
-        );
+        const el = E("script", {
+          src: `${RT.env.media}/patches/${stem}.js`,
+          [PATCH_ATTR]: stem,
+        });
+        // The patch mounts itself on evaluation; if the user has already
+        // navigated on by then, that mount belongs to a page that is gone.
+        el.addEventListener("load", () => {
+          if (gen !== this.gen) window.aurora?.patches?.[stem]?.unmount?.();
+        });
+        document.head.appendChild(el);
       } else registry[stem]?.mount?.();
     }
     this.pendingPatches = [];

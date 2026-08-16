@@ -5,7 +5,7 @@
  * CDP (headless Chrome, no npm deps, node >= 22).
  *
  * env: HOST (default http://192.168.1.1), COOKIE_NAME, COOKIE_VALUE,
- *      CHROME_BIN, RUNS (default 5), ONLY (walk|timing|soak|back)
+ *      CHROME_BIN, RUNS (default and minimum 10), ONLY (walk|timing|soak|back|poison)
  *
  * Scenarios:
  *   walk   every page the navigation model links to (menu + each page's
@@ -16,8 +16,11 @@
  *          vs full load, same pages.
  *   soak   60 navigations over the walked pages; heap, DOM nodes, poll queue
  *          and view intervals sampled on the same page each lap.
- *   back   traverse back through the router's history entries: same
- *          document, correct URL/data-page each step.
+ *   back   traverse back through a chain that deliberately includes alias
+ *          and firstchild URLs (read from the menu tree): same document,
+ *          correct URL/data-page each step.
+ *   poison a foreign <style> in <head> makes the next navigation a full
+ *          load, and the one after (fresh document) is same-document again.
  */
 import { spawn } from "node:child_process";
 import { once } from "node:events";
@@ -28,7 +31,8 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 const HOST = (process.env.HOST ?? "http://192.168.1.1").replace(/\/+$/, "");
 const LABEL = process.argv[2] ?? "run";
-const RUNS = Math.max(3, +(process.env.RUNS ?? 5) || 5);
+// measuring.md: medians of at least 10 runs.
+const RUNS = Math.max(10, +(process.env.RUNS ?? 10) || 10);
 const ONLY = process.env.ONLY || null;
 const CHROME =
   process.env.CHROME_BIN ??
@@ -227,7 +231,7 @@ p = await newPage();
 await fullLoad(p.sessionId, START);
 await evaljs(p.sessionId, "window.__spaMarker = 1");
 const routerActive = await evaljs(p.sessionId,
-  `!!(window.navigation) && !document.querySelector('script[type="speculationrules"]') && !!window.aurora`);
+  `!!window.navigation && performance.getEntriesByType('resource').some(e => /router-aurora\.js/.test(e.name))`);
 const menuLinks = JSON.parse(await evaljs(p.sessionId, `JSON.stringify([...new Set(
   [...document.querySelectorAll('#mobile-nav-list a[href], #sidebar-list a[href]')]
     .map(a => a.href).filter(h => /\\/cgi-bin\\/luci\\/admin\\//.test(h) && !/logout/.test(h)))])`));
@@ -351,21 +355,75 @@ if (!ONLY || ONLY === "soak") {
 if (!ONLY || ONLY === "back") {
   await fullLoad(p.sessionId, START);
   await evaljs(p.sessionId, "window.__spaMarker = 1");
-  const chain = PAGES.slice(1, 6);
-  for (const url of chain) await spaNavigate(p.sessionId, url);
+  // Two alias/firstchild URLs (from the menu tree, resolved client-side by
+  // the router) interleaved with two view URLs.
+  const redirecting = JSON.parse(await evaljs(p.sessionId, `(async () => {
+    const tree = await L.require('ui').then(ui => ui.menu.load());
+    const out = [];
+    (function walk(node, segs) {
+      for (const [name, child] of Object.entries(node.children ?? {})) {
+        const path = [...segs, name];
+        const t = child.action?.type;
+        if (child.satisfied && child.title && (t === 'alias' || t === 'firstchild') && path[0] === 'admin' && path.length >= 3)
+          out.push(L.url(...path));
+        walk(child, path);
+      }
+    })(tree, []);
+    return JSON.stringify(out.map(u => new URL(u, location.href).href));
+  })()`, true)).filter((u) => PAGES.includes(u) && /\/admin\/(status|network)\//.test(u)).slice(0, 2);
+  const views = PAGES.filter((u) => !redirecting.includes(u) && u !== START).slice(0, 2);
+  const chain = [redirecting[0], views[0], redirecting[1], views[1]].filter(Boolean);
+  process.stderr.write(`back chain: ${chain.map((u) => u.replace(HOST, "")).join(" → ")}\n`);
+  if (redirecting.length < 2) process.stderr.write("back: fewer than 2 alias/firstchild pages found\n");
+  for (const url of chain) {
+    const r = await spaNavigate(p.sessionId, url);
+    process.stderr.write(`  ${url.replace(HOST, "")} sameDoc=${r.sameDoc}\n`);
+  }
   const steps = [];
   for (let i = chain.length - 1; i >= 0; i--) {
-    const r = JSON.parse(await evaljs(p.sessionId, `(async () => {
-      const t0 = performance.now();
-      try { await navigation.back().finished; } catch (e) { return JSON.stringify({ error: String(e) }); }
-      return JSON.stringify({ ms: performance.now() - t0, sameDoc: window.__spaMarker === 1,
-        url: location.pathname, page: document.body.dataset.page });
-    })()`, true));
+    let r;
+    try {
+      r = JSON.parse(await evaljs(p.sessionId, `(async () => {
+        const t0 = performance.now();
+        try { await navigation.back().finished; } catch (e) { return JSON.stringify({ error: String(e) }); }
+        return JSON.stringify({ ms: performance.now() - t0, sameDoc: window.__spaMarker === 1,
+          url: location.pathname, page: document.body.dataset.page });
+      })()`, true));
+    } catch (e) {
+      if (!/navigated or closed/.test(e.message)) throw e;
+      // cross-document traversal: a bfcache restore fires no load event, so
+      // poll until the (restored or new) document answers
+      for (let t = 0; t < 100; t++) {
+        try { if (await evaljs(p.sessionId, "document.readyState") === "complete") break; } catch {}
+        await sleep(100);
+      }
+      await waitViewSettled(p.sessionId);
+      await evaljs(p.sessionId, "window.__spaMarker = 1");
+      r = { sameDoc: false, url: await evaljs(p.sessionId, "location.pathname"), page: await evaljs(p.sessionId, "document.body.dataset.page") };
+    }
     const expected = i > 0 ? chain[i - 1] : START;
     steps.push({ ...r, ok: r.sameDoc && `${HOST}${r.url}` === expected.split("?")[0] });
   }
-  out.back = { steps: steps.length, allSameDocument: steps.every((s) => s.sameDoc),
+  out.back = { chain: chain.map((u) => u.replace(HOST, "")), redirectingInChain: redirecting.length,
+    steps: steps.length, allSameDocument: steps.every((s) => s.sameDoc),
     allCorrect: steps.every((s) => s.ok), detail: steps };
+}
+
+/* ---------- poison gate ---------- */
+if (!ONLY || ONLY === "poison") {
+  await fullLoad(p.sessionId, START);
+  await evaljs(p.sessionId, "window.__spaMarker = 1");
+  const [a, b] = PAGES.filter((u) => u !== START).slice(0, 2);
+  const before = await spaNavigate(p.sessionId, a);
+  // what a foreign view does: an unlayered <style> straight into <head>
+  await evaljs(p.sessionId, `document.head.appendChild(Object.assign(document.createElement('style'),
+    { textContent: '.cbi-button-save{display:none!important}' })).id = 'poison'`);
+  const poisoned = await spaNavigate(p.sessionId, b);          // must be a full load
+  const stillPoisoned = await evaljs(p.sessionId, "!!document.getElementById('poison')");
+  const after = await spaNavigate(p.sessionId, a);             // fresh document → router again
+  out.poison = { beforeSameDoc: before.sameDoc, poisonedFullLoad: !poisoned.sameDoc,
+    styleGoneAfterFullLoad: !stillPoisoned, afterSameDoc: after.sameDoc,
+    ok: before.sameDoc && !poisoned.sameDoc && !stillPoisoned && after.sameDoc };
 }
 
 console.log(JSON.stringify(out, null, 2));

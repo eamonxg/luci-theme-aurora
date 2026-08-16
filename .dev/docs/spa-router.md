@@ -146,7 +146,8 @@ router and drifted on the first real page (the network badges lost their
 labels: upstream's `renderBadge` takes extra `L.itemlist` arguments the port
 did not know about). So the router does not port anything: when a link to a
 template node is hovered or focused, its page is **fetched once per
-document**, parsed with `DOMParser`, and the content region between `#tabmenu` and
+document** (the in-flight request is shared by every intent event that
+arrives before it resolves), parsed with `DOMParser`, and the content region between `#tabmenu` and
 `<footer>` is kept as the page's *shell* — every node cloned, `#view`
 replaced by an empty div, the inline `instantiateView('…')` script read for
 the class name, the remaining inline scripts (the helpers) replayed into
@@ -180,11 +181,16 @@ handler in order:
      auto-starts and fires immediately instead of waiting up to `interval`
      seconds for the surviving tick to align. Upstream's `initDOM()` does
      the same `Poll.start()` on an empty queue before the first view.
-   - `uci`: `unload()` every loaded package (documents start with an empty
-     cache; four shipped apps read `load()`'s return as an existence check
-     and draw an error over the page when the cache answers `[]`). Then, if
-     `L.network` has been loaded, `load(['network','wireless','luci'])` is
-     re-issued and **awaited**: `network.js` fills its `_state` once and
+   - `uci`: `unload()` every package present in `state.values` **or**
+     `uci.loaded` (documents start with an empty cache; four shipped apps
+     read `load()`'s return as an existence check and draw an error over
+     the page when the cache answers `[]`; and `uci.loaded` keeps a
+     package's request promise — a rejected one included — until
+     `unload()`, so a failed load left there would be handed to every later
+     view). Then, if `L.network` has been loaded,
+     `load(['network','wireless','luci'])` is re-issued and **awaited** —
+     and a rejection propagates to the hard-load fallback rather than
+     leaving `network.js` on an empty config: `network.js` fills its `_state` once and
      from then on answers out of the uci cache (`getWifiDevices()` *is*
      `uci.sections('wireless','wifi-device')`), so dropping those without
      refilling hands every consumer an empty config for the rest of the
@@ -197,6 +203,20 @@ handler in order:
      core keeps tooltips, notification timeouts and a request timeout on
      `setTimeout`, and there is no self-rescheduling timeout in any
      shipped view.
+   - `window`/`document` listeners a view registered **while it rendered**
+     are removed. Several shipped views add them per render (statistics
+     graphs: an anonymous `resize` that later throws against detached DOM;
+     nlbwmon: `tooltip-open`/`touchstart`; the core's own dropdown widgets:
+     one `window` click/touchstart per instance), so they accumulate and
+     act on pages that are gone. The hook records registrations inside the
+     render window only. A **warm** render evaluates no module, so its
+     registrations are per-render by construction and go on the next
+     teardown. A **cold** render also runs the module's top level, whose
+     registrations must survive (removing them is one-way — an editor's
+     module-eval listeners never come back), so cold registrations are only
+     credited to the class and released when a later warm render of the
+     same class registers the same target/type, which proves them
+     per-render.
    - `ui.hideModal()`, the theme's own surfaces (mega
      menu, mobile drawer, palette) close.
    - page-scoped patch CSS is disabled and its JS patch unmounted (below).
@@ -232,7 +252,9 @@ handler in order:
    matching `patches/<stem>.js` files are loaded once and their
    `window.aurora.patches[stem]` `{ mount, unmount }` pair is driven per
    visit — a JS patch that registers nothing is simply executed once,
-   MPA-style.
+   MPA-style. A patch script mounts itself when it evaluates; if the user
+   has navigated on before it arrives, its `load` handler sees a newer
+   navigation generation and unmounts it again.
 7. **View.**
    - **cold** (`view.<path>` never required in this document):
      `window.L.require(className)` — the require *is* the render (LuCI
@@ -249,7 +271,11 @@ handler in order:
      from.
    - **completion** is observed, not assumed: a `MutationObserver` on the
      staged element resolves when a non-spinner child lands (or the spinner
-     is removed for an empty render), bounded by a timeout. On completion —
+     is removed for an empty render). Not completing within 15 s is a
+     **failure**, not a completion: committing the spinner and releasing the
+     serialization would let the still-running chain paint into a later
+     navigation's `#view`, so the timeout rejects and the catch path
+     hard-loads the destination. On completion —
      and only if this navigation is still the latest — the outgoing region
      (everything between `#tabmenu` and `<footer>` except the staged
      element) is removed and the staged view is unhidden inside

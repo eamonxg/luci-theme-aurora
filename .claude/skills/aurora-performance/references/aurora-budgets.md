@@ -14,9 +14,9 @@ address, so they stay local).
 | main.css (identity/raw) | ≤ 190 KB | size | production build, 2026-07 (183,820 B) |
 | login.css (identity/raw) | ≤ 12 KB | size | production build, 2026-07 (10,935 B, token-pruned) |
 | menu-aurora.js (identity/raw) | ≤ 21.5 KB | size | production build, 2026-08 (20,851 B; +1.3 KB for the router's `syncRoute`/`closeSurfaces` hooks) |
-| router-aurora.js (identity/raw, Navigation-API browsers only) | ≤ 10.5 KB | size | production build, 2026-08 (9,962 B; template shells are fetched, not hand-ported) |
+| router-aurora.js (identity/raw, Navigation-API browsers only) | ≤ 12 KB | size | production build, 2026-08 (11,468 B: template shells fetched, per-render listener teardown, timeout-as-failure) |
 | Default logo (identity/raw) | ≤ 16 KB | size | production build, 2026-07 (15,057 B) |
-| Core admin cold theme assets (identity/raw) | ≤ 262 KB | size | main CSS + menu JS + router JS + default font + logo, 2026-08 (260,007 B; the router is a one-time cost that removes per-click dispatcher work) |
+| Core admin cold theme assets (identity/raw) | ≤ 264 KB | size | main CSS + menu JS + router JS + default font + logo, 2026-08 (≈261.5 KB; the router is a one-time cost that removes per-click dispatcher work) |
 | Login cold theme assets, excluding configured background (identity/raw) | ≤ 55 KB | size | login CSS + default font + logo, 2026-07 (49,572 B) |
 | Blocking requests before first paint | ≤ 4 | count | current waterfall |
 | Repeat-visit asset requests | ≈ 0 | count | target state; package-built CSS/JS URLs are versioned, but long-lived cache headers still need live verification |
@@ -46,13 +46,15 @@ Budget revisions require a new baseline entry under `../baselines/`.
 - Client-side router (`router-aurora.js`, `.dev/docs/spa-router.md`,
   2026-08-16): view/alias/firstchild/overview navigations become
   same-document swaps on Navigation-API browsers, MPA elsewhere.
-  Measured on RE-SS-01 over plain HTTP (`bench-spa.mjs`, RUNS=5): click →
-  view painted **259–668 ms → 130–323 ms warm, median −46 %**; walk of 51
-  linked pages, 43 served, **0 divergences** vs full loads; 65-navigation
-  soak flat after the first lap once departed regions are cleared through
-  `dom.content()` (the data-idref registry otherwise pins every departed
-  subtree: 26k → 72k nodes before, 18–24k after); back traversal
-  same-document. Report in `../baselines/spa-router-re-ss-01.md`.
+  Measured on RE-SS-01 over plain HTTP (`bench-spa.mjs`, RUNS=10): click →
+  view painted **262–496 ms → 48–269 ms warm, median −69 %**; walk of
+  51/62 linked pages (mega-menu/sidebar), 42–43 served, **0 divergences** vs
+  full loads incl. DOM shape; 65-navigation soak flat after the first lap
+  once departed regions are cleared through `dom.content()` (the data-idref
+  registry otherwise pins every departed subtree: 26k → 72k nodes before)
+  and per-render window/document listeners are torn down; back traversal
+  through alias/firstchild entries same-document; poison gate → full load →
+  router again. Report in `../baselines/spa-router-re-ss-01.md`.
 
 ### Pending
 | Item | Principle | Estimated gain |

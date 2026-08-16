@@ -61,7 +61,8 @@ HOST=http://<device> COOKIE_NAME=sysauth_http COOKIE_VALUE=<from jar> \
   node ../.claude/skills/aurora-performance/scripts/bench-spa.mjs <label>
 ```
 
-`ONLY=walk|timing|soak|back` runs one scenario. `walk` visits every page
+`ONLY=walk|timing|soak|back|poison` runs one scenario (`RUNS` defaults to and
+is floored at 10). `walk` visits every page
 the navigation model links to (menu + each page's tab strip) through the
 router, then full-loads the same URL and diffs title, `data-page`,
 `dispatchpath`, tab strip, active nav mark, footer presence and console
@@ -69,8 +70,12 @@ errors — the report lists fallbacks (pages the router declined) and
 divergences separately, and 0 divergences is the merge gate. `timing` is
 click → view painted, median of `RUNS`, router warm/cold vs full load.
 `soak` samples heap, DOM nodes, listeners and the poll queue on the same
-page after each of 5 laps over 12 pages. `back` traverses the router's own
-history entries and asserts each step stayed same-document.
+page after each of 5 laps over 12 pages. `back` traverses a chain that
+deliberately interleaves alias/firstchild URLs (read from the menu tree)
+with view URLs and asserts each step stayed same-document with the right
+URL and `data-page`. `poison` injects a foreign `<style>` into `<head>` and
+asserts the next navigation is a full load and the one after is
+same-document again.
 
 Trap: a navigation the router does not take is a real document load and
 tears down the CDP evaluation ("Inspected target navigated"); the harness
