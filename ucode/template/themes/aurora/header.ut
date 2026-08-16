@@ -180,7 +180,7 @@
 		{% if (_mainBgUrl): %}
 		<link rel="preload" as="image" href="{{ entityencode(_mainBgUrl, true) }}">
 		{% endif %}
-		<link rel="stylesheet" href="{{ media }}/main.css">
+		<link rel="stylesheet" href="{{ media }}/main.css" data-aurora-shell>
 		{% for (let patch in patch_files): %}
 		<link rel="stylesheet" href="{{ media }}/patches/{{ patch }}.css" data-aurora-patch="{{ patch }}">
 		{% endfor %}
@@ -192,7 +192,7 @@
 		<link rel="preload" as="font" type="font/woff2" crossorigin href="{{ font_preload }}">
 		{% endif %}
 		{% if (font_css): %}
-		<style>{{ font_css }}</style>
+		<style data-aurora-shell>{{ font_css }}</style>
 		{% endif %}
 		<link rel="icon" href="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" sizes="any" type="image/svg+xml">
 		{% if (favicon_png): %}
@@ -210,10 +210,10 @@
 		<link rel="stylesheet" href="{{ resource }}/{{ dispatched.css }}" data-aurora-node-css="{{ entityencode(dispatched.css, true) }}">
 		{% endif %}
 		{% if (css): %}
-		<style title="text/css">{{ css }}</style>
+		<style title="text/css" data-aurora-shell>{{ css }}</style>
 		{% endif %}
 		{% if (token_css_light || token_css_dark): %}
-		<style>
+		<style data-aurora-shell>
 			:root { {{ token_css_light }} }
 			[data-darkmode="true"] { {{ token_css_dark }} }
 		</style>

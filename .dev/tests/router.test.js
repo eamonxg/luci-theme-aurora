@@ -352,3 +352,12 @@ test("a menu.d node css is served for the resolved leaf only", () => {
     null,
   );
 });
+
+test("the contract names every missing luci-base surface", () => {
+  const router = loadRouter({ tree });
+  const missing = router.contract();
+
+  assert.ok(missing.includes("L.view"));
+  assert.ok(missing.includes("poll.queue"));
+  assert.ok(!missing.includes("L.env.base_url"));
+});

@@ -5,7 +5,9 @@
  * CDP (headless Chrome, no npm deps, node >= 22).
  *
  * env: HOST (default http://192.168.1.1), COOKIE_NAME, COOKIE_VALUE,
- *      CHROME_BIN, RUNS (default and minimum 10), ONLY (walk|timing|soak|back|poison|nodecss|expiry)
+ *      CHROME_BIN, RUNS (default and minimum 10), ONLY (walk|timing|soak|back|poison|sheets|hygiene|nodecss|expiry),
+ *      MATCH (regex; walk only these pages), SETTLE (ms after the view settled before
+ *      a snapshot, default 300 — raise it for pages whose tables fill on the first poll)
  *
  * Scenarios:
  *   walk   every page the navigation model links to (menu + each page's
@@ -21,6 +23,12 @@
  *          correct URL/data-page each step.
  *   poison a foreign <style> in <head> makes the next navigation a full
  *          load, and the one after (fresh document) is same-document again.
+ *   sheets  every walked view page that inserts its own <style>/<link> (found
+ *          on the walk): reached same-document, the navigation away is a
+ *          full load (poison gate), the one after is same-document again.
+ *          Skipped when the walk found no such page.
+ *   hygiene progress bar and live region exist; a hidden tab stops polling
+ *          and a visible one resumes it; the live region carries the title.
  *   nodecss a page whose menu.d node declares `css`: its link is enabled on
  *          arrival, disabled (not removed) after leaving, re-enabled without
  *          a duplicate on return. Skipped when no such node is installed.
@@ -40,6 +48,8 @@ const LABEL = process.argv[2] ?? "run";
 // measuring.md: medians of at least 10 runs.
 const RUNS = Math.max(10, +(process.env.RUNS ?? 10) || 10);
 const ONLY = process.env.ONLY || null;
+const MATCH = process.env.MATCH ? new RegExp(process.env.MATCH) : null;
+const SETTLE = +(process.env.SETTLE ?? 300) || 300;
 const CHROME =
   process.env.CHROME_BIN ??
   (process.platform === "darwin"
@@ -189,6 +199,8 @@ const SNAPSHOT = `(() => JSON.stringify({
   footer: !!document.querySelector('#view .cbi-page-actions'),
   readonly: L.env.nodespec?.readonly === true,
   perm: L.hasViewPermission(),
+  foreign: [...document.querySelectorAll('style, link[rel~="stylesheet"]')].filter(l => !document.getElementById('view')?.contains(l) && !l.hasAttribute('data-aurora-shell') && !l.hasAttribute('data-aurora-patch') && !l.hasAttribute('data-aurora-node-css')).map(l => l.tagName + (l.href ? ':' + l.href.replace(HOST, '') : '')),
+  status: document.getElementById('aurora-nav-status')?.textContent ?? null,
   nodeCss: [...document.querySelectorAll('link[data-aurora-node-css]')].filter(l => !l.disabled).map(l => l.getAttribute('data-aurora-node-css')).sort().join(','),
   viewChildren: document.getElementById('view')?.childElementCount ?? -1,
   viewIds: document.querySelectorAll('[id="view"]').length,
@@ -262,8 +274,8 @@ const out = { label: LABEL, host: HOST, routerActive, pages: PAGES.length };
 
 /* ---------- walk ---------- */
 if (!ONLY || ONLY === "walk") {
-  const divergences = [], fallbacks = [], ok = [], errors = [];
-  for (const url of PAGES) {
+  const divergences = [], fallbacks = [], ok = [], errors = [], injectors = [];
+  for (const url of PAGES.filter((u) => !MATCH || MATCH.test(u))) {
    const t0 = Date.now();
    try {
     consoleErrors.length = 0;
@@ -272,11 +284,11 @@ if (!ONLY || ONLY === "walk") {
     const nav = await spaNavigate(p.sessionId, url);
     if (!nav.sameDoc) { fallbacks.push(url.replace(HOST, "")); continue; }
     await waitViewSettled(p.sessionId);
-    await sleep(300);
+    await sleep(SETTLE);
     const spa = await snapshot(p.sessionId);
     const spaErrors = [...consoleErrors]; consoleErrors.length = 0;
     await fullLoad(p.sessionId, url);
-    await sleep(300);
+    await sleep(SETTLE);
     const full = await snapshot(p.sessionId);
     // a page's own console errors (missing binaries, 404s) show on both paths
     const fullErrors = new Set(consoleErrors.map((e) => e.split("\n")[0]));
@@ -292,6 +304,8 @@ if (!ONLY || ONLY === "walk") {
         diffs.push(`shape ${k}: spa=${a} full=${b}`);
     }
     if (spa.viewChildren <= 0 && full.viewChildren > 0) diffs.push("view empty under spa");
+    if (spa.status !== spa.title) diffs.push(`live region: ${spa.status}`);
+    if (full.foreign.length) injectors.push({ url: url.replace(HOST, ""), foreign: full.foreign });
     if (routerErrors.length) diffs.push(`console: ${routerErrors.slice(0, 2).join(" | ").slice(0, 200)}`);
     (diffs.length ? divergences : ok).push({ url: url.replace(HOST, ""), diffs });
    } catch (e) {
@@ -300,7 +314,7 @@ if (!ONLY || ONLY === "walk") {
    }
    process.stderr.write(`walk ${url.replace(HOST, "")} ${Date.now() - t0} ms\n`);
   }
-  out.walk = { ok: ok.length, fallbacks, divergences, errors };
+  out.walk = { ok: ok.length, fallbacks, divergences, errors, injectors };
 }
 
 /* ---------- timing ---------- */
@@ -433,6 +447,67 @@ if (!ONLY || ONLY === "poison") {
   out.poison = { beforeSameDoc: before.sameDoc, poisonedFullLoad: !poisoned.sameDoc,
     styleGoneAfterFullLoad: !stillPoisoned, afterSameDoc: after.sameDoc,
     ok: before.sameDoc && !poisoned.sameDoc && !stillPoisoned && after.sameDoc };
+}
+
+/* ---------- foreign sheets ---------- */
+if (!ONLY || ONLY === "sheets") {
+  const FOREIGN = `[...document.querySelectorAll('style, link[rel~="stylesheet"]')].filter(l => !document.getElementById('view')?.contains(l) && !l.hasAttribute('data-aurora-shell') && !l.hasAttribute('data-aurora-patch') && !l.hasAttribute('data-aurora-node-css')).length`;
+  const injecting = out.walk?.injectors?.map((i) => HOST + i.url) ?? [];
+  if (!injecting.length && ONLY === "sheets")
+    for (const url of PAGES.filter((u) => u !== START)) {
+      await fullLoad(p.sessionId, url);
+      if (await evaljs(p.sessionId, FOREIGN)) injecting.push(url);
+      if (injecting.length >= 3) break;
+    }
+  const cases = [];
+  for (const a of injecting.slice(0, 3)) {
+    const [b, c] = PAGES.filter((u) => u !== START && u !== a);
+    await fullLoad(p.sessionId, START);
+    await evaljs(p.sessionId, "window.__spaMarker = 1");
+    const arrive = await spaNavigate(p.sessionId, a);
+    // A page the router does not serve (Lua, call) is a full load either way.
+    if (!arrive.sameDoc) { cases.push({ a: a.replace(HOST, ""), skipped: "not a view page" }); continue; }
+    await waitViewSettled(p.sessionId); await sleep(300);
+    const foreign = await evaljs(p.sessionId, FOREIGN);
+    const leave = await spaNavigate(p.sessionId, b);          // poison gate → full load
+    const after = await spaNavigate(p.sessionId, c);          // fresh document → router again
+    // Landing on the page itself: its modules insert before the router boots;
+    // the markers, not a snapshot, must still tell those sheets apart.
+    await fullLoad(p.sessionId, a);
+    await evaljs(p.sessionId, "window.__spaMarker = 1");
+    const fromBoot = await spaNavigate(p.sessionId, b);
+    cases.push({ a: a.replace(HOST, ""), foreign, arriveSameDoc: arrive.sameDoc, leaveFullLoad: !leave.sameDoc, afterSameDoc: after.sameDoc,
+      leaveFromBootFullLoad: !fromBoot.sameDoc,
+      ok: arrive.sameDoc && foreign > 0 && !leave.sameDoc && after.sameDoc && !fromBoot.sameDoc });
+  }
+  const tested = cases.filter((c) => !c.skipped);
+  out.sheets = tested.length ? { cases, ok: tested.every((c) => c.ok) } : { skipped: "no walked view page inserts a stylesheet", cases };
+}
+
+/* ---------- hygiene ---------- */
+if (!ONLY || ONLY === "hygiene") {
+  await fullLoad(p.sessionId, START);
+  await evaljs(p.sessionId, "window.__spaMarker = 1");
+  const b = PAGES.find((u) => u !== START);
+  const nav = await spaNavigate(p.sessionId, b);
+  await waitViewSettled(p.sessionId); await sleep(300);
+  // Back on Overview, which polls, so the visibility gate has a timer to stop.
+  const home = await spaNavigate(p.sessionId, START);
+  await waitViewSettled(p.sessionId); await sleep(1500);
+  const r = JSON.parse(await evaljs(p.sessionId, `(async () => {
+    const bar = !!document.getElementById('aurora-nav-progress');
+    const status = document.getElementById('aurora-nav-status')?.textContent;
+    const wasActive = L.Poll.active();
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    const hiddenActive = L.Poll.active();
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+    const shownActive = L.Poll.active();
+    return JSON.stringify({ bar, status, title: document.title, wasActive, hiddenActive, shownActive });
+  })()`, true));
+  out.hygiene = { ...r, sameDoc: nav.sameDoc && home.sameDoc,
+    ok: nav.sameDoc && home.sameDoc && r.bar && r.status === r.title && r.wasActive && !r.hiddenActive && r.shownActive };
 }
 
 /* ---------- menu.d node css ---------- */

@@ -10,6 +10,9 @@ const RT = window.L;
 const RENDER_TIMEOUT = 15000;
 const PATCH_ATTR = "data-aurora-patch";
 const NODE_CSS_ATTR = "data-aurora-node-css";
+const SHELL_ATTR = "data-aurora-shell";
+// A navigation shorter than this stays silent; longer ones show the top bar.
+const PROGRESS_DELAY = 150;
 const INSTANTIATE = /instantiateView\(\s*['"]([^'"]+)['"]/;
 
 const supported = () =>
@@ -144,18 +147,35 @@ const moduleUrl = (name) =>
 return baseclass.extend({
   __init__() {
     if (!supported() || !RT?.env?.scriptname) return;
+    const missing = this.contract();
+    if (missing.length) {
+      console.warn(
+        `router-aurora: luci-base surface missing, staying MPA: ${missing.join(", ")}`,
+      );
+      return;
+    }
 
     this.gen = 0;
     this.seen = new Set();
     this.warmed = new Set();
     this.inflight = Promise.resolve();
     this.intervals = new Set();
-    this.knownSheets = new WeakSet(this.sheets());
+    // Only the sheets header.ut rendered are known; anything else present at
+    // boot was injected by the page's own modules before the router ran.
+    this.knownSheets = new WeakSet(
+      this.sheets().filter(
+        (el) =>
+          el.hasAttribute(SHELL_ATTR) ||
+          el.hasAttribute(PATCH_ATTR) ||
+          el.hasAttribute(NODE_CSS_ATTR),
+      ),
+    );
     this.hostname =
       document.querySelector(".brand")?.textContent?.trim() || document.title;
     this.hookIntervals();
     this.hookListeners();
     this.hookSession();
+    this.hookVisibility();
 
     Promise.all([ui.menu.load(), RT.require("menu-aurora")]).then(
       ([tree, menu]) => {
@@ -163,12 +183,89 @@ return baseclass.extend({
         this.menu = menu;
         if (!this.trackInitialRender()) return;
         document.querySelector('script[type="speculationrules"]')?.remove();
+        this.bar = document.body.appendChild(
+          E("div", { id: "aurora-nav-progress", "aria-hidden": "true" }),
+        );
+        this.status = document.body.appendChild(
+          E("div", {
+            id: "aurora-nav-status",
+            role: "status",
+            "aria-live": "polite",
+            "aria-atomic": "true",
+          }),
+        );
         navigation.addEventListener("navigate", (ev) => this.onNavigate(ev));
         document.addEventListener("pointerover", (ev) => this.onIntent(ev));
         document.addEventListener("pointerdown", (ev) => this.onIntent(ev));
         document.addEventListener("focusin", (ev) => this.onIntent(ev));
       },
     );
+  },
+
+  // Every luci-base surface the router leans on, by name. A missing one means
+  // upstream moved and the safe answer is the MPA the theme was before — with
+  // a warning, not a broken page. Kept in step with spa-router.md.
+  contract() {
+    const roots = { L: RT, rpc, poll, ui, window };
+    const need = [
+      "L.view",
+      "L.require",
+      "L.dom.content",
+      "L.env.base_url",
+      "L.env.resource",
+      "L.env.media",
+      "L.Request.addInterceptor",
+      "L.uci.load",
+      "L.uci.unload",
+      "L.uci.state",
+      "rpc.addInterceptor",
+      "poll.queue",
+      "poll.start",
+      "poll.stop",
+      "poll.active",
+      "ui.menu.load",
+      "ui.hideModal",
+      "ui.hideIndicator",
+      "window.E",
+    ];
+    const lookup = (path) =>
+      path.split(".").reduce((o, k) => (o == null ? o : o[k]), roots);
+
+    return need.filter((path) => lookup(path) == null);
+  },
+
+  // A hidden tab keeps polling on a full load; on a weak router that is
+  // RPC work nobody sees. Stopped while hidden, resumed on return unless the
+  // user paused it or the session died meanwhile.
+  hookVisibility() {
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        this.pausedByVisibility = poll.active();
+        if (this.pausedByVisibility) poll.stop();
+      } else if (this.pausedByVisibility) {
+        this.pausedByVisibility = false;
+        if (!this.expired) poll.start();
+      }
+    });
+  },
+
+  progressStart() {
+    this.pending = (this.pending ?? 0) + 1;
+    clearTimeout(this.progressTimer);
+    this.progressTimer = setTimeout(
+      () => (this.bar.dataset.state = "active"),
+      PROGRESS_DELAY,
+    );
+  },
+
+  progressEnd() {
+    if (--this.pending > 0) return;
+    clearTimeout(this.progressTimer);
+    if (this.bar.dataset.state !== "active") return;
+    this.bar.dataset.state = "done";
+    this.progressTimer = setTimeout(() => {
+      if (this.bar.dataset.state === "done") delete this.bar.dataset.state;
+    }, 300);
   },
 
   sheets() {
@@ -528,6 +625,7 @@ return baseclass.extend({
     const previous = this.inflight;
     let release;
     this.inflight = new Promise((res) => (release = res));
+    this.progressStart();
 
     try {
       await previous;
@@ -564,6 +662,7 @@ return baseclass.extend({
       if (gen !== this.gen) return;
       await this.commit(view);
       this.mountPatches(gen);
+      this.status.textContent = document.title;
       document.getElementById("maincontent")?.focus({ preventScroll: true });
     } catch (err) {
       console.error("router-aurora:", err);
@@ -571,6 +670,7 @@ return baseclass.extend({
       window.location.href = ev.destination.url;
       await new Promise(() => {});
     } finally {
+      this.progressEnd();
       release();
     }
   },

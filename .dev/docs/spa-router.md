@@ -5,8 +5,8 @@ full page load, where it deliberately does not, and the invariants a router
 inside LuCI has to keep. Source: `.dev/src/resource/router-aurora.js`,
 loaded from `footer.ut` next to `menu-aurora.js`. **No changes to luci-base
 or to any view** — the router is additive theme JS plus three small template
-hooks (a patch manifest, a `<footer>` boundary and a marker on the menu.d
-node css link).
+hooks (a patch manifest, a `<footer>` boundary, and `data-aurora-*` markers
+on the stylesheets header.ut itself renders).
 
 ## Why it pays, measured
 
@@ -91,6 +91,15 @@ events, `ui.menu.load()`'s session-cached tree with `satisfied` /
 `node_weight` / alias re-dispatch semantics (ported verbatim). Live
 verification so far: OpenWrt SNAPSHOT (2026-08, ipq60xx) — 23.05/24.10 by
 inspection, not yet on device.
+
+That list is also executable: `contract()` in `router-aurora.js` looks every
+one of those surfaces up at boot (`L.view`, `L.require`, `L.dom.content`,
+`L.env.{base_url,resource,media}`, `L.Request.addInterceptor`,
+`L.uci.{load,unload,state}`, `rpc.addInterceptor`,
+`poll.{queue,start,stop,active}`, `ui.menu.load`, `ui.hideModal`,
+`ui.hideIndicator`, `E`) and, if any is missing, logs which and does not
+activate — the theme is the MPA it was, not a broken router, on a luci-base
+that moved.
 
 ## What is intercepted
 
@@ -315,8 +324,16 @@ handler in order:
      wrapping `prototype.render` per class and repairing stale cold renders
      by re-navigating — leaves a real window open and needs three mechanisms
      where one suffices.
-8. **Focus.** `#maincontent` (`tabindex=-1`) with `preventScroll`.
-9. Any exception → `console.error` (a silent fallback makes every router
+8. **Focus and announcement.** `#maincontent` (`tabindex=-1`) with
+   `preventScroll`; the new `document.title` is written into
+   `#aurora-nav-status` (`role=status`, `aria-live=polite`), since a
+   same-document swap fires no load a screen reader would announce.
+9. **Progress.** A navigation that outlives 150 ms shows `#aurora-nav-progress`,
+   a hairline at the top that creeps right while the view renders and
+   completes on commit (`data-state` active → done); shorter ones stay
+   silent, overlapping ones share the bar. Reduced motion drops its
+   transitions, not the bar.
+10. Any exception → `console.error` (a silent fallback makes every router
    regression look like "the page is just slow") → `location.href =
    destination` — a hard full load, never a stuck page.
 
@@ -332,7 +349,16 @@ signals luci-base acts on — a `403` with `X-LuCI-Login-Required: yes` on any
 `-32002` coming back denied or errored — and from then on intercepts nothing:
 the next click is a full load, which the dispatcher turns into the login
 page. A denied call on any other object is an ACL matter and is ignored.
-Nothing is reset: the flag dies with the document, as the session did.
+Nothing is reset: the flag dies with the document, as the session did. The
+same flag keeps the visibility gate (below) from restarting a poll the
+expiry stopped.
+
+## Hidden tabs
+
+luci-base keeps polling in a background tab. The router stops `Poll` on
+`visibilitychange` → hidden when it was active and starts it again on
+return — unless the user had paused it, or the session died meanwhile. On
+a weak router that is RPC work nobody is looking at.
 
 ## The poison gate
 
@@ -342,13 +368,25 @@ every page after it (a shipped file manager hides Save/Reset on every config
 page with one unlayered `!important` rule). Removing it is not an option: a
 library that imports CSS at module eval never runs again, so deletion is
 one-way (an editor page came back as a black rectangle two million pixels
-tall). Hence a gate, not a sweep: the head's stylesheet set is snapshotted at
-boot; before intercepting, any sheet not in that snapshot and not marked
-`data-aurora-patch` marks the document **poisoned** and the navigation is a
+tall). Hence a gate, not a sweep: before intercepting, any sheet outside
+`#view` that is not one of the theme's own — header.ut marks everything it
+renders (`data-aurora-shell` on `main.css`, the font, custom and token
+`<style>`s; `data-aurora-patch` on patches; `data-aurora-node-css` on the
+menu.d node css) — marks the document **poisoned** and the navigation is a
 full load — the fresh document carries no view CSS, so the router resumes
-immediately. Correctness over speed, never the other way. (Finer selector
-analysis to let harmless sheets through is a possible refinement; it is not
-needed for correctness.)
+immediately. The markers, not a boot snapshot, define "own": the boot page's
+modules load concurrently with the router, and a sheet they inserted before
+it snapshotted would have counted as the theme's for the rest of the
+document. Correctness over speed, never the other way.
+
+An owner-based refinement (stamp each sheet with the inserting module off
+the call stack, enable it for pages whose dependency closure holds that
+module, `disabled` for the rest) was built, verified on the device and
+**removed again**: on this device one view page inserts its own CSS, the
+saving is one reload when leaving it, and the price was three monkeypatches
+plus an inline template script whose failure mode — a page silently missing
+a shared library's CSS — is worse than the reload it avoids. Revisit only
+with a real corpus of self-styling view pages.
 
 ## Module prewarm on hover
 
@@ -389,7 +427,7 @@ already 0-byte cache hits.
   (alias chain, nested firstchild, weights, ineligible, unsatisfied,
   wildcard args, cycle); URL → segments; patch prefix matching; pragma scan
   on a minified head; readonly folding; expiry signals; node css of the
-  resolved leaf.
+  resolved leaf; the contract check.
 - Device (`.claude/skills/aurora-performance/scripts/bench-spa.mjs`, CDP):
   1. full walk of every clickable node in each nav mode, each compared
      against a real full load of the same URL — `data-page`,
@@ -398,15 +436,22 @@ already 0-byte cache hits.
   3. soak: 60 navigations over 12 pages, heap / DOM nodes / listeners /
      poll queue length flat after the first pass;
   4. back/forward chain through alias and firstchild URLs — no reload;
-  5. poison gate: visit a CSS-injecting page, next navigation is a full
-     load, the one after is SPA again;
+  5. poison gate: a foreign `<style>` in `<head>` makes the next
+     navigation a full load, the one after is SPA again;
+  5b. sheets: the same, on every walked view page that really inserts its
+     own sheets (found on the walk) instead of an injected one — reached
+     same-document and landed on directly (its modules insert before the
+     router boots), leaving is a full load either way;
+  5c. hygiene: progress bar and live region present, live region carries the
+     title, a hidden tab stops polling and a visible one resumes it;
   6. nodecss: a page whose menu.d node declares `css` — link enabled on
      arrival, disabled after leaving, re-enabled without a duplicate on
      return (skipped when no installed node declares one);
   7. expiry (last, destroys the session): logout fetched from inside the
      document, one failing RPC → luci-base's modal and `Poll.stop()`; the
      next navigation is a full load landing on the login form.
-  The walk also compares `nodespec.readonly`, `L.hasViewPermission()` and
-  the set of enabled node-css links against the full load.
+  The walk also compares `nodespec.readonly`, `L.hasViewPermission()`, the
+  set of enabled node-css links and the live-region text against the full
+  load, and reports which pages carry sheets that are not the theme's.
 - The perf skill's N1 is rewritten to describe this router and its
   boundaries; N2 keeps document prefetch for the non-router path.
