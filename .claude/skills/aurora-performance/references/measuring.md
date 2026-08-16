@@ -50,6 +50,33 @@ still print.
 **Output.** The whole report is Markdown: paste it straight into a PR
 description, or archive it (see below).
 
+## `bench-spa.mjs` — router verification and A/B (CDP)
+
+The client-side router (`.dev/docs/spa-router.md`) is verified against real
+full loads, never against expectation:
+
+```bash
+curl -c jar.txt -d 'luci_username=root&luci_password=…' http://<device>/cgi-bin/luci/
+HOST=http://<device> COOKIE_NAME=sysauth_http COOKIE_VALUE=<from jar> \
+  node ../.claude/skills/aurora-performance/scripts/bench-spa.mjs <label>
+```
+
+`ONLY=walk|timing|soak|back` runs one scenario. `walk` visits every page
+the navigation model links to (menu + each page's tab strip) through the
+router, then full-loads the same URL and diffs title, `data-page`,
+`dispatchpath`, tab strip, active nav mark, footer presence and console
+errors — the report lists fallbacks (pages the router declined) and
+divergences separately, and 0 divergences is the merge gate. `timing` is
+click → view painted, median of `RUNS`, router warm/cold vs full load.
+`soak` samples heap, DOM nodes, listeners and the poll queue on the same
+page after each of 5 laps over 12 pages. `back` traverses the router's own
+history entries and asserts each step stayed same-document.
+
+Trap: a navigation the router does not take is a real document load and
+tears down the CDP evaluation ("Inspected target navigated"); the harness
+treats that as a fallback, waits for the new document, and re-arms its
+same-document marker there.
+
 ## Measurement discipline
 
 - **Median of ≥10 runs**, never a single sample — router-side variance

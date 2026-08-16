@@ -560,6 +560,11 @@ body[data-nav-type="sidebar"] {
   #view {
     @apply mx-0 w-full bg-transparent p-0 shadow-none empty:hidden md:p-0;
 
+    /* Outgoing page while the router renders the next one (spa-router.md). */
+    &.view-leaving {
+      @apply cursor-progress opacity-60 transition-opacity duration-150;
+    }
+
     .cbi-title-section {
       @apply mb-6 leading-relaxed max-md:mx-2 max-md:mb-3;
     }

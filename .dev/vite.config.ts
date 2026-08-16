@@ -266,6 +266,7 @@ function createLocalServePlugin(): Plugin {
     "/luci-static/resources/view/aurora/sysauth.js":
       "src/resource/view/aurora/sysauth.js",
     "/luci-static/resources/menu-aurora.js": "src/resource/menu-aurora.js",
+    "/luci-static/resources/router-aurora.js": "src/resource/router-aurora.js",
   };
 
   // Any theme CSS (entries, partials, patches) or served JS change must force

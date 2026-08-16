@@ -200,6 +200,14 @@ class FakeElement {
     assert.equal(value, "");
     this.children = [];
   }
+
+  get textContent() {
+    return this.children
+      .map((child) =>
+        child instanceof FakeElement ? child.textContent : String(child),
+      )
+      .join("");
+  }
 }
 
 const E = (tagName, attributes, children) =>

@@ -34,7 +34,7 @@
 				</div>
 			</footer>
 		</div>
-		<script>L.require('menu-aurora')</script>
+		<script>L.require('menu-aurora').then(() => { if (window.navigation) L.require('router-aurora'); })</script>
 		{% endif %}
 	</body>
 </html>

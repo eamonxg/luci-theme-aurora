@@ -61,11 +61,14 @@ return baseclass.extend({
     };
 
     const closeMobileNavigation = () => {
+      if (!overlay.classList.contains("mobile-menu-open")) return;
       overlay.classList.remove("mobile-menu-open");
       document.body.classList.remove("mobile-navigation-open");
       document.body.style.overflow = "";
       this.resetNavigationGroups(mobileList);
+      updateToggleState(false);
     };
+    this.closeMobileNavigation = closeMobileNavigation;
 
     const getNavigationExpanded = () => {
       if (isDesktopSidebar()) {
@@ -195,20 +198,78 @@ return baseclass.extend({
   },
 
   render(tree) {
+    this.tree = tree;
     this.renderModeMenu(tree);
+    this.renderTabs(tree);
+  },
 
-    if (L.env.dispatchpath.length >= 3) {
-      let node = tree;
-      let url = "";
+  renderTabs(tree) {
+    if (L.env.dispatchpath.length < 3) return;
 
-      for (let i = 0; i < 3 && node; i++) {
-        const segment = L.env.dispatchpath[i];
-        node = node.children?.[segment];
-        url += (url ? "/" : "") + segment;
-      }
+    let node = tree;
+    let url = "";
 
-      if (node) this.renderTabMenu(node, url);
+    for (let i = 0; i < 3 && node; i++) {
+      const segment = L.env.dispatchpath[i];
+      node = node.children?.[segment];
+      url += (url ? "/" : "") + segment;
     }
+
+    if (node) this.renderTabMenu(node, url);
+  },
+
+  // Re-marks every nav surface from L.env after a same-document navigation
+  // (router-aurora.js). Menus keep their DOM and listeners; only state moves.
+  syncRoute() {
+    if (!this.tree) return;
+
+    const activeHref = new URL(
+      L.url(...L.env.dispatchpath.slice(0, 3)),
+      location.href,
+    ).pathname;
+
+    document
+      .querySelectorAll(
+        "#topmenu a, .desktop-menu-canvas a, #sidebar-list a, #mobile-nav-list a",
+      )
+      .forEach((a) => {
+        const active =
+          a.pathname === activeHref && !a.getAttribute("href").startsWith("#");
+        a.classList.toggle("is-active-page", active);
+        if (active) a.setAttribute("aria-current", "page");
+        else a.removeAttribute("aria-current");
+      });
+
+    document.querySelectorAll(".navigation-group").forEach((group) => {
+      const active = !!group.querySelector("a.is-active-page");
+      const toggle = group.querySelector(".navigation-group-toggle");
+      group.classList.toggle("is-active-group", active);
+      if (active) toggle?.setAttribute("aria-current", "location");
+      else toggle?.removeAttribute("aria-current");
+    });
+
+    for (const surface of [
+      document.querySelector("#sidebar-list"),
+      document.querySelector("#mobile-nav-list"),
+    ]) {
+      this.resetNavigationGroups(surface);
+      this.expandActiveNavigationGroup(surface);
+    }
+
+    this.renderCrumb();
+
+    const tabs = document.querySelector("#tabmenu");
+    if (tabs) {
+      tabs.innerHTML = "";
+      tabs.style.display = "none";
+    }
+    this.renderTabs(this.tree);
+  },
+
+  closeSurfaces() {
+    this.hideDesktopNav();
+    if (this.paletteList) this.closePalette();
+    this.closeMobileNavigation?.();
   },
 
   renderTabMenu(tree, url, level = 0) {
@@ -484,25 +545,13 @@ return baseclass.extend({
   renderSidebar(items) {
     const list = document.querySelector("#sidebar-list");
     const footer = document.querySelector("#sidebar-footer");
-    const crumbEl = document.querySelector("#header-crumb");
 
     if (list) list.innerHTML = "";
     if (footer) footer.innerHTML = "";
-    if (crumbEl) crumbEl.innerHTML = "";
 
     if (!list) return;
 
-    const crumb = [];
-
     items.forEach((item) => {
-      if (item.isActiveGroup || item.isActivePage) {
-        crumb.push(item.title);
-        // Same-named group/page pairs ("System › System") collapse to one
-        // level — the duplicate adds no information.
-        if (item.activePage && item.activePage.title !== item.title)
-          crumb.push(item.activePage.title);
-      }
-
       if (item.isLogout) {
         (footer || list).appendChild(
           E("a", { class: "nav-link", href: item.href }, [item.title]),
@@ -514,10 +563,27 @@ return baseclass.extend({
     });
 
     this.bindNavigationAccordion(list);
+    this.renderCrumb();
+  },
 
+  renderCrumb() {
+    const crumbEl = document.querySelector("#header-crumb");
+    const list = document.querySelector("#sidebar-list");
+    if (!crumbEl || !list) return;
+
+    const crumb = [];
+    const group = list.querySelector(".is-active-group");
+    const page = list.querySelector(".is-active-page");
+    if (group)
+      crumb.push(group.querySelector(".nav-category-label")?.textContent);
+    // Same-named group/page pairs ("System › System") collapse to one
+    // level — the duplicate adds no information.
+    if (page && page.textContent !== crumb[0]) crumb.push(page.textContent);
+
+    crumbEl.innerHTML = "";
     crumb.forEach((title, i) => {
-      if (i) crumbEl?.appendChild(E("li", { class: "crumb-sep" }, ["/"]));
-      crumbEl?.appendChild(
+      if (i) crumbEl.appendChild(E("li", { class: "crumb-sep" }, ["/"]));
+      crumbEl.appendChild(
         E("li", { class: i === crumb.length - 1 ? "current" : "" }, [title]),
       );
     });
@@ -661,11 +727,9 @@ return baseclass.extend({
     });
     // Mobile-only exit (the full-screen takeover leaves no outside to tap
     // and touch devices have no Escape) — hidden on md+ via CSS.
-    const cancel = E(
-      "button",
-      { class: "cmdk-cancel", type: "button" },
-      [_("Cancel")],
-    );
+    const cancel = E("button", { class: "cmdk-cancel", type: "button" }, [
+      _("Cancel"),
+    ]);
     cancel.addEventListener("click", () => this.closePalette());
     const panel = E(
       "div",
@@ -916,9 +980,7 @@ return baseclass.extend({
   },
 
   movePaletteSelection(delta) {
-    const rows = [
-      ...this.paletteList.querySelectorAll(".cmdk-row"),
-    ];
+    const rows = [...this.paletteList.querySelectorAll(".cmdk-row")];
     if (!rows.length) return;
 
     const current = rows.findIndex((row) =>

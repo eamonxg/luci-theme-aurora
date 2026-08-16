@@ -143,10 +143,10 @@
 
   // Kernel-log page under either menu layout: admin-status-dmesg on
   // 23.05/24.10, admin-status-logs-dmesg on master's combined Logs menu.
-  const page = document.body?.dataset?.page || "";
-  const parseLine = /(^|-)dmesg(-|$)/.test(page)
-    ? parseDmesgLine
-    : parseSyslogLine;
+  // Read per mount: the router swaps pages without re-evaluating this file.
+  let parseLine = parseSyslogLine;
+  let timer = null;
+  let arrival = null;
 
   let viewer = null;
   let lastValue = null;
@@ -248,26 +248,50 @@
     } else teardown(container);
   }
 
-  // Content updates: LuCI's poll rewrites .value, which fires nothing — a
-  // cheap dirty-check covers it.
-  setInterval(tick, 1000);
-
-  // First paint: the view (and its textarea) is inserted asynchronously by
-  // LuCI after this script runs. Element insertion IS an observable childList
-  // mutation (unlike .value writes), and the callback runs as a microtask
-  // before the browser paints the inserted textarea — so the viewer takes
-  // over without a flash of the raw log.
-  if (document.getElementById("syslog")) {
-    tick();
-  } else {
-    const arrival = new MutationObserver(function () {
-      if (!document.getElementById("syslog")) return;
-      arrival.disconnect();
+  function mount() {
+    if (timer) return;
+    const page = document.body?.dataset?.page || "";
+    parseLine = /(^|-)dmesg(-|$)/.test(page) ? parseDmesgLine : parseSyslogLine;
+    lastValue = null;
+    // Content updates: LuCI's poll rewrites .value, which fires nothing — a
+    // cheap dirty-check covers it.
+    timer = setInterval(tick, 1000);
+    // First paint: the view (and its textarea) is inserted asynchronously by
+    // LuCI after this script runs. Element insertion IS an observable childList
+    // mutation (unlike .value writes), and the callback runs as a microtask
+    // before the browser paints the inserted textarea — so the viewer takes
+    // over without a flash of the raw log.
+    if (document.getElementById("syslog")) {
       tick();
-    });
-    arrival.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-    });
+    } else {
+      arrival = new MutationObserver(function () {
+        if (!document.getElementById("syslog")) return;
+        arrival.disconnect();
+        arrival = null;
+        tick();
+      });
+      arrival.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+      });
+    }
   }
+
+  function unmount() {
+    clearInterval(timer);
+    timer = null;
+    arrival?.disconnect();
+    arrival = null;
+    const container = document.getElementById("content_syslog");
+    if (container) teardown(container);
+    viewer = null;
+  }
+
+  // Page-scoped lifecycle for the router (see .dev/docs/spa-router.md);
+  // a full load simply mounts once.
+  ((window.aurora ??= {}).patches ??= {})["admin-status-logs"] = {
+    mount,
+    unmount,
+  };
+  mount();
 })();

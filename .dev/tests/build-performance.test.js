@@ -13,6 +13,7 @@ test("production assets stay within raw-transfer budgets", () => {
   const main = bytes("aurora/main.css");
   const login = bytes("aurora/login.css");
   const menu = bytes("resources/menu-aurora.js");
+  const router = bytes("resources/router-aurora.js");
   const font = bytes("aurora/fonts/lato-v24-latin-regular.woff2");
   const logo = bytes("aurora/images/logo.svg");
 
@@ -21,9 +22,13 @@ test("production assets stay within raw-transfer budgets", () => {
   // unchanged and still binds.
   assert.ok(main <= 192_000, "main.css exceeds 192 KB");
   assert.ok(login <= 12_000, "login.css exceeds 12 KB");
-  assert.ok(menu <= 20_000, "menu-aurora.js exceeds 20 KB");
+  assert.ok(menu <= 21_500, "menu-aurora.js exceeds 21.5 KB");
+  assert.ok(router <= 10_000, "router-aurora.js exceeds 10 KB");
   assert.ok(logo <= 16_000, "logo.svg exceeds 16 KB");
-  assert.ok(main + menu + font + logo <= 250_000, "admin assets exceed 250 KB");
+  assert.ok(
+    main + menu + router + font + logo <= 260_000,
+    "admin assets exceed 260 KB",
+  );
   assert.ok(login + font + logo <= 55_000, "login assets exceed 55 KB");
 });
 

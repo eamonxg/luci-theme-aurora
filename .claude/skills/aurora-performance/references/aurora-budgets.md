@@ -13,9 +13,10 @@ address, so they stay local).
 |---|---|---|---|
 | main.css (identity/raw) | ≤ 190 KB | size | production build, 2026-07 (183,820 B) |
 | login.css (identity/raw) | ≤ 12 KB | size | production build, 2026-07 (10,935 B, token-pruned) |
-| menu-aurora.js (identity/raw) | ≤ 20 KB | size | production build, 2026-07 (19,100 B) |
+| menu-aurora.js (identity/raw) | ≤ 21.5 KB | size | production build, 2026-08 (20,851 B; +1.3 KB for the router's `syncRoute`/`closeSurfaces` hooks) |
+| router-aurora.js (identity/raw, Navigation-API browsers only) | ≤ 10 KB | size | production build, 2026-08 (8,7xx B) |
 | Default logo (identity/raw) | ≤ 16 KB | size | production build, 2026-07 (15,057 B) |
-| Core admin cold theme assets (identity/raw) | ≤ 250 KB | size | main CSS + menu JS + default font + logo, 2026-07 (241,557 B) |
+| Core admin cold theme assets (identity/raw) | ≤ 260 KB | size | main CSS + menu JS + router JS + default font + logo, 2026-08 (≈258.7 KB; the router is a one-time cost that removes per-click dispatcher work) |
 | Login cold theme assets, excluding configured background (identity/raw) | ≤ 55 KB | size | login CSS + default font + logo, 2026-07 (49,572 B) |
 | Blocking requests before first paint | ≤ 4 | count | current waterfall |
 | Repeat-visit asset requests | ≈ 0 | count | target state; package-built CSS/JS URLs are versioned, but long-lived cache headers still need live verification |

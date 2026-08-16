@@ -22,19 +22,26 @@
 	const page_segs = length(ctx?.request_path) ? ctx.request_path : (ctx?.path || []);
 	const page = join('-', page_segs);
 	// On-demand patches — see "On-Demand Third-Party Patches" in DEVELOPMENT.md.
-	let patch_files = [], patch_scripts = [];
+	let patch_files = [], patch_scripts = [], patch_all = [];
 	if (!blank_page) {
 		let seg_prefixes = {}, acc = null;
 		for (let seg in page_segs)
 			seg_prefixes[acc = (acc == null ? seg : `${acc}-${seg}`)] = true;
 		for (let f in lsdir(`/www${media}/patches`) ?? []) {
-			if (substr(f, -4) == '.css' && exists(seg_prefixes, substr(f, 0, -4)))
-				push(patch_files, substr(f, 0, -4));
-			else if (substr(f, -3) == '.js' && exists(seg_prefixes, substr(f, 0, -3)))
-				push(patch_scripts, substr(f, 0, -3));
+			if (substr(f, -4) == '.css') {
+				push(patch_all, f);
+				if (exists(seg_prefixes, substr(f, 0, -4)))
+					push(patch_files, substr(f, 0, -4));
+			}
+			else if (substr(f, -3) == '.js') {
+				push(patch_all, f);
+				if (exists(seg_prefixes, substr(f, 0, -3)))
+					push(patch_scripts, substr(f, 0, -3));
+			}
 		}
 		sort(patch_files);
 		sort(patch_scripts);
+		sort(patch_all);
 	}
 	// Both background tokens store a url('...') wrapper; preload wants the
 	// bare URL, and a data: URI (an inline LQIP-sized value) needs no preload.
@@ -93,7 +100,7 @@
 <html lang="{{ dispatcher.lang }}">
 	<head>
 		<meta charset="utf-8">
-		<title>{{ striptags(dispatched?.title ? `${_(dispatched.title)} - ` : '') }}{{ hostname }}</title>
+		<title>{% if (dispatched?.title): %}{{ striptags(_(dispatched.title)) }} - {% endif %}{{ hostname }}</title>
 		{% if (blank_page): %}
 		<script>
 			(function () {
@@ -175,10 +182,10 @@
 		{% endif %}
 		<link rel="stylesheet" href="{{ media }}/main.css">
 		{% for (let patch in patch_files): %}
-		<link rel="stylesheet" href="{{ media }}/patches/{{ patch }}.css">
+		<link rel="stylesheet" href="{{ media }}/patches/{{ patch }}.css" data-aurora-patch="{{ patch }}">
 		{% endfor %}
 		{% for (let patch in patch_scripts): %}
-		<script defer src="{{ media }}/patches/{{ patch }}.js"></script>
+		<script defer src="{{ media }}/patches/{{ patch }}.js" data-aurora-patch="{{ patch }}"></script>
 		{% endfor %}
 		{% endif %}
 		{% if (font_preload): %}
@@ -217,7 +224,7 @@
 		{% endif %}
 	</head>
 
-	<body class="lang_{{ dispatcher.lang }}" data-page="{{ entityencode(page, true) }}" data-nav-type="{{ nav_type }}"{% if (blank_page ? tokens.struct_login_bg : tokens.struct_main_bg): %} data-bg{% endif %}>
+	<body class="lang_{{ dispatcher.lang }}" data-page="{{ entityencode(page, true) }}" data-nav-type="{{ nav_type }}"{% if (length(patch_all)): %} data-patches="{{ entityencode(join(' ', patch_all), true) }}"{% endif %}{% if (blank_page ? tokens.struct_login_bg : tokens.struct_main_bg): %} data-bg{% endif %}>
 		{% if (!blank_page): %}
 		{% if (tokens.struct_main_bg): %}
 		<div class="page-bg" aria-hidden="true"></div>
@@ -384,7 +391,7 @@
 		</script>
 		{% endif %}
 
-		<div id="maincontent">
+		<div id="maincontent" tabindex="-1">
 			{% if (getuid() == 0 && getspnam('root')?.pwdp === ''): %}
 				<div class="alert-message warning">
 					<h4>{{ _('No password set!') }}</h4>
