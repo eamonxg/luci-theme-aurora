@@ -4,8 +4,9 @@ How the theme turns a menu click into an in-document view swap instead of a
 full page load, where it deliberately does not, and the invariants a router
 inside LuCI has to keep. Source: `.dev/src/resource/router-aurora.js`,
 loaded from `footer.ut` next to `menu-aurora.js`. **No changes to luci-base
-or to any view** — the router is additive theme JS plus two small template
-hooks (a patch manifest and a `<footer>` boundary).
+or to any view** — the router is additive theme JS plus three small template
+hooks (a patch manifest, a `<footer>` boundary and a marker on the menu.d
+node css link).
 
 ## Why it pays, measured
 
@@ -82,8 +83,11 @@ events, `ui.menu.load()`'s session-cached tree with `satisfied` /
 `firstchild_ineligible` / `wildcard` / `action.type` (`view`, `alias`,
 `firstchild`, `template`), `ui.instantiateView`, `ui.hideIndicator`,
 `ui.hideModal`, `uci.state.values` / `uci.unload()` / `uci.load()`,
-`network.js`'s uci-backed state, `view.ut`'s `#view` + inline
-`instantiateView` shell, and `dispatcher.uc`'s `resolve_firstchild` /
+`network.js`'s uci-backed state, `Request.addInterceptor` /
+`rpc.addInterceptor` and the `-32002` → `session.access` probe in
+`setupDOM`, `dispatcher.uc`'s `ctx_append` acl folding and `node.css`
+(schema since 7c6d8ff, 2026-08 — older trees simply carry no `css`),
+`view.ut`'s `#view` + inline `instantiateView` shell, and `dispatcher.uc`'s `resolve_firstchild` /
 `node_weight` / alias re-dispatch semantics (ported verbatim). Live
 verification so far: OpenWrt SNAPSHOT (2026-08, ipq60xx) — 23.05/24.10 by
 inspection, not yet on device.
@@ -96,7 +100,8 @@ A `navigate` event is intercepted only when **all** hold:
   `hashChange`, no `downloadRequest`, no `formData`, `navigationType !== 'reload'`;
 - the destination path (minus `L.env.scriptname`) resolves in the menu tree
   to a **serviceable node** (below);
-- the document is not **poisoned** (below);
+- the document is not **poisoned** (below) and its session is not known to
+  be **expired** (below);
 - the router **activated** in this document: it does so only when the page
   it booted on is itself serviceable. A `call`/`cbi`/`function` page carries
   scripts (legacy `XHR.poll`, inline timers) that only a document death
@@ -225,9 +230,18 @@ handler in order:
    server-side, so `requestpath` and `data-page` carry the alias target while
    `pathinfo` keeps the URL as requested; a `firstchild` keeps the requested
    path in both. The title suffix (` - hostname`) is read off the initial
-   document, so it matches whatever the template emitted. `nodespec` drives `L.hasViewPermission()` and therefore the
-   Save/Apply footer's readonly state; `data-page` keys `ui.tabs` session
-   state and the theme's page-scoped CSS.
+   document, so it matches whatever the template emitted. `nodespec` drives
+   `L.hasViewPermission()` and therefore the Save/Apply footer's readonly
+   state — and its `readonly` is **folded down the dispatch path** the way
+   `dispatcher.uc` does it: `ctx_append` collects every node's
+   `depends.acl` and one `check_acl_depends()` over the union is writable as
+   soon as *any* group is writable, so a page is readonly only when every
+   acl-bearing node on its path is. The tree's per-node flag
+   (`apply_tree_acls`) covers that node's own acl alone; handing the leaf
+   node over as-is gave a read-only user a live Save & Apply on every page
+   under a read-only group. The tree object is not mutated (`nodespec` is a
+   copy). `data-page` keys `ui.tabs` session state and the theme's
+   page-scoped CSS.
 4. **Chrome.** `menu-aurora.js` exposes `syncRoute()`: it re-marks
    `is-active-page`/`aria-current` from `L.env.dispatchpath` across every
    nav surface, expands the active sidebar/mobile group and collapses the
@@ -255,6 +269,11 @@ handler in order:
    MPA-style. A patch script mounts itself when it evaluates; if the user
    has navigated on before it arrives, its `load` handler sees a newer
    navigation generation and unmounts it again.
+   A menu.d node's own `css` (`header.ut` links `<resource>/<node.css>` for
+   the dispatched node, marked `data-aurora-node-css`) is kept the same
+   way: one `<link>` per stylesheet, enabled for the page whose resolved leaf
+   declares it, `disabled` for every other page, never removed. Both
+   attributes are exempt from the poison gate.
 7. **View.**
    - **cold** (`view.<path>` never required in this document):
      `window.L.require(className)` — the require *is* the render (LuCI
@@ -300,6 +319,20 @@ handler in order:
 9. Any exception → `console.error` (a silent fallback makes every router
    regression look like "the page is just slow") → `location.href =
    destination` — a hard full load, never a stuck page.
+
+## The expiry gate
+
+luci-base answers a dead session with `notifySessionExpiry()`: `Poll.stop()`
+plus a modal whose only button is a hard reload. A same-document swap would
+`hideModal()` and `Poll.start()` right through it and browse on, every page
+erroring in turn (measured: `bench-spa.mjs expiry` against the previous
+router — `expiredFullLoad: false`). So the router listens for the same two
+signals luci-base acts on — a `403` with `X-LuCI-Login-Required: yes` on any
+`L.Request`, and the `session.access` probe luci-base fires after a
+`-32002` coming back denied or errored — and from then on intercepts nothing:
+the next click is a full load, which the dispatcher turns into the login
+page. A denied call on any other object is an ACL matter and is ignored.
+Nothing is reset: the flag dies with the document, as the session did.
 
 ## The poison gate
 
@@ -355,7 +388,8 @@ already 0-byte cache hits.
 - Unit (`.dev/tests/router.test.js`): resolver against a fixture tree
   (alias chain, nested firstchild, weights, ineligible, unsatisfied,
   wildcard args, cycle); URL → segments; patch prefix matching; pragma scan
-  on a minified head.
+  on a minified head; readonly folding; expiry signals; node css of the
+  resolved leaf.
 - Device (`.claude/skills/aurora-performance/scripts/bench-spa.mjs`, CDP):
   1. full walk of every clickable node in each nav mode, each compared
      against a real full load of the same URL — `data-page`,
@@ -365,6 +399,14 @@ already 0-byte cache hits.
      poll queue length flat after the first pass;
   4. back/forward chain through alias and firstchild URLs — no reload;
   5. poison gate: visit a CSS-injecting page, next navigation is a full
-     load, the one after is SPA again.
+     load, the one after is SPA again;
+  6. nodecss: a page whose menu.d node declares `css` — link enabled on
+     arrival, disabled after leaving, re-enabled without a duplicate on
+     return (skipped when no installed node declares one);
+  7. expiry (last, destroys the session): logout fetched from inside the
+     document, one failing RPC → luci-base's modal and `Poll.stop()`; the
+     next navigation is a full load landing on the login form.
+  The walk also compares `nodespec.readonly`, `L.hasViewPermission()` and
+  the set of enabled node-css links against the full load.
 - The perf skill's N1 is rewritten to describe this router and its
   boundaries; N2 keeps document prefetch for the non-router path.

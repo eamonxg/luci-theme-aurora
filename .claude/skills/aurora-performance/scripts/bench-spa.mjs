@@ -5,7 +5,7 @@
  * CDP (headless Chrome, no npm deps, node >= 22).
  *
  * env: HOST (default http://192.168.1.1), COOKIE_NAME, COOKIE_VALUE,
- *      CHROME_BIN, RUNS (default and minimum 10), ONLY (walk|timing|soak|back|poison)
+ *      CHROME_BIN, RUNS (default and minimum 10), ONLY (walk|timing|soak|back|poison|nodecss|expiry)
  *
  * Scenarios:
  *   walk   every page the navigation model links to (menu + each page's
@@ -21,6 +21,12 @@
  *          correct URL/data-page each step.
  *   poison a foreign <style> in <head> makes the next navigation a full
  *          load, and the one after (fresh document) is same-document again.
+ *   nodecss a page whose menu.d node declares `css`: its link is enabled on
+ *          arrival, disabled (not removed) after leaving, re-enabled without
+ *          a duplicate on return. Skipped when no such node is installed.
+ *   expiry the session is destroyed from inside the document (logout fetch)
+ *          and a poll fails: the next navigation must be a full load that
+ *          lands on the login form. Destroys the session — always runs last.
  */
 import { spawn } from "node:child_process";
 import { once } from "node:events";
@@ -181,6 +187,9 @@ const SNAPSHOT = `(() => JSON.stringify({
   activeTab: document.querySelector('#tabmenu li.active a')?.textContent ?? null,
   activeNav: [...document.querySelectorAll('#sidebar-list a.is-active-page, #mobile-nav-list a.is-active-page, .desktop-menu-canvas a.is-active-page, #topmenu a.is-active-page')].map(a => a.getAttribute('href'))[0] ?? null,
   footer: !!document.querySelector('#view .cbi-page-actions'),
+  readonly: L.env.nodespec?.readonly === true,
+  perm: L.hasViewPermission(),
+  nodeCss: [...document.querySelectorAll('link[data-aurora-node-css]')].filter(l => !l.disabled).map(l => l.getAttribute('data-aurora-node-css')).sort().join(','),
   viewChildren: document.getElementById('view')?.childElementCount ?? -1,
   viewIds: document.querySelectorAll('[id="view"]').length,
   h1: document.querySelector('#view h2, #maincontent > h2')?.textContent ?? null,
@@ -273,7 +282,7 @@ if (!ONLY || ONLY === "walk") {
     const fullErrors = new Set(consoleErrors.map((e) => e.split("\n")[0]));
     const routerErrors = spaErrors.filter((e) => !fullErrors.has(e.split("\n")[0]));
     const diffs = [];
-    for (const k of ["url", "title", "page", "dispatch", "request", "tabs", "activeTab", "activeNav", "footer", "h1", "svgLines"])
+    for (const k of ["url", "title", "page", "dispatch", "request", "tabs", "activeTab", "activeNav", "footer", "readonly", "perm", "nodeCss", "h1", "svgLines"])
       if (String(spa[k]) !== String(full[k])) diffs.push(`${k}: spa=${spa[k]} full=${full[k]}`);
     if (spa.viewIds !== 1) diffs.push(`viewIds=${spa.viewIds}`);
     for (const k of new Set([...Object.keys(spa.shape), ...Object.keys(full.shape)])) {
@@ -424,6 +433,56 @@ if (!ONLY || ONLY === "poison") {
   out.poison = { beforeSameDoc: before.sameDoc, poisonedFullLoad: !poisoned.sameDoc,
     styleGoneAfterFullLoad: !stillPoisoned, afterSameDoc: after.sameDoc,
     ok: before.sameDoc && !poisoned.sameDoc && !stillPoisoned && after.sameDoc };
+}
+
+/* ---------- menu.d node css ---------- */
+if (!ONLY || ONLY === "nodecss") {
+  const LINKS = `JSON.stringify([...document.querySelectorAll('link[data-aurora-node-css]')].map(l => [l.getAttribute('data-aurora-node-css'), !l.disabled]))`;
+  let styled = null;
+  for (const url of PAGES.filter((u) => u !== START)) {
+    await fullLoad(p.sessionId, url);
+    if (JSON.parse(await evaljs(p.sessionId, LINKS)).length) { styled = url; break; }
+  }
+  if (!styled) out.nodecss = { skipped: "no installed menu.d node declares css" };
+  else {
+    const other = PAGES.find((u) => u !== START && u !== styled);
+    await fullLoad(p.sessionId, START);
+    await evaljs(p.sessionId, "window.__spaMarker = 1");
+    const arrive = await spaNavigate(p.sessionId, styled);
+    const onArrival = JSON.parse(await evaljs(p.sessionId, LINKS));
+    const leave = await spaNavigate(p.sessionId, other);
+    const afterLeave = JSON.parse(await evaljs(p.sessionId, LINKS));
+    const back = await spaNavigate(p.sessionId, styled);
+    const onReturn = JSON.parse(await evaljs(p.sessionId, LINKS));
+    out.nodecss = { page: styled.replace(HOST, ""), onArrival, afterLeave, onReturn,
+      ok: arrive.sameDoc && leave.sameDoc && back.sameDoc &&
+        onArrival.length === 1 && onArrival[0][1] === true &&
+        afterLeave.length === 1 && afterLeave[0][1] === false &&
+        onReturn.length === 1 && onReturn[0][1] === true };
+  }
+}
+
+/* ---------- session expiry ---------- */
+if (!ONLY || ONLY === "expiry") {
+  await fullLoad(p.sessionId, START);
+  await evaljs(p.sessionId, "window.__spaMarker = 1");
+  const [a, b] = PAGES.filter((u) => u !== START).slice(0, 2);
+  const before = await spaNavigate(p.sessionId, a);
+  // What a real expiry looks like from inside the document: the session is
+  // gone server-side and the next RPC comes back -32002; luci-base probes
+  // session.access, then shows its modal and stops polling.
+  const seen = JSON.parse(await evaljs(p.sessionId, `(async () => {
+    await fetch(L.url('admin/logout'), { credentials: 'same-origin' }).catch(() => {});
+    const rpc = await L.require('rpc');
+    await rpc.declare({ object: 'system', method: 'board' })().catch(() => {});
+    await new Promise(r => setTimeout(r, 500));
+    return JSON.stringify({ modal: !!document.querySelector('.modal'), pollActive: L.Poll.active() });
+  })()`, true));
+  const nav = await spaNavigate(p.sessionId, b);              // must be a full load
+  const login = await evaljs(p.sessionId, `!!document.querySelector('input[name="luci_username"]')`);
+  out.expiry = { beforeSameDoc: before.sameDoc, modalShown: seen.modal, pollStopped: !seen.pollActive,
+    expiredFullLoad: !nav.sameDoc, landedOnLogin: login,
+    ok: before.sameDoc && seen.modal && !nav.sameDoc && login };
 }
 
 console.log(JSON.stringify(out, null, 2));

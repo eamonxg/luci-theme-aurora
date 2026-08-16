@@ -207,7 +207,7 @@
 		<meta name="apple-mobile-web-app-title" content="{{ striptags(boardinfo.hostname ?? 'Aurora') }}">
 		<meta name="mobile-web-app-capable" content="yes">
 		{% if (dispatched?.css): %}
-		<link rel="stylesheet" href="{{ resource }}/{{ dispatched.css }}">
+		<link rel="stylesheet" href="{{ resource }}/{{ dispatched.css }}" data-aurora-node-css="{{ entityencode(dispatched.css, true) }}">
 		{% endif %}
 		{% if (css): %}
 		<style title="text/css">{{ css }}</style>

@@ -2,12 +2,14 @@
 "require baseclass";
 "require ui";
 "require poll";
+"require rpc";
 
 // Same-document navigation for LuCI view pages. Design, boundaries and the
 // invariants each step keeps: .dev/docs/spa-router.md.
 const RT = window.L;
 const RENDER_TIMEOUT = 15000;
 const PATCH_ATTR = "data-aurora-patch";
+const NODE_CSS_ATTR = "data-aurora-node-css";
 const INSTANTIATE = /instantiateView\(\s*['"]([^'"]+)['"]/;
 
 const supported = () =>
@@ -92,6 +94,21 @@ function resolve(tree, segs) {
   return null;
 }
 
+// dispatcher.uc pushes every depends.acl along the dispatch path into one
+// check_acl_depends() call, which is writable as soon as any group is
+// writable; the tree's per-node readonly flag covers that node's acl alone.
+function readonlyAlong(tree, path) {
+  const gated = [];
+  let node = tree;
+
+  for (const name of path) {
+    node = node?.children?.[name];
+    if (node?.depends?.acl?.length) gated.push(node);
+  }
+
+  return gated.length > 0 && gated.every((n) => n.readonly === true);
+}
+
 function viewClass(node) {
   const action = node?.action;
 
@@ -138,6 +155,7 @@ return baseclass.extend({
       document.querySelector(".brand")?.textContent?.trim() || document.title;
     this.hookIntervals();
     this.hookListeners();
+    this.hookSession();
 
     Promise.all([ui.menu.load(), RT.require("menu-aurora")]).then(
       ([tree, menu]) => {
@@ -163,7 +181,10 @@ return baseclass.extend({
 
   poisoned() {
     return this.sheets().some(
-      (el) => !this.knownSheets.has(el) && !el.hasAttribute(PATCH_ATTR),
+      (el) =>
+        !this.knownSheets.has(el) &&
+        !el.hasAttribute(PATCH_ATTR) &&
+        !el.hasAttribute(NODE_CSS_ATTR),
     );
   },
 
@@ -210,6 +231,41 @@ return baseclass.extend({
     }
     this.pageListeners = [];
     this.coldListeners = new Map();
+  },
+
+  // luci-base answers an expired session with a modal and Poll.stop(); a
+  // same-document swap would dismiss both and browse on. The signals are the
+  // ones luci-base itself acts on: a 403 asking for login, or the
+  // session.access probe it fires after any -32002 coming back denied.
+  hookSession() {
+    RT.Request?.addInterceptor?.((res) => {
+      if (this.loginRequired(res)) this.expired = true;
+    });
+    rpc?.addInterceptor?.((msg, req) => {
+      if (this.sessionGone(msg, req)) this.expired = true;
+    });
+  },
+
+  loginRequired(res) {
+    return (
+      res?.status === 403 && res.headers?.get("X-LuCI-Login-Required") === "yes"
+    );
+  },
+
+  sessionGone(msg, req) {
+    if (req?.object !== "session" || req?.method !== "access" || !msg)
+      return false;
+    if (msg.error) return true;
+    const data = Array.isArray(msg.result) ? msg.result[1] : msg.result;
+    return data?.access === false;
+  },
+
+  nodespec(r) {
+    return { ...r.node, readonly: readonlyAlong(this.tree, r.path) };
+  },
+
+  nodeCss(r) {
+    return typeof r.node.css === "string" && r.node.css ? r.node.css : null;
   },
 
   openRenderWindow() {
@@ -458,7 +514,7 @@ return baseclass.extend({
       return;
 
     const r = this.route(ev.destination.url);
-    if (!r || this.poisoned()) return;
+    if (!r || this.expired || this.poisoned()) return;
 
     ev.intercept({
       focusReset: "manual",
@@ -488,6 +544,7 @@ return baseclass.extend({
       this.setEnvironment(r);
       this.menu.syncRoute();
       this.applyPatches(r.request);
+      this.applyNodeCss(this.nodeCss(r));
 
       const view = this.stage(tpl);
       const done = this.rendered(view);
@@ -557,7 +614,7 @@ return baseclass.extend({
     RT.env.requestpath = r.request;
     RT.env.dispatchpath = r.path;
     RT.env.pathinfo = `/${r.segs.join("/")}`;
-    RT.env.nodespec = r.node;
+    RT.env.nodespec = this.nodespec(r);
     document.body.dataset.page = r.request.join("-");
     document.title = r.node.title
       ? `${_(r.node.title)}${this.titleTail}`
@@ -617,6 +674,21 @@ return baseclass.extend({
     if (document.startViewTransition && !reduce)
       return document.startViewTransition(swap).updateCallbackDone;
     swap();
+  },
+
+  // menu.d `css` is linked by header.ut for the dispatched node; the same
+  // link is kept per page here — disabled, not removed, when leaving.
+  applyNodeCss(css) {
+    for (const link of document.querySelectorAll(`link[${NODE_CSS_ATTR}]`))
+      link.disabled = link.getAttribute(NODE_CSS_ATTR) !== css;
+    if (css && !document.querySelector(`link[${NODE_CSS_ATTR}="${css}"]`))
+      document.head.appendChild(
+        E("link", {
+          rel: "stylesheet",
+          href: `${RT.env.resource}/${css}`,
+          [NODE_CSS_ATTR]: css,
+        }),
+      );
   },
 
   installed() {

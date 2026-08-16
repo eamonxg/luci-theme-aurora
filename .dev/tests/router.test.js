@@ -29,8 +29,9 @@ const loadRouter = ({ tree, scriptname = "/cgi-bin/luci" } = {}) => {
     "baseclass",
     "ui",
     "poll",
+    "rpc",
     source,
-  )(window, document, window.L, { extend: (value) => value }, {}, {});
+  )(window, document, window.L, { extend: (value) => value }, {}, {}, {});
 
   router.tree = tree;
   return router;
@@ -231,4 +232,123 @@ test("module dependencies are read from a minified one-line head", () => {
     "network",
   ]);
   assert.deepEqual(router.moduleDeps("(function(){'require x'})()"), []);
+});
+
+// dispatcher.uc folds every depends.acl along the dispatch path into one
+// check_acl_depends() call, which is writable as soon as any group is
+// writable — so a page is readonly only when every acl-bearing node on its
+// path is readonly. The menu tree's per-node flag covers that node alone.
+test("nodespec readonly is folded down the dispatch path like the dispatcher", () => {
+  const acl = (readonly) => ({
+    depends: { acl: ["luci-app-x"] },
+    ...(readonly ? { readonly: true } : {}),
+  });
+  const t = {
+    action: { type: "firstchild" },
+    satisfied: true,
+    children: {
+      admin: {
+        title: "Admin",
+        satisfied: true,
+        action: { type: "firstchild" },
+        children: {
+          ro: {
+            title: "RO",
+            satisfied: true,
+            action: { type: "firstchild" },
+            ...acl(true),
+            children: {
+              leaf: view("ro/leaf"),
+              writable: view("ro/writable", acl(false)),
+              alsoro: view("ro/alsoro", acl(true)),
+            },
+          },
+          plain: {
+            title: "Plain",
+            satisfied: true,
+            action: { type: "firstchild" },
+            children: { leaf: view("plain/leaf") },
+          },
+        },
+      },
+    },
+  };
+  const router = loadRouter({ tree: t });
+  const spec = (segs) => router.nodespec(router.resolve(segs));
+
+  assert.equal(spec(["admin", "ro", "leaf"]).readonly, true);
+  assert.equal(spec(["admin", "ro", "alsoro"]).readonly, true);
+  assert.equal(spec(["admin", "ro", "writable"]).readonly, false);
+  assert.equal(spec(["admin", "plain", "leaf"]).readonly, false);
+  assert.equal(spec(["admin", "ro"]).readonly, true);
+  // The tree's own node object is not mutated.
+  assert.equal(t.children.admin.children.ro.children.leaf.readonly, undefined);
+  assert.equal(spec(["admin", "ro", "leaf"]).action.path, "ro/leaf");
+});
+
+test("session expiry is recognised from the same signals luci-base uses", () => {
+  const router = loadRouter({ tree });
+  const res = (status, required) => ({
+    status,
+    headers: { get: (h) => (h === "X-LuCI-Login-Required" ? required : null) },
+  });
+  const probe = { object: "session", method: "access" };
+
+  assert.equal(router.loginRequired(res(403, "yes")), true);
+  assert.equal(router.loginRequired(res(403, null)), false);
+  assert.equal(router.loginRequired(res(200, "yes")), false);
+
+  assert.equal(router.sessionGone({ error: { code: -32002 } }, probe), true);
+  assert.equal(
+    router.sessionGone({ result: [0, { access: false }] }, probe),
+    true,
+  );
+  assert.equal(
+    router.sessionGone({ result: [0, { access: true }] }, probe),
+    false,
+  );
+  // A denied call on any other object is an ACL matter, not an expiry.
+  assert.equal(
+    router.sessionGone(
+      { error: { code: -32002 } },
+      { object: "uci", method: "get" },
+    ),
+    false,
+  );
+  assert.equal(router.sessionGone(null, probe), false);
+});
+
+test("a menu.d node css is served for the resolved leaf only", () => {
+  const t = {
+    action: { type: "firstchild" },
+    satisfied: true,
+    children: {
+      admin: {
+        title: "Admin",
+        satisfied: true,
+        action: { type: "firstchild" },
+        children: {
+          styled: view("styled", { css: "view/styled/styled.css" }),
+          group: {
+            title: "Group",
+            satisfied: true,
+            action: { type: "firstchild" },
+            css: "group.css",
+            children: { leaf: view("group/leaf") },
+          },
+        },
+      },
+    },
+  };
+  const router = loadRouter({ tree: t });
+
+  assert.equal(
+    router.nodeCss(router.resolve(["admin", "styled"])),
+    "view/styled/styled.css",
+  );
+  assert.equal(router.nodeCss(router.resolve(["admin", "group"])), null);
+  assert.equal(
+    router.nodeCss(router.resolve(["admin", "group", "leaf"])),
+    null,
+  );
 });
