@@ -23,7 +23,7 @@
 ## Features
 
 - **Modern**: Modern, content-first UI design with a clean layout and elegant animations.
-- **Fast, silky navigation**: On supported browsers, switching pages only updates the content instead of reloading the whole page, so moving between pages feels silky and seamless. This no-reload page-switching took cues from [luci-theme-footstrap](https://github.com/VizzleTF/luci-theme-footstrap).
+- **Fast, silky navigation**: The classic approach reloads the whole page on every menu click — top bar, sidebar and styles all rebuilt, with a brief blank flash; on supported browsers this theme only updates the content area and leaves the rest in place, so moving between pages feels silky and seamless with no reload flash. For measured numbers, see the [router doc](.dev/docs/router.md#why-it-pays-measured).
 - **Mobile-friendly**: Optimized for mobile interactions and display, supporting both smartphones and tablets.
 - **Theme Switcher**: Built-in theme switcher with seamless switching between Auto (system), Light, and Dark modes.
 - **Command Palette (⌘K)**: Search and jump to any page from the header.
