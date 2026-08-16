@@ -43,10 +43,10 @@ Budget revisions require a new baseline entry under `../baselines/`.
 - login.css pruned to its reachable custom properties at build time (the
   shared token sheet is admin-sized; the login page consumes a fraction).
 
-- Client-side router (`router-aurora.js`, `.dev/docs/spa-router.md`,
+- Client-side router (`router-aurora.js`, `.dev/docs/router.md`,
   2026-08-16): view/alias/firstchild/overview navigations become
   same-document swaps on Navigation-API browsers, MPA elsewhere.
-  Measured on RE-SS-01 over plain HTTP (`bench-spa.mjs`, RUNS=10): click →
+  Measured on RE-SS-01 over plain HTTP (`bench-router.mjs`, RUNS=10): click →
   view painted **262–496 ms → 48–269 ms warm, median −69 %**; walk of
   51/62 linked pages (mega-menu/sidebar), 42–43 served, **0 divergences** vs
   full loads incl. DOM shape; 65-navigation soak flat after the first lap
@@ -54,7 +54,7 @@ Budget revisions require a new baseline entry under `../baselines/`.
   registry otherwise pins every departed subtree: 26k → 72k nodes before)
   and per-render window/document listeners are torn down; back traversal
   through alias/firstchild entries same-document; poison gate → full load →
-  router again. Report in `../baselines/spa-router-re-ss-01.md`.
+  router again. Report in `../baselines/router-re-ss-01.md`.
 
 ### Pending
 | Item | Principle | Estimated gain |

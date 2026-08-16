@@ -50,15 +50,15 @@ still print.
 **Output.** The whole report is Markdown: paste it straight into a PR
 description, or archive it (see below).
 
-## `bench-spa.mjs` — router verification and A/B (CDP)
+## `bench-router.mjs` — router verification and A/B (CDP)
 
-The client-side router (`.dev/docs/spa-router.md`) is verified against real
+The client-side router (`.dev/docs/router.md`) is verified against real
 full loads, never against expectation:
 
 ```bash
 curl -c jar.txt -d 'luci_username=root&luci_password=…' http://<device>/cgi-bin/luci/
 HOST=http://<device> COOKIE_NAME=sysauth_http COOKIE_VALUE=<from jar> \
-  node ../.claude/skills/aurora-performance/scripts/bench-spa.mjs <label>
+  node ../.claude/skills/aurora-performance/scripts/bench-router.mjs <label>
 ```
 
 `ONLY=walk|timing|soak|back|poison` runs one scenario (`RUNS` defaults to and

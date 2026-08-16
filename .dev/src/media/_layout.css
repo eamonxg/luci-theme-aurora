@@ -551,7 +551,7 @@ body[data-nav-type="sidebar"] {
   }
 }
 
-/* Router progress (spa-router.md): a hairline across the top that only
+/* Router progress (router.md): a hairline across the top that only
    appears once a navigation outlives its silent 150 ms, creeps towards
    the right while the view renders, and completes on commit. */
 #aurora-nav-progress {
@@ -566,7 +566,7 @@ body[data-nav-type="sidebar"] {
   }
 }
 
-/* Router announcement (spa-router.md): the new page's title for screen
+/* Router announcement (router.md): the new page's title for screen
    readers after a same-document swap, which fires no load event. */
 #aurora-nav-status {
   @apply sr-only;
@@ -578,7 +578,7 @@ body[data-nav-type="sidebar"] {
      body[data-nav-type="sidebar"] above. */
   @apply mx-auto min-h-[calc(100vh-4rem)] w-23/24 max-w-(--content-width-centered) px-4 max-md:w-full max-md:px-3;
 
-  /* Router staging (spa-router.md): the incoming region keeps its full
+  /* Router staging (router.md): the incoming region keeps its full
      width for layout-measuring renders but takes no space and no paint. */
   .view-staging {
     @apply invisible h-0 overflow-hidden;
@@ -587,7 +587,7 @@ body[data-nav-type="sidebar"] {
   #view {
     @apply mx-0 w-full bg-transparent p-0 shadow-none empty:hidden md:p-0;
 
-    /* Outgoing page while the router renders the next one (spa-router.md). */
+    /* Outgoing page while the router renders the next one (router.md). */
     &.view-leaving {
       @apply cursor-progress opacity-60 transition-opacity duration-150;
     }

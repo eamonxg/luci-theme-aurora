@@ -5,7 +5,7 @@
 "require rpc";
 
 // Same-document navigation for LuCI view pages. Design, boundaries and the
-// invariants each step keeps: .dev/docs/spa-router.md.
+// invariants each step keeps: .dev/docs/router.md.
 const RT = window.L;
 const RENDER_TIMEOUT = 15000;
 const PATCH_ATTR = "data-aurora-patch";
@@ -218,7 +218,7 @@ return baseclass.extend({
 
   // Every luci-base surface the router leans on, by name. A missing one means
   // upstream moved and the safe answer is the MPA the theme was before — with
-  // a warning, not a broken page. Kept in step with spa-router.md.
+  // a warning, not a broken page. Kept in step with router.md.
   contract() {
     const roots = { L: RT, rpc, poll, ui, window };
     const need = [

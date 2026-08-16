@@ -83,7 +83,7 @@ of everything below.
 
 So the router's effective floor is Chrome/Edge 105, Safari 26.2, Firefox 147;
 everything older keeps the theme's existing floor and behaviour. Verified
-live in Chrome 151 (headless, `bench-spa.mjs`); Safari/Firefox by feature
+live in Chrome 151 (headless, `bench-router.mjs`); Safari/Firefox by feature
 detection only — the gate is the same API surface, not a UA sniff.
 
 ### OpenWrt / LuCI
@@ -371,7 +371,7 @@ handler in order:
 luci-base answers a dead session with `notifySessionExpiry()`: `Poll.stop()`
 plus a modal whose only button is a hard reload. A same-document swap would
 `hideModal()` and `Poll.start()` right through it and browse on, every page
-erroring in turn (measured: `bench-spa.mjs expiry` against the previous
+erroring in turn (measured: `bench-router.mjs expiry` against the previous
 router — `expiredFullLoad: false`). So the router listens for the same two
 signals luci-base acts on — a `403` with `X-LuCI-Login-Required: yes` on any
 `L.Request`, and the `session.access` probe luci-base fires after a
@@ -457,16 +457,16 @@ already 0-byte cache hits.
   wildcard args, cycle); URL → segments; patch prefix matching; pragma scan
   on a minified head; readonly folding; expiry signals; node css of the
   resolved leaf; the contract check.
-- Device (`.claude/skills/aurora-performance/scripts/bench-spa.mjs`, CDP):
+- Device (`.claude/skills/aurora-performance/scripts/bench-router.mjs`, CDP):
   1. full walk of every clickable node in each nav mode, each compared
      against a real full load of the same URL — `data-page`,
      `dispatchpath`, URL, title, tab count, footer presence, console clean;
-  2. click → view painted, median of N, SPA vs MPA, warm and cold;
+  2. click → view painted, median of N, router vs full load, warm and cold;
   3. soak: 60 navigations over 12 pages, heap / DOM nodes / listeners /
      poll queue length flat after the first pass;
   4. back/forward chain through alias and firstchild URLs — no reload;
   5. poison gate: a foreign `<style>` in `<head>` makes the next
-     navigation a full load, the one after is SPA again;
+     navigation a full load, the one after is a same-document swap again;
   5b. sheets: the same, on every walked view page that really inserts its
      own sheets (found on the walk) instead of an injected one — reached
      same-document and landed on directly (its modules insert before the

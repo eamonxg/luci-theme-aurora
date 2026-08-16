@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * bench-spa.mjs <label> — verifies and measures the theme's client-side
+ * bench-router.mjs <label> — verifies and measures the theme's client-side
  * router (router-aurora.js) against real full loads on the device, over raw
  * CDP (headless Chrome, no npm deps, node >= 22).
  *
@@ -72,7 +72,7 @@ const median = (v) => {
 };
 
 /* ---------- chrome + CDP ---------- */
-const profile = mkdtempSync(join(tmpdir(), "cdp-aurora-spa-"));
+const profile = mkdtempSync(join(tmpdir(), "cdp-aurora-router-"));
 const chrome = spawn(
   CHROME,
   ["--headless=new", "--remote-debugging-port=0", `--user-data-dir=${profile}`,
@@ -129,7 +129,7 @@ async function recover(reason) {
   try { await send("Target.closeTarget", { targetId: p.targetId }); } catch {}
   p = await newPage();
   await fullLoad(p.sessionId, START);
-  await evaljs(p.sessionId, "window.__spaMarker = 1");
+  await evaljs(p.sessionId, "window.__sameDocMarker = 1");
 }
 async function newPage() {
   const { targetId } = await send("Target.createTarget", { url: "about:blank" });
@@ -210,7 +210,7 @@ const SNAPSHOT = `(() => JSON.stringify({
   shape: (() => { const m = {}; for (const el of document.querySelectorAll('#view *')) {
     const k = el.tagName + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).sort().join('.') : '');
     (m[k] ??= [0, 0]); m[k][0]++; if (el.textContent.trim()) m[k][1]++; } return m; })(),
-  marker: window.__spaMarker ?? null,
+  marker: window.__sameDocMarker ?? null,
 }))()`;
 async function snapshot(sessionId) { return JSON.parse(await evaljs(sessionId, SNAPSHOT)); }
 // A navigation the router does not take becomes a real document load, which
@@ -231,17 +231,17 @@ async function spaNavigate(sessionId, url) {
         await Promise.race([navigation.navigate(${JSON.stringify(url)}).finished,
           new Promise((_, rej) => setTimeout(() => rej(new Error("router did not finish in 20 s")), 20000))]);
       } catch (e) { error = String(e); }
-      return JSON.stringify({ ms: performance.now() - t0, error, sameDoc: window.__spaMarker === 1,
+      return JSON.stringify({ ms: performance.now() - t0, error, sameDoc: window.__sameDocMarker === 1,
         state: { views: document.querySelectorAll('[id="view"]').length, page: document.body.dataset.page } });
     })()`, true));
     if (r.sameDoc) return r;
     await load; await waitViewSettled(sessionId);
-    await evaljs(sessionId, "window.__spaMarker = 1");
+    await evaljs(sessionId, "window.__sameDocMarker = 1");
     return r;
   } catch (e) {
     if (!/navigated or closed/.test(e.message)) throw e;
     await load; await waitViewSettled(sessionId);
-    await evaljs(sessionId, "window.__spaMarker = 1");
+    await evaljs(sessionId, "window.__sameDocMarker = 1");
     return { ms: null, error: null, sameDoc: false };
   }
 }
@@ -250,7 +250,7 @@ async function spaNavigate(sessionId, url) {
 await send("Storage.setCookies", { cookies: [COOKIE] });
 p = await newPage();
 await fullLoad(p.sessionId, START);
-await evaljs(p.sessionId, "window.__spaMarker = 1");
+await evaljs(p.sessionId, "window.__sameDocMarker = 1");
 const routerActive = await evaljs(p.sessionId,
   `!!window.navigation && performance.getEntriesByType('resource').some(e => /router-aurora\.js/.test(e.name))`);
 const menuLinks = JSON.parse(await evaljs(p.sessionId, `JSON.stringify([...new Set(
@@ -280,31 +280,31 @@ if (!ONLY || ONLY === "walk") {
    try {
     consoleErrors.length = 0;
     await fullLoad(p.sessionId, START);
-    await evaljs(p.sessionId, "window.__spaMarker = 1");
+    await evaljs(p.sessionId, "window.__sameDocMarker = 1");
     const nav = await spaNavigate(p.sessionId, url);
     if (!nav.sameDoc) { fallbacks.push(url.replace(HOST, "")); continue; }
     await waitViewSettled(p.sessionId);
     await sleep(SETTLE);
-    const spa = await snapshot(p.sessionId);
-    const spaErrors = [...consoleErrors]; consoleErrors.length = 0;
+    const soft = await snapshot(p.sessionId);
+    const softErrors = [...consoleErrors]; consoleErrors.length = 0;
     await fullLoad(p.sessionId, url);
     await sleep(SETTLE);
     const full = await snapshot(p.sessionId);
     // a page's own console errors (missing binaries, 404s) show on both paths
     const fullErrors = new Set(consoleErrors.map((e) => e.split("\n")[0]));
-    const routerErrors = spaErrors.filter((e) => !fullErrors.has(e.split("\n")[0]));
+    const routerErrors = softErrors.filter((e) => !fullErrors.has(e.split("\n")[0]));
     const diffs = [];
     for (const k of ["url", "title", "page", "dispatch", "request", "tabs", "activeTab", "activeNav", "footer", "readonly", "perm", "nodeCss", "h1", "svgLines"])
-      if (String(spa[k]) !== String(full[k])) diffs.push(`${k}: spa=${spa[k]} full=${full[k]}`);
-    if (spa.viewIds !== 1) diffs.push(`viewIds=${spa.viewIds}`);
-    for (const k of new Set([...Object.keys(spa.shape), ...Object.keys(full.shape)])) {
-      const a = spa.shape[k] ?? [0, 0], b = full.shape[k] ?? [0, 0];
+      if (String(soft[k]) !== String(full[k])) diffs.push(`${k}: router=${soft[k]} full=${full[k]}`);
+    if (soft.viewIds !== 1) diffs.push(`viewIds=${soft.viewIds}`);
+    for (const k of new Set([...Object.keys(soft.shape), ...Object.keys(full.shape)])) {
+      const a = soft.shape[k] ?? [0, 0], b = full.shape[k] ?? [0, 0];
       // tolerate small count drift (live tables), flag missing kinds and lost text
       if (Math.abs(a[0] - b[0]) > Math.max(2, b[0] * 0.25) || (b[1] > 0 && a[1] === 0 && b[0] <= 20 && a[0] > 0))
-        diffs.push(`shape ${k}: spa=${a} full=${b}`);
+        diffs.push(`shape ${k}: router=${a} full=${b}`);
     }
-    if (spa.viewChildren <= 0 && full.viewChildren > 0) diffs.push("view empty under spa");
-    if (spa.status !== spa.title) diffs.push(`live region: ${spa.status}`);
+    if (soft.viewChildren <= 0 && full.viewChildren > 0) diffs.push("view empty under router");
+    if (soft.status !== soft.title) diffs.push(`live region: ${soft.status}`);
     if (full.foreign.length) injectors.push({ url: url.replace(HOST, ""), foreign: full.foreign });
     if (routerErrors.length) diffs.push(`console: ${routerErrors.slice(0, 2).join(" | ").slice(0, 200)}`);
     (diffs.length ? divergences : ok).push({ url: url.replace(HOST, ""), diffs });
@@ -332,7 +332,7 @@ if (!ONLY || ONLY === "timing") {
     }
     // router, cold (fresh document, module never required) then warm
     await fullLoad(p.sessionId, START);
-    await evaljs(p.sessionId, "window.__spaMarker = 1");
+    await evaljs(p.sessionId, "window.__sameDocMarker = 1");
     const cold = await spaNavigate(p.sessionId, url);
     const warm = [];
     for (let i = 0; i < RUNS; i++) {
@@ -350,7 +350,7 @@ if (!ONLY || ONLY === "timing") {
 /* ---------- soak ---------- */
 if (!ONLY || ONLY === "soak") {
   await fullLoad(p.sessionId, START);
-  await evaljs(p.sessionId, "window.__spaMarker = 1");
+  await evaljs(p.sessionId, "window.__sameDocMarker = 1");
   const laps = 5, ring = PAGES.slice(0, 12);
   const samples = [];
   const measure = async () => {
@@ -377,7 +377,7 @@ if (!ONLY || ONLY === "soak") {
 /* ---------- back ---------- */
 if (!ONLY || ONLY === "back") {
   await fullLoad(p.sessionId, START);
-  await evaljs(p.sessionId, "window.__spaMarker = 1");
+  await evaljs(p.sessionId, "window.__sameDocMarker = 1");
   // Two alias/firstchild URLs (from the menu tree, resolved client-side by
   // the router) interleaved with two view URLs.
   const redirecting = JSON.parse(await evaljs(p.sessionId, `(async () => {
@@ -409,7 +409,7 @@ if (!ONLY || ONLY === "back") {
       r = JSON.parse(await evaljs(p.sessionId, `(async () => {
         const t0 = performance.now();
         try { await navigation.back().finished; } catch (e) { return JSON.stringify({ error: String(e) }); }
-        return JSON.stringify({ ms: performance.now() - t0, sameDoc: window.__spaMarker === 1,
+        return JSON.stringify({ ms: performance.now() - t0, sameDoc: window.__sameDocMarker === 1,
           url: location.pathname, page: document.body.dataset.page });
       })()`, true));
     } catch (e) {
@@ -421,7 +421,7 @@ if (!ONLY || ONLY === "back") {
         await sleep(100);
       }
       await waitViewSettled(p.sessionId);
-      await evaljs(p.sessionId, "window.__spaMarker = 1");
+      await evaljs(p.sessionId, "window.__sameDocMarker = 1");
       r = { sameDoc: false, url: await evaljs(p.sessionId, "location.pathname"), page: await evaljs(p.sessionId, "document.body.dataset.page") };
     }
     const expected = i > 0 ? chain[i - 1] : START;
@@ -435,7 +435,7 @@ if (!ONLY || ONLY === "back") {
 /* ---------- poison gate ---------- */
 if (!ONLY || ONLY === "poison") {
   await fullLoad(p.sessionId, START);
-  await evaljs(p.sessionId, "window.__spaMarker = 1");
+  await evaljs(p.sessionId, "window.__sameDocMarker = 1");
   const [a, b] = PAGES.filter((u) => u !== START).slice(0, 2);
   const before = await spaNavigate(p.sessionId, a);
   // what a foreign view does: an unlayered <style> straight into <head>
@@ -463,7 +463,7 @@ if (!ONLY || ONLY === "sheets") {
   for (const a of injecting.slice(0, 3)) {
     const [b, c] = PAGES.filter((u) => u !== START && u !== a);
     await fullLoad(p.sessionId, START);
-    await evaljs(p.sessionId, "window.__spaMarker = 1");
+    await evaljs(p.sessionId, "window.__sameDocMarker = 1");
     const arrive = await spaNavigate(p.sessionId, a);
     // A page the router does not serve (Lua, call) is a full load either way.
     if (!arrive.sameDoc) { cases.push({ a: a.replace(HOST, ""), skipped: "not a view page" }); continue; }
@@ -474,7 +474,7 @@ if (!ONLY || ONLY === "sheets") {
     // Landing on the page itself: its modules insert before the router boots;
     // the markers, not a snapshot, must still tell those sheets apart.
     await fullLoad(p.sessionId, a);
-    await evaljs(p.sessionId, "window.__spaMarker = 1");
+    await evaljs(p.sessionId, "window.__sameDocMarker = 1");
     const fromBoot = await spaNavigate(p.sessionId, b);
     cases.push({ a: a.replace(HOST, ""), foreign, arriveSameDoc: arrive.sameDoc, leaveFullLoad: !leave.sameDoc, afterSameDoc: after.sameDoc,
       leaveFromBootFullLoad: !fromBoot.sameDoc,
@@ -487,7 +487,7 @@ if (!ONLY || ONLY === "sheets") {
 /* ---------- hygiene ---------- */
 if (!ONLY || ONLY === "hygiene") {
   await fullLoad(p.sessionId, START);
-  await evaljs(p.sessionId, "window.__spaMarker = 1");
+  await evaljs(p.sessionId, "window.__sameDocMarker = 1");
   const b = PAGES.find((u) => u !== START);
   const nav = await spaNavigate(p.sessionId, b);
   await waitViewSettled(p.sessionId); await sleep(300);
@@ -522,7 +522,7 @@ if (!ONLY || ONLY === "nodecss") {
   else {
     const other = PAGES.find((u) => u !== START && u !== styled);
     await fullLoad(p.sessionId, START);
-    await evaljs(p.sessionId, "window.__spaMarker = 1");
+    await evaljs(p.sessionId, "window.__sameDocMarker = 1");
     const arrive = await spaNavigate(p.sessionId, styled);
     const onArrival = JSON.parse(await evaljs(p.sessionId, LINKS));
     const leave = await spaNavigate(p.sessionId, other);
@@ -540,7 +540,7 @@ if (!ONLY || ONLY === "nodecss") {
 /* ---------- session expiry ---------- */
 if (!ONLY || ONLY === "expiry") {
   await fullLoad(p.sessionId, START);
-  await evaljs(p.sessionId, "window.__spaMarker = 1");
+  await evaljs(p.sessionId, "window.__sameDocMarker = 1");
   const [a, b] = PAGES.filter((u) => u !== START).slice(0, 2);
   const before = await spaNavigate(p.sessionId, a);
   // What a real expiry looks like from inside the document: the session is

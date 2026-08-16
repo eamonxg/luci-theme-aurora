@@ -287,7 +287,7 @@
     viewer = null;
   }
 
-  // Page-scoped lifecycle for the router (see .dev/docs/spa-router.md);
+  // Page-scoped lifecycle for the router (see .dev/docs/router.md);
   // a full load simply mounts once.
   ((window.aurora ??= {}).patches ??= {})["admin-status-logs"] = {
     mount,
