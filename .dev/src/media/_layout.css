@@ -560,7 +560,13 @@ body[data-nav-type="sidebar"] {
   #view {
     @apply mx-0 w-full bg-transparent p-0 shadow-none empty:hidden md:p-0;
 
-    /* Outgoing page while the router renders the next one (spa-router.md). */
+    /* Router staging (spa-router.md): the incoming view keeps its full
+       width for layout-measuring renders but takes no space and no paint. */
+    &.view-staging {
+      @apply invisible h-0 overflow-hidden;
+    }
+
+    /* Outgoing page while the router renders the next one. */
     &.view-leaving {
       @apply cursor-progress opacity-60 transition-opacity duration-150;
     }

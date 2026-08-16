@@ -166,11 +166,15 @@ handler in order:
    section. Menus are **not** rebuilt — the mega menu measures and binds on
    construction and the palette index is a flat array of the same model —
    only their state changes.
-5. **Staging.** A fresh `<div id="view" hidden>` is inserted right after
-   `#tabmenu`, i.e. **first in tree order** — `getElementById('view')`
-   returns the first match, so everything LuCI's view chain writes goes into
-   the staged element while the outgoing page stays on screen (dimmed,
-   `.view-leaving`). Nothing is removed yet.
+5. **Staging.** A fresh `<div id="view" class="view-staging">` is inserted
+   right after `#tabmenu`, i.e. **first in tree order** —
+   `getElementById('view')` returns the first match, so everything LuCI's
+   view chain writes goes into the staged element while the outgoing page
+   stays on screen (dimmed, `.view-leaving`). The stage is invisible but
+   **laid out** (`visibility:hidden; height:0; overflow:hidden`, never
+   `display:none`): the realtime graphs size themselves from
+   `#view.offsetWidth` inside `render()`, and a `display:none` stage handed
+   them a 0-wide canvas. Nothing is removed yet.
 6. **Patches.** `header.ut` emits the installed on-demand patch stems as
    `body[data-patches]`; the router applies the same segment-prefix rule the
    template applies at render time: matching `patches/<stem>.css` links are

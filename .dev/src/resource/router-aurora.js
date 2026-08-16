@@ -441,12 +441,13 @@ return baseclass.extend({
     return { main, start, end, nodes };
   },
 
-  // The incoming view renders into a hidden #view placed first in tree
-  // order (getElementById returns the first), so the outgoing page stays on
-  // screen until the new one is ready.
+  // The incoming view renders into an invisible but laid-out #view placed
+  // first in tree order (getElementById returns the first), so the outgoing
+  // page stays on screen until the new one is ready. Laid out, not
+  // display:none: views size their graphs from #view.offsetWidth in render().
   stage(r) {
     const { main, start, end } = this.region();
-    const view = E("div", { id: "view", hidden: "" });
+    const view = E("div", { id: "view", class: "view-staging" });
 
     for (const old of main.querySelectorAll(":scope > #view"))
       old.classList.add("view-leaving");
@@ -466,7 +467,7 @@ return baseclass.extend({
         if (n.nodeType === 1) RT.dom.content(n, null);
         n.remove();
       }
-      view.hidden = false;
+      view.classList.remove("view-staging");
       if (r.className === "view.status.index")
         view.before(E("h2", { name: "content" }, _("Status")));
     };

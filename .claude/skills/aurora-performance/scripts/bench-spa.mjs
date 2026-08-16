@@ -180,6 +180,7 @@ const SNAPSHOT = `(() => JSON.stringify({
   viewChildren: document.getElementById('view')?.childElementCount ?? -1,
   viewIds: document.querySelectorAll('[id="view"]').length,
   h1: document.querySelector('#view h2, #maincontent > h2')?.textContent ?? null,
+  svgLines: document.querySelectorAll('#view svg line').length,
   marker: window.__spaMarker ?? null,
 }))()`;
 async function snapshot(sessionId) { return JSON.parse(await evaljs(sessionId, SNAPSHOT)); }
@@ -257,7 +258,7 @@ if (!ONLY || ONLY === "walk") {
     await sleep(300);
     const full = await snapshot(p.sessionId);
     const diffs = [];
-    for (const k of ["url", "title", "page", "dispatch", "request", "tabs", "activeTab", "activeNav", "footer", "h1"])
+    for (const k of ["url", "title", "page", "dispatch", "request", "tabs", "activeTab", "activeNav", "footer", "h1", "svgLines"])
       if (String(spa[k]) !== String(full[k])) diffs.push(`${k}: spa=${spa[k]} full=${full[k]}`);
     if (spa.viewIds !== 1) diffs.push(`viewIds=${spa.viewIds}`);
     if (spa.viewChildren <= 0 && full.viewChildren > 0) diffs.push("view empty under spa");
