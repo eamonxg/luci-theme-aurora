@@ -53,6 +53,7 @@
   - **Chrome/Edge 111+** _(released March 2023)_
   - **Safari 16.4+** _(released March 2023)_
   - **Firefox 128+** _(released July 2024)_
+  - Same-document navigation (no full page reload between view pages) additionally needs the Navigation API — Chrome/Edge 105+, Safari 26.2+, Firefox 147+; older browsers keep classic full-page navigation automatically.
 
 ## Installation
 

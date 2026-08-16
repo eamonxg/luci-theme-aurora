@@ -52,6 +52,42 @@ does today. This is a deliberate trade: one code path, correct by
 construction, over a second history-API path that would double the surface
 of everything below.
 
+## Compatibility
+
+### Browsers — per platform feature
+
+| Feature | Used for | Required? | Chrome / Edge | Safari | Firefox | Without it |
+|---|---|---|---|---|---|---|
+| Navigation API (`navigation.addEventListener('navigate')`, `NavigateEvent.intercept()`, `event.destination/signal`, `navigation.navigate()/back()`) | the whole router | **yes — gate** | 105+ (2022) | 26.2+ (2026-01) | 147+ (2026-01) | `router-aurora.js` is not even loaded (`footer.ut` checks `window.navigation`); the theme is the plain MPA it was before |
+| `document.startViewTransition()` (same-document) | crossfade at the swap | no | 111+ | 18+ | 144+ | swap without animation; also off under `prefers-reduced-motion` |
+| `fetch(url, { priority: 'low' })` | hover module prewarm | no | 101+ | 17.2+ | 132+ | the option is ignored, the fetch still runs at default priority |
+| `MutationObserver`, `DOMParser`, `WeakSet`, `URL`, `Element.replaceWith`, `:scope`, `matchMedia`, optional chaining / `??=` | render completion, template shells, poison gate, staging | yes | ≥ 85 | ≥ 14 | ≥ 79 | all inside the theme's declared floor (Chrome 111 / Safari 16.4 / Firefox 128) |
+
+So the router's effective floor is Chrome/Edge 105, Safari 26.2, Firefox 147;
+everything older keeps the theme's existing floor and behaviour. Verified
+live in Chrome 151 (headless, `bench-spa.mjs`); Safari/Firefox by feature
+detection only — the gate is the same API surface, not a UA sniff.
+
+### OpenWrt / LuCI
+
+The theme already requires OpenWrt 23.05+ (ucode templates). The router
+touches only luci-base surfaces that exist unchanged in the `openwrt-23.05`,
+`openwrt-24.10`, `openwrt-25.12` and `master` branches of `openwrt/luci`
+(checked by source, 2026-08): `L.require` with instance caching and
+`prototype.constructor`, `L.view`, `L.dom.content` and the `data-idref`
+registry, `L.env.{scriptname, base_url, resource_version, media,
+requestpath, dispatchpath, pathinfo, nodespec}`, `L.hasSystemFeature`,
+`L.Poll.{queue, tick, timer, start, stop}` and the `poll-start/poll-stop`
+events, `ui.menu.load()`'s session-cached tree with `satisfied` /
+`firstchild_ineligible` / `wildcard` / `action.type` (`view`, `alias`,
+`firstchild`, `template`), `ui.instantiateView`, `ui.hideIndicator`,
+`ui.hideModal`, `uci.state.values` / `uci.unload()` / `uci.load()`,
+`network.js`'s uci-backed state, `view.ut`'s `#view` + inline
+`instantiateView` shell, and `dispatcher.uc`'s `resolve_firstchild` /
+`node_weight` / alias re-dispatch semantics (ported verbatim). Live
+verification so far: OpenWrt SNAPSHOT (2026-08, ipq60xx) — 23.05/24.10 by
+inspection, not yet on device.
+
 ## What is intercepted
 
 A `navigate` event is intercepted only when **all** hold:
