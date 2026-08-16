@@ -42,6 +42,24 @@ last row (view module from cache + data RPCs + render). Speculation-rules
 prefetch cannot reach that number on HTTP at all (secure-context API) and on
 HTTPS only hides the first row.
 
+End to end, click → view painted, median of 10 on an `ipq60xx` (RE-SS-01)
+over plain HTTP (`bench-router.mjs`, 2026-08):
+
+| page | full load | router (warm) | faster |
+|---|--:|--:|--:|
+| status/routesj | 307 | 140 | 54 % |
+| status/nftables | 335 | 95 | 72 % |
+| status/logs | 375 | 187 | 50 % |
+| status/processes | 451 | 269 | 40 % |
+| status/channel_analysis | 464 | 74 | 84 % |
+| status/realtime | 262 | 48 | 82 % |
+| system/system | 496 | 163 | 67 % |
+| system/admin | 266 | 53 | 80 % |
+
+Median **69 % faster** (40–84 % across the sample). Absolute numbers move
+with CPU, network and page; the ratio is the point — the same-document swap
+skips the router-side rebuild above and keeps only the view render.
+
 ## Why it is possible
 
 For a `view` node the dispatcher renders `view.ut`: the theme header, then
