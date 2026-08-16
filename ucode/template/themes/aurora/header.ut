@@ -100,7 +100,7 @@
 <html lang="{{ dispatcher.lang }}">
 	<head>
 		<meta charset="utf-8">
-		<title>{% if (dispatched?.title): %}{{ striptags(_(dispatched.title)) }} - {% endif %}{{ hostname }}</title>
+		<title>{{ dispatched?.title ? `${striptags(_(dispatched.title))} - ` : '' }}{{ hostname }}</title>
 		{% if (blank_page): %}
 		<script>
 			(function () {

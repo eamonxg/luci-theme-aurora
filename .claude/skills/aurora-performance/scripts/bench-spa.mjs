@@ -136,7 +136,7 @@ async function newPage() {
       const v = document.getElementById('view');
       if (v && v.querySelector(':scope > :not(.spinning):not(script)') && window.__viewReady == null)
         window.__viewReady = performance.now();
-    }).observe(document.documentElement, { childList: true, subtree: true });` }, sessionId);
+    }).observe(document, { childList: true, subtree: true });` }, sessionId);
   return { targetId, sessionId };
 }
 async function evaljs(sessionId, expression, awaitPromise = false, timeout = 30000) {

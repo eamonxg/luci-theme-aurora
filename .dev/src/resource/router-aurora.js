@@ -459,7 +459,13 @@ return baseclass.extend({
 
   commit(view, r) {
     const swap = () => {
-      for (const n of this.region().nodes) if (n !== view) n.remove();
+      for (const n of this.region().nodes) {
+        if (n === view) continue;
+        // dom.content() drops the data-idref registry entries that would
+        // otherwise keep the departed subtree (and its class instances) alive.
+        if (n.nodeType === 1) RT.dom.content(n, null);
+        n.remove();
+      }
       view.hidden = false;
       if (r.className === "view.status.index")
         view.before(E("h2", { name: "content" }, _("Status")));
