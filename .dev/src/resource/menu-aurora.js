@@ -11,15 +11,15 @@ return baseclass.extend({
     this.initPollLifecycle();
   },
 
-  // Hidden tabs keep hammering ubus, and bfcache restores show stale data
-  // until the next tick. Poll.start() runs one step() synchronously, so
-  // resuming a visibility pause is an immediate refresh. We only resume a
-  // pause this handler still owns; another stop transfers that ownership.
+  // Poll.start() runs one step() synchronously, so resume is an immediate
+  // refresh. Ownership: another caller's stop() cancels a pending resume;
+  // ui.awaitReconnect() must keep pinging from a hidden tab.
   initPollLifecycle() {
     let pausedWhileHidden = false;
     let stoppingForVisibility = false;
+    let reconnecting = false;
     const pause = () => {
-      if (!document.hidden) return;
+      if (!document.hidden || reconnecting) return;
 
       stoppingForVisibility = true;
       pausedWhileHidden = poll.stop() || pausedWhileHidden;
@@ -32,8 +32,6 @@ return baseclass.extend({
       poll.start();
     };
 
-    // Poll is a global singleton. A successful stop from another caller
-    // transfers ownership, so this handler must not restart it later.
     document.addEventListener("poll-stop", () => {
       if (!stoppingForVisibility) pausedWhileHidden = false;
     });
@@ -47,8 +45,12 @@ return baseclass.extend({
       if (ev.persisted) resume();
     });
 
-    // LuCI starts Poll after modules initialize. Catch that first start when
-    // a page was opened in an already-hidden tab, and any later hidden start.
+    const { awaitReconnect } = ui;
+    ui.awaitReconnect = function (...hosts) {
+      reconnecting = true;
+      return awaitReconnect.apply(this, hosts);
+    };
+
     document.addEventListener("poll-start", pause);
     pause();
   },
@@ -705,11 +707,9 @@ return baseclass.extend({
     });
     // Mobile-only exit (the full-screen takeover leaves no outside to tap
     // and touch devices have no Escape) — hidden on md+ via CSS.
-    const cancel = E(
-      "button",
-      { class: "cmdk-cancel", type: "button" },
-      [_("Cancel")],
-    );
+    const cancel = E("button", { class: "cmdk-cancel", type: "button" }, [
+      _("Cancel"),
+    ]);
     cancel.addEventListener("click", () => this.closePalette());
     const panel = E(
       "div",
@@ -960,9 +960,7 @@ return baseclass.extend({
   },
 
   movePaletteSelection(delta) {
-    const rows = [
-      ...this.paletteList.querySelectorAll(".cmdk-row"),
-    ];
+    const rows = [...this.paletteList.querySelectorAll(".cmdk-row")];
     if (!rows.length) return;
 
     const current = rows.findIndex((row) =>

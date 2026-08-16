@@ -43,7 +43,7 @@ const createEventTarget = (properties = {}) => {
   });
 };
 
-const loadPollLifecycle = ({ active = true, hidden = false } = {}) => {
+const loadPollLifecycle = ({ active = true, hidden = false, ui = {} } = {}) => {
   const document = createEventTarget({ hidden });
   const window = createEventTarget();
   const calls = [];
@@ -73,7 +73,7 @@ const loadPollLifecycle = ({ active = true, hidden = false } = {}) => {
     "document",
     "window",
     menuSource,
-  )({ extend: (value) => value }, {}, poll, document, window);
+  )({ extend: (value) => value }, ui, poll, document, window);
 
   menu.initPollLifecycle();
 
@@ -103,20 +103,21 @@ test("speculative prefetch excludes logout with a root-relative pattern", () => 
   assert.equal(exclusion.not.href_matches, "/cgi-bin/luci/admin/logout*");
 });
 
-test("speculative prefetch is restricted to theme navigation links", () => {
-  const rules = speculationRules();
-  const selector = condition(rules, "selector_matches");
+test("speculative prefetch is restricted to leaf links in theme navigation", () => {
+  const selector = condition(speculationRules(), "selector_matches");
+  const menu = source(".dev/src/resource/menu-aurora.js");
+  const containers = selector.match(
+    /^:is\((.+)\) a:not\(\[href\^="#"\], \[aria-current\]\)$/,
+  );
 
-  assert.equal(typeof selector, "string", "missing navigation selector");
-  for (const navigation of [
-    "#topmenu a",
-    ".desktop-menu-canvas a",
-    "#sidebar-list a",
-    "#mobile-nav-list a",
-    "#tabmenu a",
-    "#cmdk-list a",
-  ]) {
-    assert.ok(selector.split(/,\s*/).includes(navigation), navigation);
+  assert.ok(containers, `unexpected selector shape: ${selector}`);
+  for (const container of containers[1].split(/,\s*/)) {
+    const name = container.slice(1);
+
+    assert.ok(
+      menu.includes(`"${container}"`) || menu.includes(`"${name}"`),
+      `${container} is not rendered by menu-aurora.js`,
+    );
   }
 });
 
@@ -225,4 +226,17 @@ test("login template reuses server data when including the header", () => {
   );
   assert.match(header, /prefetched_boardinfo\s*\?\?/);
   assert.match(header, /prefetched_tokens\s*\?\?/);
+});
+
+test("awaitReconnect keeps polling in a hidden tab", () => {
+  const ui = { awaitReconnect: () => "original" };
+  const lifecycle = loadPollLifecycle({ ui });
+
+  lifecycle.document.hidden = true;
+  lifecycle.document.dispatch("visibilitychange");
+  assert.equal(lifecycle.poll.active(), false);
+
+  assert.equal(ui.awaitReconnect(), "original");
+  lifecycle.poll.start();
+  assert.equal(lifecycle.poll.active(), true, "reconnect poll was paused");
 });

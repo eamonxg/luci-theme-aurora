@@ -21,7 +21,7 @@ test("production assets stay within raw-transfer budgets", () => {
   // unchanged and still binds.
   assert.ok(main <= 192_000, "main.css exceeds 192 KB");
   assert.ok(login <= 12_000, "login.css exceeds 12 KB");
-  assert.ok(menu <= 20_000, "menu-aurora.js exceeds 20 KB");
+  assert.ok(menu <= 20_500, "menu-aurora.js exceeds 20.5 KB");
   assert.ok(logo <= 16_000, "logo.svg exceeds 16 KB");
   assert.ok(main + menu + font + logo <= 250_000, "admin assets exceed 250 KB");
   assert.ok(login + font + logo <= 55_000, "login assets exceed 55 KB");

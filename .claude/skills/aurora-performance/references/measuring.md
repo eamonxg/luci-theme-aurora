@@ -71,9 +71,13 @@ The harness also aborts if navigation lands on the login form — unauthenticate
 responses are never accepted as measurements — and always closes Chrome and
 removes its temporary profile on success or failure.
 
-Scenarios: S1 document navigation timing (median of `RUNS`); S2 hover→click
-vs immediate click (`deliveryType: navigational-prefetch` proves a hit);
-S3 back/forward bfcache restore + time-to-first-`/ubus` (poll freshness);
+Scenarios: S1 document navigation timing (median of `RUNS`, alternating two
+pages — a same-URL `Page.navigate` is a *reload* and revalidates every
+subresource; `types` in the output must read all `navigate`); S2 hover→click
+vs immediate click (`hoverPrefetchHits: n/RUNS` counts
+`deliveryType: navigational-prefetch` — a single hit out of ten is flake, not
+proof); S3 back/forward bfcache restore + time-to-first-`/ubus` after the
+restoring `pageshow` (poll freshness);
 S4 polling rate visible vs hidden; S5 view-transition activation
 (`pagereveal.viewTransition`, checked normally and under emulated
 `prefers-reduced-motion`). `ONLY=doc|click|back|polling|vt` runs one
@@ -82,7 +86,7 @@ scenario. Output is JSON; run once per state (base/branch) and diff.
 Three caveats that will otherwise produce false conclusions:
 
 - **Speculation Rules are a secure-context API.** Over plain HTTP the rules
-  parse but never fire — S2 shows an empty deliveryType and unchanged TTFB.
+  parse but never fire — S2 shows `0/RUNS` prefetch hits and unchanged TTFB.
   Bench prefetch against `https://` (a self-signed uhttpd cert is
   sufficient; the harness ignores certificate errors).
 - **Headless Chrome suspends background tabs wholesale**, zeroing S4 for

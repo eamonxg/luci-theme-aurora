@@ -214,13 +214,9 @@
 		{% if (!blank_page): %}
 		<script src="{{ dispatcher.build_url('admin/translations', dispatcher.lang) }}"></script>
 		<script src="{{ resource }}/cbi.js"></script>
-		{#
-		 Speculative document prefetch (perf skill N2). A prefetch is a real
-		 GET carrying session cookies, so logout — a state-changing GET —
-		 must stay excluded. Prefetch only; prerendering executes page JS.
-		-#}
+		{# Prefetch only (prerender would run page JS); logout is a state-changing GET. -#}
 		<script type="speculationrules">
-		{"prefetch":[{"where":{"and":[{"href_matches":"{{ dispatcher.build_url('admin') }}/*"},{"selector_matches":"#topmenu a, .desktop-menu-canvas a, #sidebar-list a, #mobile-nav-list a, #tabmenu a, #cmdk-list a, #modemenu a"},{"not":{"href_matches":"{{ dispatcher.build_url('admin') }}/logout*"}}]},"eagerness":"moderate"}]}
+		{"prefetch":[{"where":{"and":[{"href_matches":"{{ dispatcher.build_url('admin') }}/*"},{"selector_matches":":is(#topmenu, .desktop-menu-canvas, #sidebar-list, #mobile-nav-list, #tabmenu, #cmdk-list) a:not([href^=\"#\"], [aria-current])"},{"not":{"href_matches":"{{ dispatcher.build_url('admin') }}/logout*"}}]},"eagerness":"moderate"}]}
 		</script>
 		{% endif %}
 	</head>

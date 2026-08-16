@@ -11,10 +11,7 @@ html {
   }
 }
 
-/* Cross-document view transitions (perf skill N4): same-origin navigations
-   crossfade instead of flashing blank. Lives here because BOTH documents
-   must opt in for a hop to animate — main.css and login.css each import
-   this file, which is what makes the login→admin hop transition too. */
+/* Both documents of a hop must opt in — main.css and login.css import this. */
 @view-transition {
   navigation: auto;
 }

@@ -121,10 +121,12 @@ ws.addEventListener("message", (ev) => {
 });
 const send = (method, params = {}, sessionId) =>
   new Promise((res, rej) => {
+    if (ws.readyState !== WebSocket.OPEN) return rej(new Error("CDP disconnected"));
     const id = ++mid;
     pending.set(id, { res, rej });
     ws.send(JSON.stringify({ id, method, params, sessionId }));
   });
+const isDisconnected = (error) => /CDP disconnected/.test(error?.message);
 const waitEvent = (method, sessionId, timeout = 25000) =>
   new Promise((res, rej) => {
     let timer, handler, waiter;
@@ -171,7 +173,9 @@ async function waitForValue(sessionId, expression, timeout = 5000) {
     try {
       const value = await evaljs(sessionId, expression);
       if (value != null) return value;
-    } catch { /* transient during document swap */ }
+    } catch (error) {
+      if (isDisconnected(error)) throw error;
+    }
     await sleep(50);
   }
   throw new Error("timed out waiting for page state");
@@ -190,14 +194,17 @@ const out = { label: LABEL };
 /* ---------- S1: document navigation timing ---------- */
 if (!ONLY || ONLY === "doc") {
   const p = await newPage();
-  const t = [], d = [], tr = [];
+  const t = [], d = [], tr = [], types = {};
+  // Same-URL Page.navigate becomes a reload (revalidates every subresource);
+  // alternate targets so every run is a plain navigation.
   for (let i = 0; i < RUNS; i++) {
-    await nav(p.sessionId, PAGE_A);
+    await nav(p.sessionId, i % 2 ? PAGE_B : PAGE_A);
     const e = await navEntry(p.sessionId);
     t.push(e.ttfb); d.push(e.dur); tr.push(e.transfer);
+    types[e.type] = (types[e.type] ?? 0) + 1;
   }
   out.doc = { ttfb: roundedMedian(t), loadDur: roundedMedian(d),
-    transfer: roundedMedian(tr), n: t.length };
+    transfer: roundedMedian(tr), n: t.length, types };
   await send("Target.closeTarget", { targetId: p.targetId });
 }
 
@@ -225,19 +232,18 @@ async function clickNav(sessionId, hoverMs) {
 if (!ONLY || ONLY === "click") {
   const p = await newPage();
   const hov = [], plain = [];
-  let hovDelivery = "", plainDelivery = "";
+  let hovPrefetched = 0, plainPrefetched = 0;
   for (let i = 0; i < RUNS; i++) {
     const e = await clickNav(p.sessionId, 450);
-    hov.push(e.ttfb); if (e.delivery) hovDelivery = e.delivery;
+    hov.push(e.ttfb); if (e.delivery === "navigational-prefetch") hovPrefetched++;
   }
   for (let i = 0; i < RUNS; i++) {
     const e = await clickNav(p.sessionId, 0);
-    plain.push(e.ttfb); if (e.delivery) plainDelivery = e.delivery;
+    plain.push(e.ttfb); if (e.delivery === "navigational-prefetch") plainPrefetched++;
   }
   out.click = {
-    hoverTtfb: roundedMedian(hov), hoverDelivery: hovDelivery || "(none)",
-    plainTtfb: roundedMedian(plain), plainDelivery: plainDelivery || "(none)",
-    n: [hov.length, plain.length],
+    hoverTtfb: roundedMedian(hov), hoverPrefetchHits: `${hovPrefetched}/${hov.length}`,
+    plainTtfb: roundedMedian(plain), plainPrefetchHits: `${plainPrefetched}/${plain.length}`,
   };
   await send("Target.closeTarget", { targetId: p.targetId });
 }
@@ -267,7 +273,9 @@ if (!ONLY || ONLY === "back") {
       const ps = await evaljs(p.sessionId, "JSON.stringify(window.__ps)");
       const v = ps && JSON.parse(ps);
       if (v && v.t >= backAt - 5) { restored = v; break; }
-    } catch { /* transient during swap */ }
+    } catch (error) {
+      if (isDisconnected(error)) throw error;
+    }
   }
   if (!restored) throw new Error("back navigation did not produce pageshow");
   await assertAuthenticated(p.sessionId);
@@ -275,7 +283,7 @@ if (!ONLY || ONLY === "back") {
   if (restored) {
     for (let i = 0; i < 120 && firstUbus == null; i++) {
       await sleep(50);
-      const hit = ubusTimes.find((t) => t >= backAt);
+      const hit = ubusTimes.find((t) => t >= restored.t);
       if (hit) firstUbus = hit;
     }
   }
