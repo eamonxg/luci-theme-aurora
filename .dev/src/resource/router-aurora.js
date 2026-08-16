@@ -112,9 +112,14 @@ function readonlyAlong(tree, path) {
   return gated.length > 0 && gated.every((n) => n.readonly === true);
 }
 
-function viewClass(node) {
-  const action = node?.action;
+// dispatcher.uc keeps a `path/*` entry's action apart as wildcardaction and
+// runs it only when request args are present; the bare path keeps action.
+const actionOf = (node, args) =>
+  args.length && typeof node?.wildcardaction === "object"
+    ? node.wildcardaction
+    : node?.action;
 
+function viewClass(action) {
   if (action?.type === "view" && action.path)
     return `view.${action.path.replace(/\//g, ".")}`;
 
@@ -138,6 +143,13 @@ function pragmaDeps(source) {
 
   return [...head.matchAll(PRAGMA)].map((m) => m[1]);
 }
+
+// luci.mk appends ?v=PKG_VERSION to the theme's quoted asset URLs at package
+// time; header.ut exposes the same value so links the router adds match.
+const assetUrl = (path) => {
+  const v = document.body.dataset.assetVersion;
+  return v ? `${path}?v=${v}` : path;
+};
 
 const moduleUrl = (name) =>
   `${RT.env.base_url}/${name.replace(/\./g, "/")}.js${
@@ -181,7 +193,8 @@ return baseclass.extend({
       ([tree, menu]) => {
         this.tree = tree;
         this.menu = menu;
-        if (!this.trackInitialRender()) return;
+        const current = this.initialRoute();
+        if (!current) return;
         document.querySelector('script[type="speculationrules"]')?.remove();
         this.bar = document.body.appendChild(
           E("div", { id: "aurora-nav-progress", "aria-hidden": "true" }),
@@ -198,6 +211,7 @@ return baseclass.extend({
         document.addEventListener("pointerover", (ev) => this.onIntent(ev));
         document.addEventListener("pointerdown", (ev) => this.onIntent(ev));
         document.addEventListener("focusin", (ev) => this.onIntent(ev));
+        this.watchInitialRender(current);
       },
     );
   },
@@ -429,10 +443,11 @@ return baseclass.extend({
     const segs = this.segsFromURL(url);
     const resolved = segs && this.resolve(segs);
     if (!resolved) return null;
-    const className = viewClass(resolved.node);
-    const path = resolved.node.action?.path;
+    const action = actionOf(resolved.node, resolved.args);
+    const className = viewClass(action);
+    const path = action?.path;
     const template =
-      resolved.node.action?.type === "template" &&
+      action?.type === "template" &&
       (intent ? !this.unservable?.has(path) : this.templates?.has(path));
 
     return className || template
@@ -522,16 +537,16 @@ return baseclass.extend({
   // so a click during its load cannot be painted over by it. A document the
   // router could not have rendered (call/cbi/function pages) carries scripts
   // only a document death retires, so the router never takes over from one.
-  trackInitialRender() {
+  initialRoute() {
     const current = this.route(window.location.href, { intent: true });
 
-    if (!current) return false;
+    if (!current) return null;
     if (current.template) {
       // The document IS the rendered template: keep its region as the shell
       // so a later visit needs no fetch.
       this.templates ??= new Map();
       const shell = this.rememberShell(current.template, this.region().nodes);
-      if (!shell) return false;
+      if (!shell) return null;
       current.className = shell.className;
     }
     this.seen.add(current.className);
@@ -539,9 +554,23 @@ return baseclass.extend({
     this.titleTail = document.title.startsWith(title)
       ? document.title.slice(title.length)
       : ` - ${this.hostname}`;
+    return current;
+  },
+
+  // A first render that never completes is a failure like any other: the
+  // first navigation's `await previous` rejects into the hard-load fallback
+  // instead of staging next to a chain that may still paint. Its listeners
+  // are credited to the class as a cold render's, released by the first
+  // warm render of the same class — as far as the router can see them: the
+  // ones registered before it loaded are out of reach.
+  watchInitialRender(current) {
     const view = document.getElementById("view");
-    if (view) this.inflight = this.rendered(view).catch(() => {});
-    return true;
+    if (!view) return;
+    this.openRenderWindow();
+    this.inflight = this.rendered(view).finally(() =>
+      this.closeRenderWindow(current.className, true),
+    );
+    this.inflight.catch(() => {});
   },
 
   rendered(view) {
@@ -641,7 +670,7 @@ return baseclass.extend({
 
       this.setEnvironment(r);
       this.menu.syncRoute();
-      this.applyPatches(r.request);
+      const patches = this.applyPatches(r.request);
       this.applyNodeCss(this.nodeCss(r));
 
       const view = this.stage(tpl);
@@ -661,7 +690,7 @@ return baseclass.extend({
       }
       if (gen !== this.gen) return;
       await this.commit(view);
-      this.mountPatches(gen);
+      this.mountPatches(patches, gen);
       this.status.textContent = document.title;
       document.getElementById("maincontent")?.focus({ preventScroll: true });
     } catch (err) {
@@ -798,6 +827,7 @@ return baseclass.extend({
   applyPatches(segs) {
     const want = new Set(prefixes(segs));
     const media = RT.env.media;
+    const pending = [];
 
     for (const file of this.installed()) {
       const stem = file.replace(/\.(css|js)$/, "");
@@ -808,26 +838,25 @@ return baseclass.extend({
         if (!link && needed) {
           link = E("link", {
             rel: "stylesheet",
-            href: `${media}/patches/${stem}.css`,
+            href: assetUrl(`${media}/patches/${stem}.css`),
             [PATCH_ATTR]: stem,
           });
           document.head.appendChild(link);
         } else if (link) link.disabled = !needed;
-      } else if (needed) {
-        this.pendingPatches ??= [];
-        this.pendingPatches.push(stem);
-      }
+      } else if (needed) pending.push(stem);
     }
+
+    return pending;
   },
 
-  mountPatches(gen) {
+  mountPatches(pending, gen) {
     const registry = window.aurora?.patches ?? {};
 
-    for (const stem of this.pendingPatches ?? []) {
+    for (const stem of pending) {
       const script = document.querySelector(`script[${PATCH_ATTR}="${stem}"]`);
       if (!script) {
         const el = E("script", {
-          src: `${RT.env.media}/patches/${stem}.js`,
+          src: assetUrl(`${RT.env.media}/patches/${stem}.js`),
           [PATCH_ATTR]: stem,
         });
         // The patch mounts itself on evaluation; if the user has already
@@ -838,7 +867,6 @@ return baseclass.extend({
         document.head.appendChild(el);
       } else registry[stem]?.mount?.();
     }
-    this.pendingPatches = [];
   },
 
   unmountPatches() {

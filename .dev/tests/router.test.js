@@ -102,6 +102,11 @@ const tree = {
             admin: view("system/admin", { order: 3 }),
             flash: view("system/flash", { order: 4, satisfied: false }),
             wild: view("system/wild", { order: 9, wildcard: true }),
+            detail: view("system/detail", {
+              order: 10,
+              wildcard: true,
+              wildcardaction: { type: "view", path: "system/detail-item" },
+            }),
             legacy: {
               title: "Legacy",
               satisfied: true,
@@ -191,6 +196,19 @@ test("wildcard nodes carry trailing segments as request args", () => {
   assert.deepEqual(r.path, ["admin", "system", "wild"]);
   assert.deepEqual(r.args, ["eth0", "x"]);
   assert.deepEqual(r.segs, ["admin", "system", "wild", "eth0", "x"]);
+});
+
+test("a wildcard node's wildcardaction serves the path with args, action the bare path", () => {
+  const router = loadRouter({ tree });
+
+  assert.equal(
+    router.route("https://r/cgi-bin/luci/admin/system/detail").className,
+    "view.system.detail",
+  );
+  assert.equal(
+    router.route("https://r/cgi-bin/luci/admin/system/detail/c1").className,
+    "view.system.detail-item",
+  );
 });
 
 test("unsatisfied, non-view, unknown and foreign URLs are not routed", () => {

@@ -24,14 +24,15 @@ test("production assets stay within raw-transfer budgets", () => {
   assert.ok(main <= 193_000, "main.css exceeds 193 KB");
   assert.ok(login <= 12_000, "login.css exceeds 12 KB");
   assert.ok(menu <= 21_500, "menu-aurora.js exceeds 21.5 KB");
-  // 14.5K: the expiry gate, readonly folding, menu.d node css, progress
-  // bar, visibility gate and contract check added ~2.9 KB over the first
-  // cut; the total-transfer budget below moved by the same amount.
-  assert.ok(router <= 14_500, "router-aurora.js exceeds 14.5 KB");
+  // 15K: the expiry gate, readonly folding, menu.d node css, wildcard
+  // actions, progress bar, visibility gate and contract check added ~3 KB
+  // over the first cut; the total-transfer budget below moved by the same
+  // amount. Mirrored in the perf skill's aurora-budgets.md.
+  assert.ok(router <= 15_000, "router-aurora.js exceeds 15 KB");
   assert.ok(logo <= 16_000, "logo.svg exceeds 16 KB");
   assert.ok(
-    main + menu + router + font + logo <= 266_500,
-    "admin assets exceed 266.5 KB",
+    main + menu + router + font + logo <= 267_000,
+    "admin assets exceed 267 KB",
   );
   assert.ok(login + font + logo <= 55_000, "login assets exceed 55 KB");
 });

@@ -131,7 +131,9 @@ Resolved with a port of the dispatcher's own rules, not a paraphrase:
   `auth.login`; a `firstchild` candidate counts only if it resolves further;
   `firstchild_ineligible` excluded; ties keep key order. The ACL check is
   skipped because `/admin/menu` is already filtered for the session;
-- `wildcard` nodes accept trailing segments as request args;
+- `wildcard` nodes accept trailing segments as request args, and — as the
+  dispatcher does — run the node's `wildcardaction` (the `path/*` entry's
+  own action) when args are present and `action` for the bare path;
 - a hop counter breaks cycles in a foreign `menu.d`.
 
 Two tracks are kept, as a full load keeps them: **requested** segments →
@@ -274,7 +276,10 @@ handler in order:
    `disabled` — not removed — for the rest, so a return costs nothing);
    matching `patches/<stem>.js` files are loaded once and their
    `window.aurora.patches[stem]` `{ mount, unmount }` pair is driven per
-   visit — a JS patch that registers nothing is simply executed once,
+   visit (the list of stems to mount belongs to the navigation that computed
+   it, so a superseded one mounts nothing later); URLs the router adds carry
+   the same `?v=PKG_VERSION` luci.mk stamps on the template's own links,
+   read from `body[data-asset-version]`, so they hit the same cache entry — a JS patch that registers nothing is simply executed once,
    MPA-style. A patch script mounts itself when it evaluates; if the user
    has navigated on before it arrives, its `load` handler sees a newer
    navigation generation and unmounts it again.
@@ -319,7 +324,13 @@ handler in order:
      B is skipped when C arrives before B ran (`event.signal` /
      generation), and C waits for whichever render is actually in flight.
      The document's initial LuCI-rendered view is tracked the same way, so a
-     click during the first load cannot be painted over by it. The cost is
+     click during the first load cannot be painted over by it — and a first
+     render that never completes rejects that wait, so the first navigation
+     takes the hard-load fallback instead of staging next to a chain that
+     may still paint. That first render also runs inside a render window
+     (opened after the router's own listeners are registered), so the
+     listeners it adds are credited to its class like a cold render's; the
+     ones it registered before the router loaded are out of reach. The cost is
      that a click during a slow load waits for that load; the alternative —
      wrapping `prototype.render` per class and repairing stale cold renders
      by re-navigating — leaves a real window open and needs three mechanisms
