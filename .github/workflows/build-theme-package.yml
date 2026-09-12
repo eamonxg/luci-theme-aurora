@@ -14,30 +14,37 @@ permissions:
 
 jobs:
   build:
-    name: build luci-theme-aurora ${{ matrix.pkg_type }}
+    name: build luci-theme-aurora ${{ matrix.sdk }}
     runs-on: ubuntu-latest
-    # Tag pushes and manual dispatches always run; branch pushes only run
-    # when the head commit message contains the [build] marker, so feat
-    # branches opt in per-commit instead of firing on every push.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.ref_type == 'tag' ||
       contains(github.event.head_commit.message, '[build]')
     strategy:
+      fail-fast: false
       matrix:
-        pkg_type: [ipk, apk]
+        sdk: ["24.10.4", "25.12.5"]
     steps:
-      - uses: eamonxg/build-luci-package@master
+      - uses: actions/checkout@v6
         with:
-          package: luci-theme-aurora
-          pkg_type: ${{ matrix.pkg_type }}
-          prep_script: |
-            ./scripts/feeds update -f base luci
-            ./scripts/feeds install -p luci-base
-          artifact_paths: |
-            bin/packages/$ARCH/base/*luci-theme-aurora*.[ai]pk
-          release_body_repo: eamonxg/assets
-          release_body_path: aurora/docs/theme/changelog/${{ github.ref_name }}.md
+          fetch-depth: 0
+      - id: slug
+        run: echo "ref=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+      - id: build
+        uses: eamonxg/build-luci-package@v2
+        with:
+          sdk: ${{ matrix.sdk }}
+          packages: '[{"pkg":"luci-theme-aurora","path":"."}]'
+      - uses: actions/upload-artifact@v6
+        with:
+          name: luci-theme-aurora-${{ steps.slug.outputs.ref }}-${{ steps.build.outputs.pkg_type }}
+          path: out/*.[ai]pk
+      - uses: eamonxg/build-luci-package/release@v2
+        with:
+          name: luci-theme-aurora
+          files: out/*.[ai]pk
+          body_repo: eamonxg/assets
+          body_path: aurora/docs/theme/changelog/${{ github.ref_name }}.md
 
   notify-feed:
     name: notify openwrt-cloud
@@ -51,7 +58,7 @@ jobs:
         run: |
           if [ -z "$GH_TOKEN" ]; then
             echo "::error::FEED_DISPATCH_TOKEN is not set, so openwrt-cloud was never told about this release."
-            echo "The feed's releases channel only rebuilds on this dispatch — without it the tag" >&2
+            echo "The feed only rebuilds ahead of its daily schedule on this dispatch — without it the tag" >&2
             echo "ships to GitHub Releases but never reaches the feed. Create a fine-grained PAT" >&2
             echo "scoped to eamonxg/openwrt-cloud with Contents: read and write, then store it as" >&2
             echo "the FEED_DISPATCH_TOKEN secret in this repository." >&2
