@@ -38,10 +38,11 @@ jobs:
         with:
           node-version: "lts/*"
 
-      - name: Enable Corepack and use latest pnpm
+      # Corepack installs the pnpm pinned by package.json's packageManager,
+      # the same version the lockfile and local builds use.
+      - name: Enable Corepack
         run: |
           corepack enable
-          corepack use pnpm@latest
           echo "pnpm version: $(pnpm --version)"
 
       - name: Install dependencies
