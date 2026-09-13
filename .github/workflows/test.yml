@@ -1,0 +1,58 @@
+name: Test
+
+on:
+  push:
+    paths:
+      - ".dev/**"
+      - "htdocs/**"
+      - ".github/workflows/test.yml"
+  pull_request:
+    paths:
+      - ".dev/**"
+      - "htdocs/**"
+      - ".github/workflows/test.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: .dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "lts/*"
+
+      - name: Enable Corepack and use latest pnpm
+        run: |
+          corepack enable
+          corepack use pnpm@latest
+          echo "pnpm version: $(pnpm --version)"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend assets
+        run: pnpm build
+
+      # tests/compat.test.js opens the DOM fixtures in the runner's Chrome.
+      - name: Run tests
+        run: pnpm test
+        env:
+          CI: "true"
+          CHROME_BIN: /usr/bin/google-chrome

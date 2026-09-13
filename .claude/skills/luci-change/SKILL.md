@@ -17,7 +17,10 @@ workflow. No edit to a shipped or source path happens before gate 1, and the
 1. **Research (read-only).** Load `luci-knowledge`; read
    `references/aurora-contract.md` and the section relevant to the files
    involved; `git log -8 --oneline -- <files>`; the tests and budgets that
-   cover them.
+   cover them. If the request names a page, a package, a DOM element or
+   shows a page screenshot, load `luci-dom-compat` and complete its steps
+   1–2 (locate the page, read `.dev/compat/pages/` for the files and
+   selectors about to change) before planning.
 2. **Plan.** Call `EnterPlanMode`. The plan states: files to change; the
    approach in ≤ 10 lines; budget impact (bytes per `tests/build-performance.test.js`,
    per-request ubus/uci/fs calls, dispatches per navigation); floor it
@@ -46,7 +49,10 @@ workflow. No edit to a shipped or source path happens before gate 1, and the
    out and why. Write the same report as a decision record to
    `.dev/decisions/<YYYY-MM-DD>-<slug>.md` (git-ignored; header lines
    `Request`, `Decision: implemented | reverted | deferred`, `Commit:` once
-   one exists) so the ledger outlives the session. `rm -f
+   one exists) so the ledger outlives the session. A page-scoped change also
+   appends its entry to `.dev/compat/pages/<data-page prefix>.md` (and a
+   fixture under `.dev/compat/fixtures/` when the symptom is geometric —
+   `luci-dom-compat` step 5) in the same commit. `rm -f
    .claude/.change-approved`. Commit only when the user asks: one logical
    change, short conventional subject, body carries the reasoning, no
    session trailers. Never push.

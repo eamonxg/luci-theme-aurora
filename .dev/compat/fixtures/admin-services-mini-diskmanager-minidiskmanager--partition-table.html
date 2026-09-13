@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>compat: mini-diskmanager partition table (#65)</title>
+<link rel="stylesheet" href="../../../htdocs/luci-static/aurora/main.css">
+<!-- The rule the plugin injects into <head> for the colour swatch in front of
+     the filesystem name; the wrap in #65 is "swatch on one line, name below". -->
+<style>
+.partition-color-indicator {
+ display: inline-block;
+ width: 18px;
+ height: 18px;
+ border: 2px solid;
+ border-radius: 3px;
+ margin-right: 8px;
+ vertical-align: middle;
+ opacity: 0.85;
+}
+</style>
+<script type="application/json" id="compat">
+{
+  "ledger": "#65",
+  "viewports": [1280, 390],
+  "checks": [
+    { "nowrap": "#partition-table-mmcblk0 tr.tr:not(.table-titles) td" },
+    { "fits": "#partition-table-mmcblk0" },
+    { "js": "getComputedStyle(document.querySelector('#partition-table-mmcblk0 td')).fontSize === '12px'" }
+  ]
+}
+</script>
+</head>
+<body data-page="admin-services-mini-diskmanager-minidiskmanager">
+<div id="maincontent">
+<div id="view">
+<div class="cbi-section">
+<!-- 1153px is the table width measured on the device at a 1280px viewport;
+     max-width keeps the mobile viewport unconstrained. -->
+<div class="partition-table-container" style="max-width: 1153px">
+<table class="table" id="partition-table-mmcblk0" style="border:1px solid var(--border-color-medium)!important; table-layout:fixed; border-collapse:collapse; width:100%; font-size:12px;"><tr class="tr table-titles"><th class="th left" style="width: 180px; min-width: 180px; text-align: left; cursor: default;" data-sortable-row="true"><span style="display: inline-block;"><input type="checkbox" id="wipeall-checkbox" title="Select all partitions for wiping" style="margin-right: 8px; vertical-align: middle; cursor: pointer;" disabled=""></span><span style="pointer-events: none; user-select: none;">Partition</span></th><th class="th left" style="width:12.50%; min-width: 90px; text-align: left; cursor: default; pointer-events: none;" data-sortable-row="true">Type / Filesystem</th><th class="th left" style="width:12.50%; min-width: 90px; text-align: left; cursor: default; pointer-events: none;" data-sortable-row="true">Mount Point</th><th class="th left" style="width:12.50%; min-width: 90px; text-align: left; cursor: default; pointer-events: none;" data-sortable-row="true">Label</th><th class="th left" style="width:12.50%; min-width: 90px; text-align: left; cursor: default; pointer-events: none;" data-sortable-row="true">Size</th><th class="th left" style="width:12.50%; min-width: 90px; text-align: left; cursor: default; pointer-events: none;" data-sortable-row="true">Used</th><th class="th left" style="width:12.50%; min-width: 90px; text-align: left; cursor: default; pointer-events: none;" data-sortable-row="true">Unused</th><th class="th left" style="width:12.50%; min-width: 90px; text-align: left; cursor: default; pointer-events: none;" data-sortable-row="true">Flags</th></tr><tr class="tr cbi-rowstyle-2"><td class="td left" data-title="Partition"><label data-tooltip="Click to select" style="cursor: pointer; display: inline-flex; align-items: center; gap:6px;"><input type="checkbox" class="partition-select-checkbox" name="partition_select" value="mmcblk0p2" data-partition="mmcblk0p2" aria-label="/dev/mmcblk0p2"><span>/dev/mmcblk0p2</span></label></td><td class="td left" data-title="Type / Filesystem"><span class="partition-color-indicator 0bootconfig"></span> 0BOOTCONFIG</td><td class="td left" data-title="Mount Point">-</td><td class="td left" data-title="Label">-</td><td class="td left" data-title="Size">256.00 KiB</td><td class="td left" data-title="Used">-</td><td class="td left" data-title="Unused">-</td><td class="td left" data-title="Flags">-</td></tr><tr class="tr cbi-rowstyle-1"><td class="td left" data-title="Partition"><label data-tooltip="Click to select" style="cursor: pointer; display: inline-flex; align-items: center; gap:6px;"><input type="checkbox" class="partition-select-checkbox" name="partition_select" value="mmcblk0p18" data-partition="mmcblk0p18" aria-label="/dev/mmcblk0p18"><span>/dev/mmcblk0p18</span></label></td><td class="td left" data-title="Type / Filesystem"><span class="partition-color-indicator squashfs"></span> SQUASHFS</td><td class="td left" data-title="Mount Point">/rom</td><td class="td left" data-title="Label">-</td><td class="td left" data-title="Size">2.00 GiB</td><td class="td left" data-title="Used">110.0 MiB</td><td class="td left" data-title="Unused">0</td><td class="td left" data-title="Flags">-</td></tr><tr class="tr cbi-rowstyle-2"><td class="td left" data-title="Partition"><label data-tooltip="Click to select" style="cursor: pointer; display: inline-flex; align-items: center; gap:6px;"><input type="checkbox" class="partition-select-checkbox" name="partition_select" value="mmcblk0p6" data-partition="mmcblk0p6" aria-label="/dev/mmcblk0p6"><span>/dev/mmcblk0p6</span></label></td><td class="td left" data-title="Type / Filesystem"><span class="partition-color-indicator ext4"></span> Ext4</td><td class="td left" data-title="Mount Point">/mnt/mmcblk0p6</td><td class="td left" data-title="Label">-</td><td class="td left" data-title="Size">113.26 GiB</td><td class="td left" data-title="Used">2.0 MiB</td><td class="td left" data-title="Unused">105.2 GiB</td><td class="td left" data-title="Flags">storage</td></tr></table>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

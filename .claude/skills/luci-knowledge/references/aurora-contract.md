@@ -53,10 +53,12 @@ login.css ≤ 12 KB, menu-aurora.js ≤ 22 KB, router-aurora.js ≤ 15 KB, admin
 ## Patches contract (third-party compatibility)
 File name = the page's `data-page` prefix; prefix matching on segment boundaries; both
 CSS and JS discovered per render by `lsdir()` in `header.ut:30`; any package may drop a
-file into `/www/luci-static/aurora/patches/`. Known quirks already patched: dashboard,
-qmodem (+sms/conversation), modemdata, openclash config/settings, statistics graphs
-(dark invert), diskman, filemanager, network bridge-vlan; log viewer JS on
-`admin-status-logs` (ids `#syslog`, third-party `#log_textarea`).
+file into `/www/luci-static/aurora/patches/`. Every page-scoped rule — patches and
+the page selectors inside the component partials alike — has an entry in
+`.dev/compat/pages/<data-page prefix>.md` (page, package, menu path, DOM, cause, fix,
+verification); grep it for a file or selector before changing either
+(`luci-dom-compat` skill). Geometric ones are guarded by `.dev/compat/fixtures/` via
+`tests/compat.test.js`.
 
 ## Verification available
 `cd .dev && pnpm test` (140 tests, ~1 s) · `pnpm build` · on-device:
