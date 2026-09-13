@@ -1,6 +1,6 @@
 table.table,
 .table {
-  @apply border-hairline mb-3 w-full border border-separate border-spacing-0 overflow-visible rounded-2xl max-md:mx-0 max-md:block max-md:w-full max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:shadow-none;
+  @apply border-hairline mb-3 w-full border border-separate border-spacing-0 overflow-visible rounded-2xl text-base max-md:mx-0 max-md:block max-md:w-full max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:text-sm max-md:shadow-none;
 
   &[width="100%"] {
     @apply w-full;
@@ -142,7 +142,7 @@ table.table,
 
   & td,
   & .td {
-    @apply border-hairline table-cell border-b px-3 py-3 align-middle text-base wrap-break-word whitespace-normal max-md:flex-[1_1_50%] max-md:border-0 max-md:px-1 max-md:py-1 max-md:text-sm;
+    @apply border-hairline table-cell border-b px-3 py-3 align-middle wrap-break-word whitespace-normal max-md:flex-[1_1_50%] max-md:border-0 max-md:px-1 max-md:py-1;
     @apply before:hidden before:content-[attr(data-title)] before:max-md:mb-1 before:max-md:block before:max-md:text-xs before:max-md:font-semibold before:max-md:tracking-wider;
 
     #cbi-samba4 & {
