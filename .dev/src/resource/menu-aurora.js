@@ -584,11 +584,12 @@ return baseclass.extend({
   // is the navigation model the menus already render from — no extra
   // requests, no DOM scraping — and the panel DOM is built lazily on first
   // open, so pages where it is never used pay nothing beyond this flat array.
-  initPalette(items) {
+  initPalette(items, root) {
     const toggle = document.querySelector("#cmdk-trigger");
     if (!toggle || this.paletteIndex) return;
 
     this.paletteIndex = [];
+    this.paletteAliases = {};
     let logout = null;
     items.forEach((item) => {
       if (item.isLogout) {
@@ -604,17 +605,44 @@ return baseclass.extend({
         });
         return;
       }
-      item.pages.forEach((page) =>
-        this.paletteIndex.push({
-          title: page.title,
-          // Section-qualified: "status/overview" keeps English dispatch
-          // segments matchable under any UI language, and the "/" is what
-          // arms the scorer's segment-start bonus.
-          name: `${item.name}/${page.name}`,
-          group: item.title,
-          href: page.href,
-        }),
-      );
+      item.pages.forEach((page) => {
+        // Dispatch paths keep English segments matchable under any UI
+        // language.
+        const name = `${item.name}/${page.name}`;
+        // The raw node: getChildren() hands out alias nodes carrying their
+        // target's children, which would hide an alias parent's tabs.
+        const node = root?.children?.[item.name]?.children?.[page.name] ?? {};
+        const tabs = ui.menu.getChildren(node);
+        const type = node.action?.type;
+        const target =
+          type === "alias"
+            ? node.action.path.replace(`${root.name}/${name}/`, "")
+            : type === "firstchild" &&
+              tabs.find((tab) => !tab.firstchild_ineligible)?.name;
+
+        // A parent that only redirects to one of its tabs is that tab; its
+        // row gives way to the tabs, and its name (stored by older recents)
+        // resolves to where it redirects.
+        if (tabs.some((tab) => tab.name === target))
+          this.paletteAliases[name] = `${name}/${target}`;
+        else
+          this.paletteIndex.push({
+            title: page.title,
+            name,
+            group: item.title,
+            href: page.href,
+          });
+
+        tabs.forEach((tab) =>
+          this.paletteIndex.push({
+            title: _(tab.title),
+            parent: page.title,
+            name: `${name}/${tab.name}`,
+            group: item.title,
+            href: L.url(root.name, item.name, page.name, tab.name),
+          }),
+        );
+      });
     });
 
     // The only non-navigation commands: theme modes. They ride the same
@@ -887,17 +915,20 @@ return baseclass.extend({
     return best;
   },
 
-  // Empty query matches everything at score 0 (the browse list); title hits
-  // outrank name/path and group hits and are the only ones highlighted.
   // localStorage can be unavailable (privacy modes) or hold anything after
   // a downgrade — both read as "no history". No size cap: dedupe bounds the
   // list by the pages actually visited, i.e. the menu's own scale.
   readPaletteRecents() {
     try {
       const list = JSON.parse(localStorage.getItem(PALETTE_RECENTS_KEY));
-      return Array.isArray(list)
-        ? list.filter((name) => typeof name === "string")
-        : [];
+      if (!Array.isArray(list)) return [];
+      return [
+        ...new Set(
+          list
+            .filter((name) => typeof name === "string")
+            .map((name) => this.paletteAliases?.[name] ?? name),
+        ),
+      ];
     } catch {
       return [];
     }
@@ -929,16 +960,64 @@ return baseclass.extend({
     );
   },
 
+  // Empty query matches everything at score 0 (the browse list). Title hits
+  // rank first, then parent hits, which score the parent alone so its tabs
+  // tie and keep menu order; "parent title" pairs split on a space. Then the
+  // path, then the group.
   matchPaletteEntry(q, page) {
     if (!q) return { score: 0, ranges: null };
 
     const title = this.fuzzyMatch(q, page.title);
     if (title) return { score: title.score + 12, ranges: title.ranges };
 
+    if (page.parent) {
+      const parent = this.fuzzyMatch(q, page.parent);
+      if (parent)
+        return {
+          score: parent.score + 8,
+          ranges: null,
+          parentRanges: parent.ranges,
+        };
+
+      const words = q.split(/\s+/);
+      for (let i = 1; i < words.length; i++) {
+        const head = this.fuzzyMatch(words.slice(0, i).join(" "), page.parent);
+        const tail =
+          head && this.fuzzyMatch(words.slice(i).join(" "), page.title);
+        if (tail)
+          return {
+            score: head.score + tail.score + 8,
+            ranges: tail.ranges,
+            parentRanges: head.ranges,
+          };
+      }
+    }
+
     const rest =
-      this.fuzzyMatch(q, page.name) ||
+      this.matchPalettePath(q, page.name) ||
       (page.group ? this.fuzzyMatch(q, page.group) : null);
     return rest && { score: rest.score, ranges: null };
+  },
+
+  // Each query word (split on spaces or "/") lands inside one segment, in
+  // path order: "network wireless" reaches network/wireless, while a lone
+  // word can't scatter across segments ("ssh" in services/passwall2/other).
+  matchPalettePath(q, name) {
+    const words = q.split(/[\s/]+/).filter(Boolean);
+    const segments = name.split("/");
+    let at = 0;
+    let score = 0;
+
+    for (const word of words) {
+      let hit = null;
+      for (; at < segments.length; at++) {
+        hit = this.fuzzyMatch(word, segments[at]);
+        if (hit) break;
+      }
+      if (!hit) return null;
+      score += hit.score;
+    }
+    return words.length ? { score } : null;
   },
 
   collectPaletteMatches(value) {
@@ -963,6 +1042,7 @@ return baseclass.extend({
         page,
         score: at < 0 ? m.score : recents.length - at,
         ranges: m.ranges,
+        parentRanges: m.parentRanges,
       });
     }
     if (q || recents.length) matches.sort((a, b) => b.score - a.score);
@@ -983,7 +1063,7 @@ return baseclass.extend({
       return;
     }
 
-    matches.forEach(({ page, ranges }, i) => {
+    matches.forEach(({ page, ranges, parentRanges }, i) => {
       const current = page.mode && page.mode === theme;
       const attributes = {
         class: "cmdk-row",
@@ -1001,7 +1081,21 @@ return baseclass.extend({
           E(
             "span",
             { class: "cmdk-title" },
-            this.highlightPaletteMatch(page.title, ranges),
+            // A tab named after its parent is the page the parent opens.
+            page.parent && page.parent !== page.title
+              ? [
+                  E(
+                    "span",
+                    { class: "cmdk-parent" },
+                    this.highlightPaletteMatch(page.parent, parentRanges),
+                  ),
+                  E(
+                    "span",
+                    { class: "cmdk-label" },
+                    this.highlightPaletteMatch(page.title, ranges),
+                  ),
+                ]
+              : this.highlightPaletteMatch(page.title, ranges),
           ),
           current
             ? // The ✓ is decorative (aria-current carries the state); mark
@@ -1488,7 +1582,7 @@ return baseclass.extend({
       );
       this.renderMainMenu(activeChild, activeChild.name, 0, navigationItems);
       this.renderMobileMenu(navigationItems);
-      this.initPalette(navigationItems);
+      this.initPalette(navigationItems, activeChild);
     }
 
     if (ul?.children.length > 1) {

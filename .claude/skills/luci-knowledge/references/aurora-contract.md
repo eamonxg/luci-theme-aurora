@@ -57,8 +57,8 @@ No `@layer` wrappers in partials; `main.css` import order is cascade order; toke
 from `@eamonxg/luci-theme-tokens/dist/aurora/tokens.css` (change colours in that repo).
 Budgets (`tests/build-performance.test.js`, mirrored in
 `.claude/skills/aurora-performance/references/aurora-budgets.md`): main.css ≤ 193 KB,
-login.css ≤ 12 KB, menu-aurora.js ≤ 22 KB, router-aurora.js ≤ 15 KB, admin cold set
-≤ 267.5 KB, login set ≤ 55 KB, SVG data URLs ≤ 17 KB and unique.
+login.css ≤ 12 KB, menu-aurora.js ≤ 23 KB, router-aurora.js ≤ 16 KB, admin cold set
+≤ 268.5 KB, login set ≤ 55 KB, SVG data URLs ≤ 17 KB and unique.
 
 ## Patches contract (third-party compatibility)
 File name = the page's `data-page` prefix; prefix matching on segment boundaries; both

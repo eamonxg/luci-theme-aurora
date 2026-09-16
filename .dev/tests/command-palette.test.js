@@ -15,14 +15,17 @@ const E = (tagName, attributes, children) => ({
 
 const loadMenuModule = (
   localStorage = {},
-  { document = {}, navigator = { platform: "" } } = {},
+  {
+    document = {},
+    navigator = { platform: "" },
+    ui = { menu: { getChildren: () => [] } },
+  } = {},
 ) => {
   const baseclass = {
     extend(module) {
       return module;
     },
   };
-  const ui = { menu: { getChildren: () => [] } };
   const L = {
     env: { dispatchpath: [], requestpath: [] },
     url: (...segments) => `/${segments.join("/")}`,
@@ -461,4 +464,329 @@ test("initPalette appends logout as the last command row", () => {
     palette.paletteIndex.findIndex((page) => page.mode) <
       palette.paletteIndex.indexOf(last),
   );
+});
+
+// ---- Tabs: third-level menu nodes ----
+
+// ui.menu.getChildren() as luci-base ships it, down to handing out alias
+// nodes with their target's children (none, for a tab target).
+const menuUi = {
+  menu: {
+    getChildren: (node) =>
+      Object.entries(node?.children ?? {})
+        .filter(([, child]) => child.satisfied && "title" in child)
+        .map(([name, child]) =>
+          child.action?.type === "alias"
+            ? { ...child, name, children: undefined }
+            : Object.assign(child, { name }),
+        )
+        .sort((a, b) => (a.order ?? 1000) - (b.order ?? 1000)),
+  },
+};
+
+const node = (title, order, action, children) => ({
+  satisfied: true,
+  title,
+  order,
+  action,
+  children,
+});
+const view = { type: "view" };
+
+const menuRoot = () => ({
+  name: "admin",
+  children: {
+    status: node("Status", 1, view, {
+      overview: node("Overview", 1, view),
+      logs: node(
+        "System Log",
+        2,
+        { type: "alias", path: "admin/status/logs/syslog" },
+        {
+          dmesg: node("Kernel Log", 2, view),
+          syslog: node("System Log", 1, view),
+        },
+      ),
+    }),
+    system: node("System", 2, view, {
+      admin: node(
+        "Administration",
+        1,
+        { type: "firstchild" },
+        {
+          dropbear: node("SSH Access", 2, view),
+          hidden: { satisfied: true, order: 0, action: view },
+          password: node("Router Password", 1, view),
+        },
+      ),
+      bmx: node("BMX", 2, view, { nodes: node("Nodes", 1, view) }),
+    }),
+  },
+});
+
+const menuItems = () => [
+  {
+    name: "status",
+    title: "Status",
+    hasChildren: true,
+    pages: [
+      { name: "overview", title: "Overview", href: "/admin/status/overview" },
+      { name: "logs", title: "System Log", href: "/admin/status/logs" },
+    ],
+  },
+  {
+    name: "system",
+    title: "System",
+    hasChildren: true,
+    pages: [
+      { name: "admin", title: "Administration", href: "/admin/system/admin" },
+      { name: "bmx", title: "BMX", href: "/admin/system/bmx" },
+    ],
+  },
+];
+
+const initTabbedPalette = (storage = fakeStorage()) => {
+  const doc = {
+    querySelector: (sel) =>
+      sel === "#cmdk-trigger"
+        ? { setAttribute() {}, addEventListener() {} }
+        : null,
+    addEventListener() {},
+  };
+  const palette = loadMenuModule(storage, { document: doc, ui: menuUi });
+  palette.initPalette(menuItems(), menuRoot());
+  return palette;
+};
+
+const navRows = (palette) =>
+  palette.paletteIndex.filter((page) => !page.mode && !page.isLogout);
+
+test("tabs join the index; a redirecting parent gives way to them", () => {
+  const rows = navRows(initTabbedPalette());
+
+  assert.deepEqual(
+    rows.map((page) => [page.name, page.parent ?? null]),
+    [
+      ["status/overview", null],
+      ["status/logs/syslog", "System Log"],
+      ["status/logs/dmesg", "System Log"],
+      ["system/admin/password", "Administration"],
+      ["system/admin/dropbear", "Administration"],
+      ["system/bmx", null],
+      ["system/bmx/nodes", "BMX"],
+    ],
+  );
+  assert.equal(rows[2].href, "/admin/status/logs/dmesg");
+  assert.equal(rows[2].group, "Status");
+});
+
+test("redirecting parents map to the tab they open", () => {
+  assert.deepEqual(initTabbedPalette().paletteAliases, {
+    "status/logs": "status/logs/syslog",
+    "system/admin": "system/admin/password",
+  });
+});
+
+test("a stored parent name reads as its tab, deduplicated", () => {
+  const palette = initTabbedPalette(
+    fakeStorage(
+      stored(["system/admin", "system/admin/password", "status/logs"]),
+    ),
+  );
+
+  assert.deepEqual(palette.readPaletteRecents(), [
+    "system/admin/password",
+    "status/logs/syslog",
+  ]);
+  assert.deepEqual(names(palette.collectPaletteMatches("")).slice(0, 3), [
+    "system/admin/password",
+    "status/logs/syslog",
+    "status/overview",
+  ]);
+});
+
+const tab = (name, title, parent = "Firewall") => ({
+  title,
+  parent,
+  name: `network/firewall/${name}`,
+  group: "Network",
+  href: `/${name}`,
+});
+
+const firewallIndex = () => [
+  navPage("status/nftables", "Firewall", "Status"),
+  tab("zones", "General Settings"),
+  tab("forwards", "Port Forwards"),
+  tab("rules", "Traffic Rules"),
+  tab("ipsets", "IP Sets"),
+];
+
+test("a parent-only query keeps its tabs in menu order", () => {
+  const palette = paletteWith(fakeStorage(), firewallIndex());
+
+  assert.deepEqual(names(palette.collectPaletteMatches("firewall")), [
+    "status/nftables",
+    "network/firewall/zones",
+    "network/firewall/forwards",
+    "network/firewall/rules",
+    "network/firewall/ipsets",
+  ]);
+});
+
+test("a parent hit highlights the parent, not the title", () => {
+  const match = menu.matchPaletteEntry(
+    "fire",
+    tab("forwards", "Port Forwards"),
+  );
+
+  assert.equal(match.ranges, null);
+  assert.deepEqual(sliced("Firewall", match.parentRanges), ["Fire"]);
+});
+
+test("a spaced query pairs parent words with title words", () => {
+  const palette = paletteWith(fakeStorage(), firewallIndex());
+  const [hit, ...rest] = palette.collectPaletteMatches("firewall  port");
+
+  assert.equal(hit.page.name, "network/firewall/forwards");
+  assert.deepEqual(rest, []);
+  assert.deepEqual(sliced("Port Forwards", hit.ranges), ["Port"]);
+  assert.deepEqual(sliced("Firewall", hit.parentRanges), ["Firewall"]);
+});
+
+test("a query no longer scatters across path segments", () => {
+  const other = {
+    title: "Other Settings",
+    parent: "PassWall 2",
+    name: "services/passwall2/other",
+    group: "Services",
+  };
+
+  assert.ok(!menu.matchPaletteEntry("ssh", other));
+  assert.ok(
+    menu.matchPaletteEntry("sshkeys", {
+      title: "SSH 密钥",
+      parent: "管理权",
+      name: "system/admin/sshkeys",
+      group: "系统",
+    }),
+  );
+});
+
+test("path words land in segments in order, never scattered", () => {
+  const wireless = { title: "无线", name: "network/wireless", group: "网络" };
+  const forwards = tab("forwards", "端口转发", "防火墙");
+
+  assert.ok(menu.matchPaletteEntry("network wireless", wireless));
+  assert.ok(
+    menu.matchPaletteEntry(
+      "status/overview",
+      navPage("status/overview", "概览"),
+    ),
+  );
+  assert.ok(menu.matchPaletteEntry("network firewall", forwards));
+  assert.ok(menu.matchPaletteEntry("netw forw", forwards));
+  assert.ok(!menu.matchPaletteEntry("wireless network", wireless));
+  assert.ok(!menu.matchPaletteEntry("netwire", wireless));
+  assert.ok(!menu.matchPaletteEntry("/", wireless));
+});
+
+test("a parent keeps its row unless it redirects to one of its own tabs", () => {
+  const doc = {
+    querySelector: (sel) =>
+      sel === "#cmdk-trigger"
+        ? { setAttribute() {}, addEventListener() {} }
+        : null,
+    addEventListener() {},
+  };
+  const palette = loadMenuModule(fakeStorage(), { document: doc, ui: menuUi });
+  const root = {
+    name: "admin",
+    children: {
+      services: node("Services", 1, view, {
+        // Redirects to an untitled page, so no tab stands in for it.
+        foo: node(
+          "Foo",
+          1,
+          { type: "alias", path: "admin/services/foo/main" },
+          {
+            main: { satisfied: true, order: 1, action: view },
+            log: node("Log", 2, view),
+          },
+        ),
+        bar: node(
+          "Bar",
+          2,
+          { type: "firstchild" },
+          { only: { ...node("Only", 1, view), firstchild_ineligible: true } },
+        ),
+      }),
+    },
+  };
+
+  palette.initPalette(
+    [
+      {
+        name: "services",
+        title: "Services",
+        hasChildren: true,
+        pages: [
+          { name: "foo", title: "Foo", href: "/admin/services/foo" },
+          { name: "bar", title: "Bar", href: "/admin/services/bar" },
+        ],
+      },
+    ],
+    root,
+  );
+
+  assert.deepEqual(
+    navRows(palette).map((page) => page.name),
+    ["services/foo", "services/foo/log", "services/bar", "services/bar/only"],
+  );
+  assert.deepEqual(palette.paletteAliases, {});
+});
+
+test("recording after a legacy read writes the mapped names back", () => {
+  const storage = fakeStorage(stored(["status/logs", "status/overview"]));
+  const palette = initTabbedPalette(storage);
+
+  palette.recordPaletteRecent("system/admin/dropbear");
+
+  assert.deepEqual(JSON.parse(storage.map.get(RECENTS_KEY)), [
+    "system/admin/dropbear",
+    "status/logs/syslog",
+    "status/overview",
+  ]);
+});
+
+test("a tab row renders its parent before the title unless they share a name", () => {
+  const rows = [];
+  const palette = paletteWith(fakeStorage(), [
+    tab("forwards", "Port Forwards"),
+    { ...tab("firewall", "Firewall"), name: "network/firewall/firewall" },
+  ]);
+  palette.paletteInput = { removeAttribute() {}, setAttribute() {} };
+  palette.paletteList = {
+    replaceChildren() {},
+    appendChild: (row) => rows.push(row),
+  };
+  palette.setPaletteSelection = () => {};
+
+  palette.renderPaletteResults("fire");
+
+  const title = (name) =>
+    rows.find((row) => row.attributes["data-name"] === name).children[0]
+      .children;
+  const forwards = title("network/firewall/forwards");
+  const same = title("network/firewall/firewall");
+  assert.deepEqual(
+    forwards.map((part) => part.attributes.class),
+    ["cmdk-parent", "cmdk-label"],
+  );
+  const marked = (parts) => parts.some((part) => part.tagName === "mark");
+  // The parent hit is highlighted inside the parent, the title stays plain.
+  assert.ok(marked(forwards[0].children));
+  assert.deepEqual(forwards[1].children, ["Port Forwards"]);
+  // Same name: a plain highlighted title, no prefix.
+  assert.ok(marked(same));
+  assert.ok(!same.some((part) => part.attributes?.class === "cmdk-parent"));
 });

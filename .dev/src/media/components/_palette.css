@@ -130,6 +130,26 @@
   }
 }
 
+/* A tab row reads "Parent › Title": the parent gives way first, and keeps
+   at least an ellipsis so the "›" never leads the row. Like the section
+   label, it stays subtle on the selected row. Unnested: the classes exist
+   only inside palette rows, and the short selectors keep main.css lean. */
+.cmdk-title:has(> .cmdk-parent) {
+  @apply flex items-baseline;
+}
+
+.cmdk-parent {
+  @apply text-text-subtle min-w-0 truncate font-normal;
+}
+
+.cmdk-label {
+  @apply max-w-[calc(100%-1.5rem)] shrink-0 truncate;
+
+  &::before {
+    @apply text-text-subtle px-1.5 font-normal content-['›'];
+  }
+}
+
 /* The frost is decorative — both degradation paths go opaque. */
 @supports not (backdrop-filter: blur(1px)) {
   .cmdk-panel {

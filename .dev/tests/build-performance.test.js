@@ -26,7 +26,10 @@ test("production assets stay within raw-transfer budgets", () => {
   // 22K: palette recents (record on pick, pure-LRU browse order, storage
   // validation) added ~0.8 KB and the ">" logout command ~0.2 KB. The total
   // budget below moved by the same amount.
-  assert.ok(menu <= 22_000, "menu-aurora.js exceeds 22 KB");
+  // 23K: palette tabs (third-level nodes, redirect-parent folding, legacy
+  // recents mapping, parent-aware scoring, per-segment path words) added
+  // ~1.3 KB; the total budget below still holds.
+  assert.ok(menu <= 23_000, "menu-aurora.js exceeds 23 KB");
   // 15K: the expiry gate, readonly folding, menu.d node css, wildcard
   // actions, progress bar, visibility gate and contract check added ~3 KB
   // over the first cut; the total-transfer budget below moved by the same
