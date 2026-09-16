@@ -6,6 +6,10 @@ const source = await readFile(
   new URL("../src/resource/menu-aurora.js", import.meta.url),
   "utf8",
 );
+const header = await readFile(
+  new URL("../../ucode/template/themes/aurora/header.ut", import.meta.url),
+  "utf8",
+);
 
 const getMethodSource = (name) => {
   const start = source.indexOf(`  ${name}(`);
@@ -196,6 +200,19 @@ class FakeElement {
     }
   }
 
+  replaceChildren(...children) {
+    this.children = [];
+    children.forEach((child) => this.appendChild(child));
+  }
+
+  set className(value) {
+    this.setAttribute("class", value);
+  }
+
+  set textContent(value) {
+    this.children = [String(value)];
+  }
+
   set innerHTML(value) {
     assert.equal(value, "");
     this.children = [];
@@ -238,6 +255,7 @@ const loadMenuModule = ({
   requestpath = [],
   translate = (value) => value,
   window = {},
+  sessionStorage = {},
 } = {}) => {
   const baseclass = {
     extend(module) {
@@ -259,8 +277,21 @@ const loadMenuModule = ({
     "document",
     "window",
     "localStorage",
+    "sessionStorage",
     source,
-  )(baseclass, ui, E, L, translate, document, window, {});
+  )(baseclass, ui, E, L, translate, document, window, {}, sessionStorage);
+};
+
+// header.ut's crumb renderer (shared with menu-aurora.js), on a fake document.
+const loadHeaderCrumb = (elements) => {
+  const fn = header.match(/function auroraCrumb\(\) \{[\s\S]*?\n\t\t\t\}/)?.[0];
+
+  assert.ok(fn, "header.ut must define auroraCrumb()");
+
+  return new Function("document", `${fn}; return auroraCrumb;`)({
+    getElementById: (id) => elements[id] ?? null,
+    createElement: (tagName) => new FakeElement(tagName),
+  });
 };
 
 const textContent = (element) =>
@@ -688,22 +719,22 @@ test("renders mobile items and logout repeatedly without duplicate listeners", (
   assert.equal(list.listenerCount("click"), 1);
 });
 
-test("renders sidebar items, logout, and translated crumbs without duplication", () => {
+test("renders sidebar items and logout without duplication, then the crumb", () => {
   const list = new FakeElement("ul", {}, [new FakeElement("li")]);
   const footer = new FakeElement("div", {}, [new FakeElement("a")]);
-  const crumb = new FakeElement("ol", {}, [new FakeElement("li")]);
   const document = createFakeDocument({
     elements: {
-      "#header-crumb": crumb,
       "#sidebar-footer": footer,
       "#sidebar-list": list,
     },
     navType: "sidebar",
   });
+  let crumbRenders = 0;
   const menu = loadMenuModule({
     dispatchpath: ["admin", "network", "wireless"],
     document,
     translate: (value) => `translated:${value}`,
+    window: { auroraCrumb: () => (crumbRenders += 1) },
   });
   const tree = {
     children: {
@@ -735,28 +766,32 @@ test("renders sidebar items, logout, and translated crumbs without duplication",
   assert.equal(footer.children[0].getAttribute("class"), "nav-link");
   assert.equal(footer.children[0].getAttribute("href"), "/admin/logout");
   assert.equal(textContent(footer.children[0]), "translated:Logout");
-  assert.equal(crumb.children.length, 3);
+  assert.equal(crumbRenders, 2);
+  assert.equal(list.dataset.accordionBound, "true");
+  assert.equal(list.listenerCount("click"), 1);
+
+  const crumb = new FakeElement("ol", {}, [new FakeElement("li")]);
+  loadHeaderCrumb({ "header-crumb": crumb, "sidebar-list": list })();
+
   assert.deepEqual(
     crumb.children.map((child) => textContent(child)),
     ["translated:Network", "/", "translated:Wireless"],
   );
-  assert.equal(crumb.children[2].getAttribute("class"), "current");
-  assert.equal(list.dataset.accordionBound, "true");
-  assert.equal(list.listenerCount("click"), 1);
+  assert.deepEqual(
+    crumb.children.map((child) => child.getAttribute("class")),
+    ["", "crumb-sep", "current"],
+  );
 });
 
 test("collapses same-named group/page crumbs to a single level", () => {
+  const list = new FakeElement("ul");
   const crumb = new FakeElement("ol", {}, [new FakeElement("li")]);
-  const document = createFakeDocument({
-    elements: {
-      "#header-crumb": crumb,
-      "#sidebar-list": new FakeElement("ul"),
-    },
-    navType: "sidebar",
-  });
   const menu = loadMenuModule({
     dispatchpath: ["admin", "system", "system"],
-    document,
+    document: createFakeDocument({
+      elements: { "#sidebar-list": list },
+      navType: "sidebar",
+    }),
     translate: (value) => `translated:${value}`,
   });
   const tree = {
@@ -771,12 +806,78 @@ test("collapses same-named group/page crumbs to a single level", () => {
   };
 
   menu.renderSidebar(menu.buildNavigationModel(getMenuChildren(tree), "admin"));
+  loadHeaderCrumb({ "header-crumb": crumb, "sidebar-list": list })();
 
   assert.deepEqual(
     crumb.children.map((child) => textContent(child)),
     ["translated:System"],
   );
   assert.equal(crumb.children[0].getAttribute("class"), "current");
+});
+
+test("caches the rendered nav under the stamp header.ut replays against", () => {
+  const stored = new Map();
+  const document = {
+    ...createFakeDocument(),
+    body: { dataset: { navStamp: "sidebar:zh_Hans:root:1.3.0" } },
+    querySelectorAll: () => [
+      { id: "sidebar-list", firstChild: {}, innerHTML: "<li>list</li>" },
+      { id: "sidebar-footer", firstChild: null, innerHTML: "" },
+    ],
+  };
+  const menu = loadMenuModule({
+    document,
+    sessionStorage: { setItem: (key, value) => stored.set(key, value) },
+  });
+
+  menu.cacheNav();
+
+  assert.deepEqual(JSON.parse(stored.get("aurora.nav")), [
+    "sidebar:zh_Hans:root:1.3.0",
+    { "sidebar-list": "<li>list</li>" },
+  ]);
+  // Both sides read the one server-rendered stamp (user included).
+  assert.match(header, /<body [^>]*data-nav-stamp="[^"]*ctx\?\.authuser/);
+  assert.match(header, /cache\?\.\[0\] !== body\.dataset\.navStamp\) return;/);
+
+  // Storage that throws (privacy modes, quota) leaves rendering untouched.
+  const sealed = loadMenuModule({
+    document,
+    sessionStorage: {
+      setItem() {
+        throw new Error("sealed");
+      },
+    },
+  });
+  assert.doesNotThrow(() => sealed.cacheNav());
+});
+
+test("releases the inert replay however the menu load settles", () => {
+  const init = getMethodSource("__init__");
+
+  // In finally: a failed load or a throwing render must not leave a dead copy.
+  assert.match(
+    init,
+    /\.finally\(\(\) => \{[\s\S]*querySelectorAll\("\[data-restored\]"\)[\s\S]*inert = false/,
+  );
+});
+
+test("drops the replayed top menu before building the live one", () => {
+  const ul = E("ul", { id: "topmenu" }, [E("li")]);
+  const menu = loadMenuModule({
+    document: createFakeDocument({ elements: { "#topmenu": ul } }),
+  });
+  let childrenAtInit = null;
+
+  menu.initMegaMenu = (children, url, list) => {
+    childrenAtInit = list.children.length;
+  };
+  menu.renderMainMenu(
+    { children: { status: { title: "Status", children: { a: {} } } } },
+    "admin",
+  );
+
+  assert.equal(childrenAtInit, 0);
 });
 
 test("renders an active group expanded when an open mobile list was initially empty", () => {

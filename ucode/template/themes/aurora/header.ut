@@ -107,6 +107,8 @@
 				const theme = localStorage.getItem('aurora.theme') || 'device';
 				const isDark = theme === 'dark' || (theme === 'device' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 				document.documentElement.setAttribute('data-darkmode', isDark);
+				{# A new session may see a different menu: drop the replayed nav. #}
+				try { sessionStorage.removeItem('aurora.nav'); } catch (e) {}
 			})();
 		</script>
 		{% else %}
@@ -225,7 +227,7 @@
 		{% endif %}
 	</head>
 
-	<body class="lang_{{ dispatcher.lang }}" data-page="{{ entityencode(page, true) }}" data-nav-type="{{ nav_type }}" data-asset-version="{# PKG_VERSION #}"{% if (length(patch_all)): %} data-patches="{{ entityencode(join(' ', patch_all), true) }}"{% endif %}{% if (blank_page ? tokens.struct_login_bg : tokens.struct_main_bg): %} data-bg{% endif %}>
+	<body class="lang_{{ dispatcher.lang }}" data-page="{{ entityencode(page, true) }}" data-nav-type="{{ nav_type }}" data-asset-version="{# PKG_VERSION #}"{% if (!blank_page): %} data-nav-stamp="{{ entityencode(join(':', [nav_type, dispatcher.lang, ctx?.authuser ?? '']), true) }}:{# PKG_VERSION #}"{% endif %}{% if (length(patch_all)): %} data-patches="{{ entityencode(join(' ', patch_all), true) }}"{% endif %}{% if (blank_page ? tokens.struct_login_bg : tokens.struct_main_bg): %} data-bg{% endif %}>
 		{% if (!blank_page): %}
 		{% if (nav_type == 'sidebar'): %}
 		{# First in body: once anything resolves body's style (the page-bg script does), the column would ease shut on load. #}
@@ -315,11 +317,58 @@
 					<img class="sidebar-logo" src="{{ media }}/images/{{ logo_svg }}?v={{ icon_cache_version }}" alt="" aria-hidden="true">
 					<a class="sidebar-brand" href="/">{{ hostname }}</a>
 				</div>
-				<ul class="sidebar-list" id="sidebar-list"></ul>
+				<ul class="sidebar-list" id="sidebar-list" data-active-path="{{ entityencode(join('/', slice(ctx?.path ?? [], 1, 3)), true) }}"></ul>
 				<div class="sidebar-footer" id="sidebar-footer"></div>
 			</nav>
 		</aside>
 		{% endif %}
+		<script>
+			{% if (nav_type == 'sidebar'): %}
+			{# Shared with menu-aurora.js, which calls it after every render and route change. #}
+			function auroraCrumb() {
+				const list = document.getElementById('sidebar-list');
+				const group = list.querySelector('.is-active-group')?.querySelector('.nav-category-label')?.textContent;
+				const page = list.querySelector('.is-active-page')?.textContent;
+				const titles = [group, page !== group && page].filter(Boolean);
+				const li = (className, textContent) => Object.assign(document.createElement('li'), { className, textContent });
+				document.getElementById('header-crumb').replaceChildren(...titles.flatMap((title, i) =>
+					i ? [li('crumb-sep', '/'), li('current', title)] : [li(titles[1] ? '' : 'current', title)]));
+			}
+			{% endif %}
+			{# Paints the nav menu-aurora.js cached on its last render before first paint, inert until the module renders over it. #}
+			(() => {
+				try {
+					const body = document.body, cache = JSON.parse(sessionStorage.getItem('aurora.nav'));
+					{# The stamp (nav type, language, user, version) is rendered on body; a different user sees a different menu. #}
+					{# luci-base's one-session store loses its menu on ui.menu.flushCache() (package changes): never replay past that. #}
+					const luci = Object.values(JSON.parse(sessionStorage.getItem('luci-session-store')) ?? {})[0];
+					if (!luci?.menu || cache?.[0] !== body.dataset.navStamp) return;
+					for (const id in cache[1]) {
+						const el = document.getElementById(id);
+						el.innerHTML = cache[1][id];
+						el.style.display = '';
+						el.dataset.restored = '';
+						el.inert = true;
+					}
+					{% if (nav_type == 'sidebar'): %}
+					{# The marks renderNavigationItem derives from L.env.dispatchpath. #}
+					const list = document.getElementById('sidebar-list'), [group, page] = list.dataset.activePath.split('/');
+					for (const row of list.querySelectorAll('[data-section]')) {
+						const on = row.dataset.section === group, item = row.parentNode;
+						if (row.tagName === 'A') {
+							row.classList.toggle('is-active-page', on);
+							continue;
+						}
+						item.classList.toggle('is-active-group', on);
+						item.classList.toggle('is-expanded', on);
+					}
+					for (const link of list.querySelectorAll('.navigation-sublink'))
+						link.classList.toggle('is-active-page', !!page && link.pathname.endsWith(`/${group}/${page}`));
+					auroraCrumb();
+					{% endif %}
+				} catch (e) {}
+			})();
+		</script>
 
 		<div class="mobile-menu-overlay" id="mobile-menu-overlay">
 			<nav class="mobile-nav" aria-label="{{ _('Navigation') }}">

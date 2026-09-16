@@ -6,7 +6,15 @@ const PALETTE_RECENTS_KEY = "aurora.paletteRecents";
 
 return baseclass.extend({
   __init__() {
-    ui.menu.load().then((tree) => this.render(tree));
+    ui.menu
+      .load()
+      .then((tree) => this.render(tree))
+      .finally(() => {
+        // header.ut's replay stays inert until the live nav has replaced it
+        // or failed to; either way it must not stay a dead copy.
+        for (const el of document.querySelectorAll("[data-restored]"))
+          el.inert = false;
+      });
     this.initNavigationControls();
     this.initUciIndicator();
   },
@@ -188,6 +196,25 @@ return baseclass.extend({
     this.tree = tree;
     this.renderModeMenu(tree);
     this.renderTabs(tree);
+    this.cacheNav();
+  },
+
+  // Snapshot for header.ut's pre-paint replay, under the stamp it renders on
+  // body; it recomputes the active marks, so one copy serves every page.
+  cacheNav() {
+    const html = {};
+    for (const el of document.querySelectorAll(
+      "#topmenu, #sidebar-list, #sidebar-footer",
+    ))
+      if (el.firstChild) html[el.id] = el.innerHTML;
+    try {
+      sessionStorage.setItem(
+        "aurora.nav",
+        JSON.stringify([document.body.dataset.navStamp, html]),
+      );
+    } catch {
+      // No storage: the next load renders after the module, as before.
+    }
   },
 
   renderTabs(tree) {
@@ -243,7 +270,8 @@ return baseclass.extend({
       this.expandActiveNavigationGroup(surface);
     }
 
-    this.renderCrumb();
+    // header.ut's, shared with its pre-paint replay (sidebar mode only).
+    window.auroraCrumb?.();
 
     const tabs = document.querySelector("#tabmenu");
     if (tabs) {
@@ -309,6 +337,8 @@ return baseclass.extend({
         return ul || E([]);
       }
 
+      // Drops header.ut's replayed copy, which carries no listeners.
+      if (ul) ul.innerHTML = "";
       if (!ul || !children.length) return E([]);
 
       if (navType === "mega-menu") {
@@ -546,30 +576,7 @@ return baseclass.extend({
     });
 
     this.bindNavigationAccordion(list);
-    this.renderCrumb();
-  },
-
-  renderCrumb() {
-    const crumbEl = document.querySelector("#header-crumb");
-    const list = document.querySelector("#sidebar-list");
-    if (!crumbEl || !list) return;
-
-    const crumb = [];
-    const group = list.querySelector(".is-active-group");
-    const page = list.querySelector(".is-active-page");
-    if (group)
-      crumb.push(group.querySelector(".nav-category-label")?.textContent);
-    // Same-named group/page pairs ("System › System") collapse to one
-    // level — the duplicate adds no information.
-    if (page && page.textContent !== crumb[0]) crumb.push(page.textContent);
-
-    crumbEl.innerHTML = "";
-    crumb.forEach((title, i) => {
-      if (i) crumbEl.appendChild(E("li", { class: "crumb-sep" }, ["/"]));
-      crumbEl.appendChild(
-        E("li", { class: i === crumb.length - 1 ? "current" : "" }, [title]),
-      );
-    });
+    window.auroraCrumb?.();
   },
 
   // Command palette (all nav types): a Spotlight-style panel on ⌘K / Ctrl+K

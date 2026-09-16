@@ -23,11 +23,21 @@ strings render untranslated (see `.dev/decisions/translations-catalog-caching.md
 ## DOM hooks shared by templates, CSS and JS
 `body[data-page]` (request segments joined by `-`), `body[data-nav-type]`
 (`mega-menu|dropdown|sidebar`), `body[data-asset-version]`, `body[data-patches]`,
-`body[data-bg]`; `#maincontent[tabindex=-1]`, `#tabmenu`, `#topmenu`, `#sidebar-list`,
+`body[data-bg]`, `body[data-nav-stamp]`; `#maincontent[tabindex=-1]`, `#tabmenu`, `#topmenu`, `#sidebar-list`,
 `#sidebar-footer`, `#header-crumb`, `#mobile-nav-list`, `#mobile-nav-footer-action`,
 `#indicators`, `#modemenu`, `#cmdk-trigger`, `.desktop-menu-container > .desktop-menu-sheet
 > .desktop-menu-canvas`, `.desktop-menu-board` (template cloned per panel),
-`.theme-switcher .theme-option[data-theme]`. Renaming any of these is a
+`.theme-switcher .theme-option[data-theme]`, `#sidebar-list[data-active-path]`
+(dispatch segments 1–2), `[data-restored]` on replayed nav surfaces.
+Pre-paint nav: `menu-aurora.js` `cacheNav()` writes `sessionStorage["aurora.nav"]`
+= `[body[data-nav-stamp], {id: innerHTML}]` after render (stamp: nav type, lang,
+user, version); header.ut replays it after the nav markup, inert, only while the
+stamp matches and luci-base's `luci-session-store` still holds `menu` (sidebar:
+recomputes active marks, then the global `auroraCrumb()`, which `menu-aurora.js`
+also calls); `menu-aurora.js` lifts `inert` once `ui.menu.load()` settles; the
+login page clears the cache. A collapsed sidebar is restored first in `<body>`: its column
+transitions, so the class must land before any style resolution.
+Renaming any of these is a
 cross-file change (grep all three layers + tests).
 
 ## Router invariants (`router-aurora.js`, spec in `.dev/docs/router.md`)
