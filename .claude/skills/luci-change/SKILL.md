@@ -20,7 +20,10 @@ workflow. No edit to a shipped or source path happens before gate 1, and the
    cover them. If the request names a page, a package, a DOM element or
    shows a page screenshot, load `luci-dom-compat` and complete its steps
    1–2 (locate the page, read `.dev/compat/pages/` for the files and
-   selectors about to change) before planning.
+   selectors about to change) before planning. If the request adds or
+   changes motion (transition, animation, View Transition), load
+   `aurora-motion`; the plan names the state, its effect from the table
+   and the measured main.css byte delta.
 2. **Plan.** Call `EnterPlanMode`. The plan states: files to change; the
    approach in ≤ 10 lines; budget impact (bytes per `tests/build-performance.test.js`,
    per-request ubus/uci/fs calls, dispatches per navigation); floor it
