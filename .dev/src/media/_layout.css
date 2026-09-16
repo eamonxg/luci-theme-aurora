@@ -217,7 +217,7 @@ header {
       @apply relative;
 
       .menu {
-        @apply text-text hover:bg-hover-faint block rounded-xl px-3.5 py-1.5 font-medium no-underline transition-colors duration-150;
+        @apply text-text hover:bg-hover-faint block rounded-xl px-3.5 py-1.5 font-medium no-underline;
 
         /* Unified pill for both dropdown modes — the open/active category is a
            filled brand pill, matching the submenu links and the sidebar. */
