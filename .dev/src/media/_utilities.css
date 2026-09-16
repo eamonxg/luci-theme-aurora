@@ -61,6 +61,18 @@
   @apply animate-[aurora-fade-in_250ms_ease_both];
 }
 
+/* Content that lands after first paint fades in once; none of it is
+   re-inserted by poll (the dashboard's polled tabs sit under .Dashboard).
+   backwards: a filling animation stays a stacking context over dropdowns. */
+#view > :not(.spinning),
+#view > .cbi-map > .cbi-map-tabbed > [data-tab-active="true"],
+.cbi-section-node-tabbed > [data-tab-active="true"],
+#topmenu,
+#sidebar-list > *,
+footer {
+  @apply animate-[aurora-fade-in_250ms_ease_backwards];
+}
+
 .fade-out {
   @apply pointer-events-none opacity-0 transition-opacity duration-[250ms];
 }

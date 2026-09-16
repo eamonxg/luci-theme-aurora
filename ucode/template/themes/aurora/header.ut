@@ -122,7 +122,8 @@
 
 				if (prev !== null && prev !== next && document.startViewTransition && !navOpen &&
 					!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-					document.startViewTransition(apply);
+					// Typed: main.css leaves the page uncaptured for any other transition.
+					document.startViewTransition(window.ViewTransitionTypeSet ? { update: apply, types: ['theme'] } : apply);
 				} else {
 					apply();
 				}

@@ -555,7 +555,7 @@ body[data-nav-type="sidebar"] {
    filled, faded and removed from the DOM. Only width and opacity move.
    Reduced motion drops the transitions, not the bar. */
 #luci-nav-progress {
-  @apply from-progress-start to-progress-end pointer-events-none fixed top-0 left-0 z-80 h-0.5 w-0 bg-linear-to-r transition-[width] duration-300 ease-out;
+  @apply from-progress-start to-progress-end pointer-events-none fixed top-0 left-0 z-80 h-0.5 w-0 bg-linear-to-r [transition:width_.3s_var(--ease-out)];
 
   &[data-state="done"] {
     @apply opacity-0 [transition:width_.3s_ease-out,opacity_.15s_ease-in_.15s];
@@ -589,7 +589,7 @@ body[data-nav-type="sidebar"] {
 
     /* Outgoing page while the router renders the next one (router.md). */
     &.view-leaving {
-      @apply cursor-progress opacity-60 transition-opacity duration-150;
+      @apply cursor-progress opacity-60 [transition:opacity_150ms_ease-out];
     }
 
     .cbi-title-section {
@@ -639,6 +639,18 @@ body[data-nav-type="sidebar"] {
       @apply flex flex-1 flex-col gap-1.5;
     }
   }
+
+  /* Hidden while the view is leaving or loading so its jump to the new page
+     height is never seen; animate-none restarts its fade-in once it returns. */
+  &:has(> #view.view-leaving, > #view > .spinning) > footer {
+    @apply invisible animate-none;
+  }
+}
+
+/* Only the theme toggle captures the page: a router swap would crossfade
+   two page layouts on top of the content's own fade-in. */
+:root:not(:active-view-transition-type(theme)) {
+  @apply [view-transition-name:none];
 }
 
 footer {
