@@ -15,15 +15,10 @@
 .cmdk-trigger {
   /* Hover is a scale nudge with no plate behind it — the header's own
      language, set by .navigation-toggle and shared with #indicators. The
-     size-8 box stays as the touch target; it just never paints. */
-  @apply text-text relative mr-4 grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg border-0 bg-transparent p-0 shadow-none transition-transform duration-150;
-
-  /* Non-sidebar headers have no mr-auto crumb absorbing the slack — pull the
-     toggle right so it docks next to #indicators instead of landing in the
-     middle of the justify-between row. */
-  body:not([data-nav-type="sidebar"]) & {
-    @apply ml-auto;
-  }
+     size-8 box stays as the touch target; it just never paints.
+     order-last pins it to the bar's right edge: #indicators sits before it
+     and grows leftward, so a late indicator never shifts the trigger. */
+  @apply text-text relative order-last grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg border-0 bg-transparent p-0 shadow-none transition-transform duration-150;
 
   /* size-5 (not the button's own size): the same box #indicators gives its
      glyphs, so the shared 24×24 Tabler canvas scales identically and the

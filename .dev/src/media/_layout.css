@@ -325,7 +325,7 @@ header {
   }
 
   #indicators {
-    @apply flex shrink-0 flex-row-reverse gap-5 md:gap-8;
+    @apply mr-4 ml-auto flex shrink-0 flex-row-reverse gap-5 md:gap-8;
 
     /* Same hover language as .navigation-toggle and .cmdk-trigger: a scale
        nudge, never a background plate. */
