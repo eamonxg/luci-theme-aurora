@@ -20,3 +20,18 @@ test("late content fades in without a filling animation", () => {
   assert.match(rule[1], /\bbackwards\b/);
   assert.doesNotMatch(rule[1], /\bboth\b/);
 });
+
+test("a collapsed sidebar is restored before anything resolves body's style", () => {
+  // The sidebar column transitions; a class landing after a style flush
+  // (the page-bg script's getComputedStyle) would ease it shut on load.
+  const restore = header.indexOf("aurora.sidebarCollapsed");
+  assert.ok(restore > header.indexOf("<body"), "restore runs inside body");
+  assert.ok(
+    restore < header.indexOf("getComputedStyle"),
+    "restore precedes the page-bg style read",
+  );
+  assert.ok(
+    restore < header.indexOf("<header>"),
+    "restore precedes the header markup",
+  );
+});

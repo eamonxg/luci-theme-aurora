@@ -32,7 +32,6 @@ return baseclass.extend({
     const mobileList = overlay.querySelector("#mobile-nav-list");
     const desktop = window.matchMedia("(min-width: 768px)");
     const SIDEBAR_COLLAPSED_KEY = "aurora.sidebarCollapsed";
-    let sidebarAnimTimer;
 
     const isDesktopSidebar = () =>
       desktop.matches && document.body.dataset.navType === "sidebar";
@@ -85,23 +84,9 @@ return baseclass.extend({
         closeMobileNavigation();
 
         const collapsed = !expanded;
-        const body = document.body;
 
-        // Coupled slide (_layout.css): the class must land in the same
-        // frame as the column snap. Open/close carry distinct
-        // animation-names, so alternating toggles restart the run without
-        // a forced reflow; the timer (not animationend — three elements
-        // animate) clears the class once the 250ms run is over.
-        body.classList.remove("sidebar-anim-open", "sidebar-anim-close");
-        body.classList.add(
-          collapsed ? "sidebar-anim-close" : "sidebar-anim-open",
-        );
-        clearTimeout(sidebarAnimTimer);
-        sidebarAnimTimer = setTimeout(() => {
-          body.classList.remove("sidebar-anim-open", "sidebar-anim-close");
-        }, 300);
-
-        body.classList.toggle("sidebar-collapsed", collapsed);
+        // The column and the panel transition together (_layout.css).
+        document.body.classList.toggle("sidebar-collapsed", collapsed);
         localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed);
         updateToggleState(expanded);
         return;

@@ -23,7 +23,7 @@ These timings are the only ones allowed: 150 ms for controls, 250 ms for surface
 | Press 按下 | `:active` | `scale-95`, only on icon-size controls. | header toggles, switcher, card icons |
 | Toggle 开关 | class flip | The thumb slides or the icon morphs. | `.theme-switcher`, hamburger → X |
 | Expand / collapse 展开收起 | theme classes | Fade. Grid rows only where they already animate. | mobile submenu |
-| Menu / drawer 菜单抽屉 | theme classes | Slide (translate) plus fade. A page scrim only dims; it is never blurred. | mega-menu (unblurred curtain), mobile nav, sidebar |
+| Menu / drawer 菜单抽屉 | theme classes | Slide (translate) plus fade. A page scrim only dims; it is never blurred. The desktop sidebar pushes: its grid column eases with the panel's slide, same curve and length. | mega-menu (unblurred curtain), mobile nav, sidebar (push) |
 | Tooltip 提示 | hover / focus | Fade plus `scale-95` → 100, after the intent delay. | `_tooltip.css`, `delay-300` |
 | Dropdown open 下拉打开 | `.cbi-dropdown[open]` | Opacity .99 → 1 over 120 ms. This is functional: it fires luci-base's focus hand-off. | **missing** (Trap 2) |
 | Modal open 弹窗打开 | `body.modal-overlay-active` | Fade in, reusing `aurora-fade-in`. The overlay goes from `display:none` to shown, so the keyframe restarts by itself. | none |
@@ -74,7 +74,7 @@ Check every change. Run `pnpm build`, then compare `wc -c < htdocs/luci-static/a
 
 ## Jank
 
-- Animate only `opacity`, `translate`, `scale` and `transform`. Never width, height, margins, `box-shadow`, `filter`, `backdrop-filter` or background. The only existing exceptions are the progress-bar width and the mobile-submenu grid rows.
+- Animate only `opacity`, `translate`, `scale` and `transform`. Never width, height, margins, `box-shadow`, `filter`, `backdrop-filter` or background. The only existing exceptions are the progress-bar width, the mobile-submenu grid rows, and the desktop sidebar column (user's call, 2026-09-16: a content column that snaps and then slides reads as broken; at 4× CPU the 250 ms push cost ~3 ms layout + style per frame on the overview page).
 - Never animate an element that carries `backdrop-blur`, because the blur is re-rasterised every frame. Animate an unblurred child instead. Under software compositing, the blurred mega-menu curtain dropped 3–5 frames per open; without the blur it dropped none (2026-09-16).
 - Keep `visibility` out of the tween. Write `[transition:opacity_220ms_…,visibility_0s_220ms]` and put `[transition-delay:0s]` on the shown state. A tweened `visibility` runs on the main thread, and on show it also keeps the paired `opacity` fade off the compositor.
 - A `color` or `background-color` transition repaints on the main thread every frame. Swap state colours instantly. Dropping the transition on the nav pills cut repaints by 61 %.

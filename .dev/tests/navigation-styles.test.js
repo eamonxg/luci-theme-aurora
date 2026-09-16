@@ -204,6 +204,28 @@ test("desktop sidebar styles only provide desktop navigation density", () => {
   assert.doesNotMatch(sidebar, /bg-brand-subtle/);
 });
 
+test("desktop sidebar toggles move the column and the panel as one", () => {
+  const sidebar = getBlock(layoutStyles, 'body[data-nav-type="sidebar"]');
+  const easing = "250ms_var(--ease-in-out)";
+
+  // The column width and the panel's translate share one curve and length,
+  // so the content edge stays on the sidebar edge in every frame.
+  assert.ok(
+    sidebar.includes(`md:[transition:grid-template-columns_${easing}]`),
+  );
+  assert.ok(
+    getBlock(sidebar, "& .sidebar-panel-inner {").includes(
+      `[transition:translate_${easing}]`,
+    ),
+  );
+  // Hidden only after the slide-out, shown at once on the way in.
+  assertIncludesUtilities(
+    getBlock(sidebar, "&.sidebar-collapsed .sidebar-panel {"),
+    ["invisible", "[transition:visibility_0s_250ms]"],
+  );
+  assert.doesNotMatch(layoutStyles, /sidebar-anim|sidebar-run-/);
+});
+
 test("mobile drawer styles only provide mobile navigation density", () => {
   const drawer = getBlock(overlayStyles, ".mobile-menu-overlay");
   const icon = getBlock(drawer, "& .nav-icon");

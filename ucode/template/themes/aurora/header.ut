@@ -227,6 +227,14 @@
 
 	<body class="lang_{{ dispatcher.lang }}" data-page="{{ entityencode(page, true) }}" data-nav-type="{{ nav_type }}" data-asset-version="{# PKG_VERSION #}"{% if (length(patch_all)): %} data-patches="{{ entityencode(join(' ', patch_all), true) }}"{% endif %}{% if (blank_page ? tokens.struct_login_bg : tokens.struct_main_bg): %} data-bg{% endif %}>
 		{% if (!blank_page): %}
+		{% if (nav_type == 'sidebar'): %}
+		{# First in body: once anything resolves body's style (the page-bg script does), the column would ease shut on load. #}
+		<script>
+			if (localStorage.getItem('aurora.sidebarCollapsed') === 'true') {
+				document.body.classList.add('sidebar-collapsed');
+			}
+		</script>
+		{% endif %}
 		{% if (tokens.struct_main_bg): %}
 		<div class="page-bg" aria-hidden="true"></div>
 		<script>
@@ -311,11 +319,6 @@
 				<div class="sidebar-footer" id="sidebar-footer"></div>
 			</nav>
 		</aside>
-		<script>
-			if (localStorage.getItem('aurora.sidebarCollapsed') === 'true') {
-				document.body.classList.add('sidebar-collapsed');
-			}
-		</script>
 		{% endif %}
 
 		<div class="mobile-menu-overlay" id="mobile-menu-overlay">
