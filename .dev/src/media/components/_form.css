@@ -28,7 +28,9 @@
       @apply text-text-muted relative mt-1 pl-4 leading-none wrap-break-word;
 
       &:not(:empty) {
-        @apply before:bg-info before:absolute before:-left-0.5 before:inline-block before:size-4 before:[mask:var(--icon-info)_center/cover_no-repeat];
+        &::before {
+          @apply bg-info absolute -left-0.5 inline-block size-4 content-[''] [mask:var(--icon-info)_center/cover_no-repeat];
+        }
       }
     }
   }
@@ -44,7 +46,9 @@
 
   & .item {
     @apply border-hairline bg-surface pointer-events-auto relative inline-flex cursor-move flex-col items-start gap-2 self-stretch overflow-hidden rounded-2xl border py-3 pr-10 pl-4 break-all shadow-sm transition-[transform,box-shadow,opacity,border-color,background-color] duration-150 select-text max-md:w-full max-md:py-2.5 max-md:pr-8 max-md:pl-3;
-    @apply after:bg-surface-sunken after:text-text-muted after:absolute after:top-2.5 after:right-2 after:inline-flex after:h-6 after:w-6 after:shrink-0 after:cursor-pointer after:items-center after:justify-center after:rounded-xl after:text-sm after:font-medium after:content-['\00D7'];
+    &::after {
+      @apply bg-surface-sunken text-text-muted absolute top-2.5 right-2 inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-xl text-sm font-medium content-['\00D7'];
+    }
 
     &.dragging {
       @apply scale-95 cursor-grabbing opacity-50 shadow-2xl;

@@ -41,12 +41,22 @@
 .navigation-group-toggle {
   /* size-4.5 ≈ the row's text height — 3.5 read as undersized next to the
      text-lg category labels, on desktop and in the mobile drawer alike. */
-  @apply after:size-4.5 after:shrink-0 after:bg-current after:opacity-55 after:transition-[transform,opacity] after:duration-[250ms] after:content-[''] after:[mask:var(--icon-arrow-right)_center/cover_no-repeat] hover:after:opacity-100;
+  &::after {
+    @apply size-4.5 shrink-0 bg-current opacity-55 transition-[transform,opacity] duration-[250ms] content-[''] [mask:var(--icon-arrow-right)_center/cover_no-repeat];
+  }
+  @variant hover {
+    &::after {
+      @apply opacity-100;
+    }
+  }
 }
 
 /* An expanded group's label turns brand and its arrow rotates open. */
 .navigation-group.is-expanded > .navigation-group-toggle {
-  @apply text-brand after:rotate-90;
+  @apply text-brand;
+  &::after {
+    @apply rotate-90;
+  }
 }
 
 /* The active group keeps its brand label even when the user manually

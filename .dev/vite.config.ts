@@ -29,7 +29,7 @@ const BUILD_OUTPUT = resolve(PROJECT_ROOT, "htdocs/luci-static");
 const PATCH_SRC_DIR = resolve(CURRENT_DIR, "src/media/patches");
 
 const LIGHTNINGCSS_TARGETS = browserslistToTargets(
-  browserslist("last 4 versions, Firefox ESR, not dead"),
+  browserslist("chrome >= 111, edge >= 111, firefox >= 128, safari >= 16.4, ios_saf >= 16.4"),
 );
 
 // See luci-theme.config.js. Empty today: the log viewer needs only

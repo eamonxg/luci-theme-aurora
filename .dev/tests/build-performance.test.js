@@ -17,11 +17,8 @@ test("production assets stay within raw-transfer budgets", () => {
   const font = bytes("aurora/fonts/lato-v24-latin-regular.woff2");
   const logo = bytes("aurora/images/logo.svg");
 
-  // 192K: the custom-background mode (scheme D surfaces + shared page-bg
-  // layer) added ~1.4 KB of rules; 193K: the router's progress bar and
-  // live region. The total-transfer budget below is unchanged and still
-  // binds.
-  assert.ok(main <= 193_000, "main.css exceeds 193 KB");
+  // 187K: pseudo-elements are nested rules, one content declaration each.
+  assert.ok(main <= 187_000, "main.css exceeds 187 KB");
   assert.ok(login <= 12_000, "login.css exceeds 12 KB");
   // 22K: palette recents (record on pick, pure-LRU browse order, storage
   // validation) added ~0.8 KB and the ">" logout command ~0.2 KB. The total
@@ -40,8 +37,8 @@ test("production assets stay within raw-transfer budgets", () => {
   assert.ok(router <= 16_000, "router-aurora.js exceeds 16 KB");
   assert.ok(logo <= 16_000, "logo.svg exceeds 16 KB");
   assert.ok(
-    main + menu + router + font + logo <= 268_500,
-    "admin assets exceed 268.5 KB",
+    main + menu + router + font + logo <= 264_000,
+    "admin assets exceed 264 KB",
   );
   assert.ok(login + font + logo <= 55_000, "login assets exceed 55 KB");
 });
@@ -120,4 +117,60 @@ test("package roots contain no macOS metadata", () => {
   visit(resolve(projectRoot, "htdocs"));
   visit(resolve(projectRoot, "ucode"));
   assert.deepEqual(offenders, []);
+});
+
+test("the web manifest's icons exist in the package", () => {
+  const manifest = JSON.parse(readFileSync(asset("aurora/images/app.webmanifest"), "utf8"));
+  assert.ok(manifest.icons.length > 0);
+  for (const { src } of manifest.icons) {
+    assert.match(src, /^\/luci-static\//);
+    assert.ok(statSync(asset(src.replace(/^\/luci-static\//, ""))).isFile(), src);
+  }
+});
+
+test("login.css keeps the Safari 16.4 backdrop-filter prefix", () => {
+  const css = readFileSync(asset("aurora/login.css"), "utf8");
+  const count = (needle) => css.split(needle).length - 1;
+  const prefixed = count("-webkit-backdrop-filter:");
+  assert.ok(prefixed > 0);
+  assert.equal(count("backdrop-filter:") - prefixed, prefixed);
+});
+
+test("no rule repeats a declaration, vendor-prefixed ones aside", () => {
+  for (const sheet of ["aurora/main.css", "aurora/login.css"]) {
+    const css = readFileSync(asset(sheet), "utf8");
+    const repeated = [];
+    const blocks = [[]];
+    let quote = "";
+    let parens = 0;
+    let start = 0;
+    const close = (end) => {
+      const declaration = css.slice(start, end).trim();
+      const seen = blocks.at(-1);
+      if (declaration && !declaration.startsWith("-webkit-")) {
+        if (seen.includes(declaration)) repeated.push(declaration);
+        seen.push(declaration);
+      }
+      start = end + 1;
+    };
+    for (let i = 0; i < css.length; i++) {
+      const char = css[i];
+      if (quote) {
+        if (char === "\\") i++;
+        else if (char === quote) quote = "";
+      } else if (char === '"' || char === "'") quote = char;
+      else if (char === "(") parens++;
+      else if (char === ")") parens--;
+      else if (parens) continue;
+      else if (char === ";") close(i);
+      else if (char === "{") {
+        blocks.push([]);
+        start = i + 1;
+      } else if (char === "}") {
+        close(i);
+        blocks.pop();
+      }
+    }
+    assert.deepEqual(repeated, [], sheet);
+  }
 });

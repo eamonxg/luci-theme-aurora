@@ -17,15 +17,21 @@ table.table,
   & .cbi-section-table-titles.named,
   & .cbi-section-table-descr.named,
   & .cbi-section-table-row[data-title] {
-    @apply before:border-hairline before:table-cell before:px-3 before:py-3 before:align-middle before:text-base before:font-semibold before:content-[attr(data-title)] before:max-md:flex before:max-md:flex-[0_0_100%] before:max-md:px-3 before:max-md:py-2.5 before:max-md:text-sm before:md:border-b;
+    &::before {
+      @apply border-hairline table-cell px-3 py-3 align-middle text-base font-semibold content-[attr(data-title)] max-md:flex max-md:flex-[0_0_100%] max-md:px-3 max-md:py-2.5 max-md:text-sm md:border-b;
+    }
     &:not([data-title]),
     &:has(td.cbi-section-table-titles) {
-      @apply before:content-none;
+      &::before {
+        @apply content-none;
+      }
     }
   }
 
   & .cbi-section-table-titles.named {
-    @apply before:text-text-subtle before:text-xs before:font-semibold before:tracking-wider before:uppercase;
+    &::before {
+      @apply text-text-subtle text-xs font-semibold tracking-wider uppercase;
+    }
   }
 
   & tbody,
@@ -48,7 +54,9 @@ table.table,
     &:last-child {
       @apply max-md:border-b-0;
       &[data-title] {
-        @apply before:border-b-0;
+        &::before {
+          @apply border-b-0;
+        }
       }
       .td {
         @apply border-b-0;
@@ -124,12 +132,19 @@ table.table,
     }
 
     &[data-sortable-row="true"] {
-      @apply hover:bg-hover-faint cursor-pointer select-none after:ml-0.5 after:text-xs;
+      @apply hover:bg-hover-faint cursor-pointer select-none;
+      &::after {
+        @apply ml-0.5 text-xs content-[''];
+      }
       &[data-sort-direction="asc"] {
-        @apply after:content-['\25B2'];
+        &::after {
+          @apply content-['\25B2'];
+        }
       }
       &[data-sort-direction="desc"] {
-        @apply after:content-['\25BC'];
+        &::after {
+          @apply content-['\25BC'];
+        }
       }
     }
   }
@@ -143,7 +158,9 @@ table.table,
   & td,
   & .td {
     @apply border-hairline table-cell border-b px-3 py-3 align-middle wrap-break-word whitespace-normal max-md:flex-[1_1_50%] max-md:border-0 max-md:px-1 max-md:py-1;
-    @apply before:hidden before:content-[attr(data-title)] before:max-md:mb-1 before:max-md:block before:max-md:text-xs before:max-md:font-semibold before:max-md:tracking-wider;
+    &::before {
+      @apply hidden content-[attr(data-title)] max-md:mb-1 max-md:block max-md:text-xs max-md:font-semibold max-md:tracking-wider;
+    }
 
     #cbi-samba4 & {
       @apply px-0.5 py-1.5;
@@ -154,7 +171,10 @@ table.table,
     }
 
     #wifi_assoclist_table & {
-      @apply max-md:flex-[0_0_100%] max-md:px-3 max-md:py-2 before:max-md:mb-1.5;
+      @apply max-md:flex-[0_0_100%] max-md:px-3 max-md:py-2;
+      &::before {
+        @apply max-md:mb-1.5;
+      }
     }
 
     & > input[type="text"],

@@ -8,13 +8,13 @@
   "theme_color": "#f8fafc",
   "icons": [
     {
-      "src": "/luci-static/aurora/images/pwa/app-icon-192x192.png",
+      "src": "/luci-static/aurora/images/app-icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/luci-static/aurora/images/pwa/app-icon-512x512.png",
+      "src": "/luci-static/aurora/images/app-icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

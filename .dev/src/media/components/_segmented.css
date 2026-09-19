@@ -4,7 +4,9 @@
   & li {
     @apply relative m-0 min-w-fit shrink-0 list-none;
     &[data-errors] {
-      @apply after:bg-danger after:text-on-brand after:absolute after:-top-0.5 after:-right-1.5 after:z-20 after:inline-flex after:min-h-4 after:min-w-4 after:items-center after:justify-center after:rounded-full after:px-1.5 after:py-0.5 after:text-xs after:font-semibold after:content-[attr(data-errors)];
+      &::after {
+        @apply bg-danger text-on-brand absolute -top-0.5 -right-1.5 z-20 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold content-[attr(data-errors)];
+      }
 
       & > a {
         @apply border-hairline border;

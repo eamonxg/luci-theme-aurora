@@ -63,7 +63,9 @@ header {
          the visible travel, clamped to 240–480ms). */
       & .desktop-menu-sheet {
         @apply bg-mega-menu-bg absolute inset-x-0 top-0 h-[calc(var(--mega-menu-height,0px)+3.5rem)] -translate-y-full overflow-hidden transition-[translate] duration-(--mega-menu-duration,300ms) ease-[cubic-bezier(0.4,0,0.6,1)] motion-reduce:transition-none;
-        @apply after:border-hairline after:pointer-events-none after:absolute after:inset-0 after:border-b after:shadow-xl after:transition-opacity after:duration-(--mega-menu-duration,300ms) after:content-[''] motion-reduce:after:transition-none;
+        &::after {
+          @apply border-hairline pointer-events-none absolute inset-0 border-b shadow-xl transition-opacity duration-(--mega-menu-duration,300ms) content-[''] motion-reduce:transition-none;
+        }
       }
 
       /* The counter-transform must mirror the sheet's endpoints and timing
@@ -79,7 +81,9 @@ header {
       }
 
       &.closing .desktop-menu-sheet {
-        @apply after:opacity-0;
+        &::after {
+          @apply opacity-0;
+        }
       }
 
       /* Category panels live inside .desktop-menu-canvas, not the nav items:
@@ -330,27 +334,41 @@ header {
     /* Same hover language as .navigation-toggle and .cmdk-trigger: a scale
        nudge, never a background plate. */
     & span[data-indicator] {
-      @apply before:text-text size-5 cursor-pointer text-[0px] transition-transform duration-150 before:absolute before:size-5 before:bg-current hover:scale-105 active:scale-95;
+      @apply size-5 cursor-pointer text-[0px] transition-transform duration-150 hover:scale-105 active:scale-95;
+      &::before {
+        @apply text-text absolute size-5 bg-current content-[''];
+      }
 
       &[data-indicator="media_error"] {
-        @apply before:[mask:var(--icon-error)_center/cover_no-repeat];
+        &::before {
+          @apply [mask:var(--icon-error)_center/cover_no-repeat];
+        }
       }
 
       &[data-indicator="poll-status"] {
         &[data-style="active"] {
-          @apply before:[mask:var(--icon-refresh)_center/cover_no-repeat];
+          &::before {
+            @apply [mask:var(--icon-refresh)_center/cover_no-repeat];
+          }
         }
 
         &[data-style="inactive"] {
-          @apply before:[mask:var(--icon-refresh-off)_center/cover_no-repeat];
+          &::before {
+            @apply [mask:var(--icon-refresh-off)_center/cover_no-repeat];
+          }
         }
       }
 
       &[data-indicator="uci-changes"] {
-        @apply relative before:[mask:var(--icon-settings)_center/cover_no-repeat];
+        @apply relative;
+        &::before {
+          @apply [mask:var(--icon-settings)_center/cover_no-repeat];
+        }
 
         &[data-count]:not([data-count="0"]) {
-          @apply after:bg-danger after:text-on-brand after:absolute after:-top-0.5 after:-right-0.5 after:z-10 after:flex after:min-h-3 after:min-w-3 after:items-center after:justify-center after:rounded-full after:px-0.5 after:text-[8px] after:leading-none after:font-bold after:shadow-sm after:content-[attr(data-count)];
+          &::after {
+            @apply bg-danger text-on-brand absolute -top-0.5 -right-0.5 z-10 flex min-h-3 min-w-3 items-center justify-center rounded-full px-0.5 text-[8px] leading-none font-bold shadow-sm content-[attr(data-count)];
+          }
         }
       }
     }
