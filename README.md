@@ -80,11 +80,11 @@ OpenWrt 25.12+ and snapshots use `apk`; other versions use `opkg`:
 cd /tmp
 
 # opkg
-uclient-fetch -O luci-theme-aurora.ipk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora_1.3.0-r20260830_all.ipk
+uclient-fetch -O luci-theme-aurora.ipk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora_1.4.0-r20260920_all.ipk
 opkg install luci-theme-aurora.ipk
 
 # apk
-uclient-fetch -O luci-theme-aurora.apk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora-1.3.0-r20260830.apk
+uclient-fetch -O luci-theme-aurora.apk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora-1.4.0-r20260920.apk
 apk add --allow-untrusted luci-theme-aurora.apk
 ```
 
