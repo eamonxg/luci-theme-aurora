@@ -1,0 +1,110 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../../htdocs/luci-static/aurora/main.css">
+<body data-page="admin-status-nftables">
+  <div id="maincontent">
+    <div id="view"><h3>IPv4/IPv6 traffic table "fw4"</h3></div>
+  </div>
+</body>
+<script>
+  const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
+  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const require = (condition, message) => {
+    if (!condition) throw new Error(message);
+  };
+
+  function notification(title) {
+    const node = document.createElement("div");
+    node.className = "alert-message fade-in warning";
+    node.style.display = "flex";
+    node.innerHTML = '<div style="flex:10"><h4></h4><p>There are legacy iptables rules present on the system. Mixing iptables and nftables rules is discouraged.</p><button class="btn cbi-button">Open iptables rules overview…</button></div><div style="flex:1 1 auto;display:flex"><button class="btn" style="margin-left:auto;margin-top:auto">Dismiss</button></div>';
+    node.querySelector("h4").textContent = title;
+    // ui.addNotification keeps fade-in and removes only on transitionend.
+    node.addEventListener("transitionend", ev => {
+      const current = ev.currentTarget;
+      if (current.parentNode && current.classList.contains("fade-out"))
+        current.parentNode.removeChild(current);
+    });
+    node.lastElementChild.firstElementChild.addEventListener("click", ev => {
+      ev.target.closest(".alert-message").classList.add("fade-out");
+    });
+    return node;
+  }
+
+  function removeStartingStyles(sheet) {
+    let removed = 0;
+    for (let i = sheet.cssRules.length - 1; i >= 0; i--) {
+      const rule = sheet.cssRules[i];
+      if (rule.cssText.startsWith("@starting-style")) {
+        sheet.deleteRule(i);
+        removed++;
+      } else if (rule.cssRules) {
+        removed += removeStartingStyles(rule);
+      }
+    }
+    return removed;
+  }
+
+  async function checkNotifications(fallback) {
+    if (fallback) {
+      const removed = [...document.styleSheets].reduce((sum, sheet) => sum + removeStartingStyles(sheet), 0);
+      require(removed > 0, "fallback must remove the starting-style enhancement");
+    }
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const main = document.querySelector("#maincontent");
+    const view = document.querySelector("#view");
+    const survivor = notification("Keep this notification");
+    main.insertBefore(survivor, view);
+    await frame();
+    const baseline = view.getBoundingClientRect().top;
+    try {
+      for (const early of [true, false]) {
+        const node = notification("Legacy rules detected");
+        const events = [];
+        node.addEventListener("transitionend", ev => events.push({ target: ev.target, property: ev.propertyName }));
+        main.insertBefore(node, survivor);
+        await frame();
+        await frame();
+        await delay(early ? 50 : 500);
+        const before = view.getBoundingClientRect().top;
+        const entryOpacity = Number(getComputedStyle(node).opacity);
+        events.length = 0;
+        const removed = await new Promise(resolve => {
+          const timeout = setTimeout(() => resolve(false), 1200);
+          node.addEventListener("transitionend", () => {
+            if (!node.isConnected) {
+              clearTimeout(timeout);
+              resolve(true);
+            }
+          });
+          node.lastElementChild.firstElementChild.click();
+        });
+        require(removed && !node.isConnected, `${early ? "early" : "settled"} dismissal left an invisible notification in the DOM`);
+        require(events.some(ev => ev.target === node && ev.property === "opacity"), "removal must follow the notification's own opacity transition");
+        await frame();
+        const after = view.getBoundingClientRect().top;
+        require(after < before && Math.abs(after - baseline) < 1, `notification gap remained: ${before} → ${after}, expected ${baseline}`);
+        require(survivor.isConnected && !survivor.classList.contains("fade-out"), "dismissal affected another notification");
+        if (early && !reduced && !fallback)
+          require(entryOpacity > 0 && entryOpacity < 1, `entry did not fade: opacity=${entryOpacity}`);
+        if (reduced || fallback)
+          require(entryOpacity === 1, `notification did not appear immediately: opacity=${entryOpacity}`);
+      }
+      return true;
+    } finally {
+      survivor.remove();
+    }
+  }
+</script>
+<script type="application/json" id="compat">
+{
+  "ledger": "#103",
+  "viewports": [390, 1280],
+  "reducedMotion": [false, true],
+  "checks": [
+    { "js": "checkNotifications(false)" },
+    { "js": "checkNotifications(true)" }
+  ]
+}
+</script>

@@ -14,11 +14,9 @@ test("only the typed theme toggle captures the page in a view transition", () =>
   assert.match(css, /\}:root:not\(:active-view-transition-type\(theme\)\)\{view-transition-name:none\}/);
 });
 
-test("late content fades in without a filling animation", () => {
-  const rule = css.match(/#view>:not\(\.spinning\)[^{]*\{([^}]*)\}/);
-  assert.ok(rule, "missing page-entry fade rule");
-  assert.match(rule[1], /\bbackwards\b/);
-  assert.doesNotMatch(rule[1], /\bboth\b/);
+test("page content appears without decorative entry fades", () => {
+  assert.ok(!css.includes("aurora-fade-in"), "decorative entry keyframe remains");
+  assert.ok(!/#view>:not\(\.spinning\)[^{]*\{[^}]*\banimation:/.test(css), "view contents still animate on entry");
 });
 
 test("a collapsed sidebar is restored before anything resolves body's style", () => {

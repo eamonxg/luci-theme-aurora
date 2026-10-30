@@ -47,9 +47,19 @@ calls `ui.addNotification` on a real page. It runs with and without
 | + `.fade-in` fill `backwards` + dropdown `ul` opacity transition | focus moves `li a` → `li b` | removed |
 | + the above + reduced motion at `duration 1ms` instead of `transition: none` | `li a` → `li b` | removed |
 
-The cause of Trap 1: Chrome does not start a transition on a property that
-a filling CSS animation still holds (`.fade-in` uses `… both`). Removing
-`.fade-in` before dismissing also made the removal work.
+Those measurements dismissed notifications after entry had completed.
+Changing the fill to `backwards` does not cover dismissal during entry:
+the animation still owns opacity and can prevent the exit transition.
+
+Issue #103 gives the shared `.fade-in` / `.fade-out` utilities one opacity
+transition, without an entry keyframe. `@starting-style` supplies the initial
+opacity where supported; older browsers show the notification immediately.
+A 1 ms transition on `.fade-out` preserves dismissal under reduced motion.
+The decorative page/tab/menu/footer entry keyframes were removed by request;
+notification transitions and independent menu/drawer interactions remain. The compat fixture
+`admin-status-nftables--notification-dismissal.html` covers early and settled
+dismissal, both motion preferences, and removal of the starting-style rule;
+it reproduces the DOM/event contract, not a full device session.
 
 Upstream direction (decision doc only, through /upstream-rfc): luci-base
 should not depend on `transitionend` alone, and should fall back when the

@@ -26,15 +26,15 @@ These timings are the only ones allowed: 150 ms for controls, 250 ms for surface
 | Menu / drawer 菜单抽屉 | theme classes | Slide (translate) plus fade. A page scrim only dims; it is never blurred. The desktop sidebar pushes: its grid column eases with the panel's slide, same curve and length. | mega-menu (unblurred curtain), mobile nav, sidebar (push) |
 | Tooltip 提示 | hover / focus | Fade plus `scale-95` → 100, after the intent delay. | `_tooltip.css`, `delay-300` |
 | Dropdown open 下拉打开 | `.cbi-dropdown[open]` | Opacity .99 → 1 over 120 ms. This is functional: it fires luci-base's focus hand-off. | **missing** (Trap 2) |
-| Modal open 弹窗打开 | `body.modal-overlay-active` | Fade in, reusing `aurora-fade-in`. The overlay goes from `display:none` to shown, so the keyframe restarts by itself. | none |
+| Modal open 弹窗打开 | `body.modal-overlay-active` | No added entry effect. | none |
 | Modal close 弹窗关闭 | class removed | None. luci-base provides no exit hook. | — |
-| Notification in 通知出现 | `.alert-message.fade-in` | Fade in. | `_utilities.css` |
-| Notification out 通知消失 | `.fade-out` (dismiss or timer) | Fade out. It must be a *running* transition. | **broken** (Trap 1) |
+| Notification in 通知出现 | `.fade-in` | Opacity transition from `@starting-style`; immediate appearance where unsupported. | `_utilities.css`, 250 ms |
+| Notification out 通知消失 | `.fade-out` | The same opacity transition reverses; its native end event lets LuCI remove a dismissed notification. | `_utilities.css`; 1 ms under reduced motion |
 | View loading 页面加载中 | `#view > .spinning` | Spinner only. It keeps spinning under reduced motion. | `.spinning` |
-| Page ready 内容就绪 | direct children of `#view` | At most one fade in, reusing `aurora-fade-in`. No stagger, no rise, and nothing deeper than the direct children. | none |
+| Page ready 内容就绪 | direct children of `#view` | Immediate appearance; no decorative entry animation. | no entry keyframe |
 | Route leave 离开页面 | `#view.view-leaving` | Dim to 60 %. | `_layout.css` |
-| Route enter 进入页面 | router swap | Same as "Page ready". Use one mechanism only: the View Transition or the fade, never both stacked. | router root crossfade |
-| Tab switch 切换标签 | `[data-tab-active="true"]` | Fade in the incoming pane. Its height snaps. | none |
+| Route enter 进入页面 | router swap | No content-entry fade; do not add a second decorative animation. | no entry keyframe |
+| Tab switch 切换标签 | `[data-tab-active="true"]` | The new pane and its height appear immediately. | no entry keyframe |
 | Busy action 操作进行中 | `.spinning` on a button | Spinner. | `.spinning` |
 | Progress 进度 | `.cbi-progressbar > div` | Width. This is an existing exception; don't copy it. | `_progress.css` |
 | Drag 拖拽 | `.dragging` | A static state style, no motion. | `_form.css` |
@@ -57,7 +57,7 @@ Measured on main.css (raw, Tailwind 4.3.2 plus lightningcss, 2026-09-16). What y
 |---|---|
 | Add a selector to an existing motion rule's selector list | **+17 B** |
 | One shorthand on a new selector: `@apply [transition:opacity_150ms_ease-out]` | +50 B |
-| Reuse the keyframe: `@apply animate-[aurora-fade-in_250ms_ease_backwards]` | +59 B |
+| Removed keyframe fade (historical measurement) | +59 B |
 | New keyframe plus its use (e.g. opacity + scale pop-in) | +141 B |
 | Press as shorthand: `[transition:scale_150ms] active:[scale:.95]` | +99 B |
 | Split utilities: `transition-opacity duration-150 ease-out` | **+316 B** |
@@ -66,9 +66,9 @@ Measured on main.css (raw, Tailwind 4.3.2 plus lightningcss, 2026-09-16). What y
 
 Tailwind v4's split utilities expand into `--tw-*` fallback chains. So:
 
-- Write motion as **one shorthand declaration**, or reuse `aurora-fade-in`.
+- Write allowed motion as **one shorthand declaration**; do not restore the removed blanket page-entry keyframe.
 - Prefer adding a selector to an existing rule over writing a new one.
-- Don't add `@starting-style`: an element that comes back from `display:none` restarts its keyframe anyway.
+- Do not add `@starting-style` for decorative motion. The approved exception is the shared `.fade-in` utility: LuCI notifications need one opacity transition for entry and dismissal, so an entry keyframe must not hold the same property. Unsupported browsers show the element immediately and retain normal dismissal. Adding `.fade-in` to an already-visible element does not replay entry. Page/tab/initial-menu/footer content appears immediately; do not recreate their removed blanket entry animations.
 
 Check every change. Run `pnpm build`, then compare `wc -c < htdocs/luci-static/aurora/main.css` with `git show HEAD:htdocs/luci-static/aurora/main.css | wc -c`. Put the delta in the commit body. If decorative motion comes out positive, remove bytes elsewhere or drop it.
 
@@ -80,7 +80,7 @@ Check every change. Run `pnpm build`, then compare `wc -c < htdocs/luci-static/a
 - A `color` or `background-color` transition repaints on the main thread every frame. Swap state colours instantly. Dropping the transition on the nav pills cut repaints by 61 %.
 - Always name the transitioned properties. Never use `transition-all`, and never use `will-change`.
 - Allow one motion per state change per region, lasting no more than 320 ms. Click, save and error feedback get no delay.
-- Under reduced motion, show the end state at once, but keep durations at 1 ms rather than `none` (Trap 1).
+- Under reduced motion, disable decoration. Where LuCI relies on a transition-end event, retain a scoped 1 ms functional transition rather than `none` (Trap 1).
 - Verify on the Layout track at 4× CPU throttling: aurora-performance runtime.md R1–R3.
 
 ## JS
@@ -104,10 +104,15 @@ Not allowed:
 
 luci-base acts on `transitionend`, which only fires if a transition actually runs.
 
-1. **A dismissed notification never leaves the DOM.** The fill of `.fade-in` (`both`) holds `opacity`, so the `.fade-out` transition never starts. Every Dismiss and every expired notification leaves an invisible 84 px gap. Fix: `both` → `backwards` (+5 B). In `_reduced-motion.css`, replace `transition-none!` with `delay-0! duration-1!` (+57 B).
+1. **A dismissed notification never leaves the DOM.** An entry keyframe can hold `opacity` and prevent the exit transition. `backwards` fixes settled entry only; closing during entry still fails. The shared fade utilities therefore use one opacity transition, with `@starting-style` as optional entry enhancement. `_utilities.css` retains a 1 ms opacity transition on `.fade-out` under reduced motion; decorative motion stays disabled elsewhere. LuCI's time-limited notifications also have their own direct-removal path.
 2. **Arrow keys cannot enter a dropdown.** There is no transition on `.cbi-dropdown > ul`, so focus never moves into the list. Fix: `opacity-99 [transition:opacity_120ms_ease-out]`, with `&.dropdown { opacity-100 }` (+98 B).
 
-Any change touching `.fade-in`/`.fade-out`, dropdowns or `_reduced-motion.css` must pass this, run after `pnpm build`:
+Notification changes must pass `node --test tests/compat.test.js` from `.dev/`
+after rebuilding. Its lifecycle fixture covers early and settled dismissal,
+reduced motion, and the no-starting-style fallback; an async false result must
+fail the runner.
+
+Any change touching `.fade-in`/`.fade-out`, dropdowns or `_reduced-motion.css` also needs this device probe after `pnpm build` (report it as unverified if the device is unreachable):
 
 ```
 MAIN_CSS=htdocs/luci-static/aurora/main.css node .claude/skills/aurora-motion/scripts/transitionend-probe.mjs

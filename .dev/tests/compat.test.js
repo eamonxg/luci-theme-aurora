@@ -82,8 +82,16 @@ const CHECKS = {
     }
     return bad;
   })()`,
-  js: (expr) => `(() => { const v = (${expr}); return v ? [] : ['expression was ' + JSON.stringify(v)]; })()`,
+  js: (expr) => `(async () => { const v = await (${expr}); return v ? [] : ['expression was ' + JSON.stringify(v)]; })()`,
 };
+
+test("compat js checks await async results", async () => {
+  const check = (expr) => new Function(`return ${CHECKS.js(expr)}`)();
+  assert.deepEqual(await check("true"), []);
+  assert.deepEqual(await check("Promise.resolve(true)"), []);
+  assert.deepEqual(await check("Promise.resolve(false)"), ["expression was false"]);
+  await assert.rejects(check("Promise.reject(new Error('fixture failure'))"), /fixture failure/);
+});
 
 function readSpec(file) {
   const html = readFileSync(join(fixtureDir, file), "utf8");
@@ -154,26 +162,31 @@ test("compat fixtures keep their geometry", { skip: skipReason ?? false }, async
       for (const width of spec.viewports ?? [1280]) {
         await send("Emulation.setDeviceMetricsOverride",
           { width, height: 900, deviceScaleFactor: 1, mobile: width < 768 }, sessionId);
-        const loaded = new Promise((res) => {
-          const h = (m) => { if (m.method === "Page.loadEventFired" && m.sessionId === sessionId) { handlers.delete(h); res(); } };
-          handlers.add(h);
-        });
-        await send("Page.navigate", { url: pathToFileURL(join(fixtureDir, file)).href }, sessionId);
-        await loaded;
-        // Force the theme font to load before measuring (font-display: swap
-        // would otherwise measure the fallback), then give layout one frame.
-        await evaljs(`document.fonts.load('12px "Lato"').then(() => document.fonts.ready)
-          .then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))`);
-        const fontOk = await evaljs(`!${JSON.stringify(!!fontCss)} || document.fonts.check('12px "Lato"')`);
-        assert.ok(fontOk, `${file}: theme font did not load from ${output}/fonts`);
-        const sheets = await evaljs("[...document.styleSheets].map(s => { try { return s.cssRules.length } catch { return -1 } })");
-        assert.ok(sheets.some((n) => n > 100), `${file}: main.css did not load (rules per sheet: ${sheets}) — run pnpm build`);
-        for (const check of spec.checks) {
-          if (check.viewports && !check.viewports.includes(width)) continue;
-          const [kind, arg] = Object.entries(check).find(([k]) => k in CHECKS) ?? [];
-          assert.ok(kind, `${file}: unknown check ${JSON.stringify(check)}`);
-          const bad = await evaljs(CHECKS[kind](arg));
-          assert.deepEqual(bad, [], `${file} @${width} ${kind} ${JSON.stringify(arg)} (ledger ${spec.ledger}): ${bad.join("; ")}`);
+        for (const reducedMotion of spec.reducedMotion ?? [false]) {
+          await send("Emulation.setEmulatedMedia", {
+            features: [{ name: "prefers-reduced-motion", value: reducedMotion ? "reduce" : "no-preference" }],
+          }, sessionId);
+          const loaded = new Promise((res) => {
+            const h = (m) => { if (m.method === "Page.loadEventFired" && m.sessionId === sessionId) { handlers.delete(h); res(); } };
+            handlers.add(h);
+          });
+          await send("Page.navigate", { url: pathToFileURL(join(fixtureDir, file)).href }, sessionId);
+          await loaded;
+          // Force the theme font to load before measuring (font-display: swap
+          // would otherwise measure the fallback), then give layout one frame.
+          await evaljs(`document.fonts.load('12px "Lato"').then(() => document.fonts.ready)
+            .then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))`);
+          const fontOk = await evaljs(`!${JSON.stringify(!!fontCss)} || document.fonts.check('12px "Lato"')`);
+          assert.ok(fontOk, `${file}: theme font did not load from ${output}/fonts`);
+          const sheets = await evaljs("[...document.styleSheets].map(s => { try { return s.cssRules.length } catch { return -1 } })");
+          assert.ok(sheets.some((n) => n > 100), `${file}: main.css did not load (rules per sheet: ${sheets}) — run pnpm build`);
+          for (const check of spec.checks) {
+            if (check.viewports && !check.viewports.includes(width)) continue;
+            const [kind, arg] = Object.entries(check).find(([k]) => k in CHECKS) ?? [];
+            assert.ok(kind, `${file}: unknown check ${JSON.stringify(check)}`);
+            const bad = await evaljs(CHECKS[kind](arg));
+            assert.deepEqual(bad, [], `${file} @${width} reducedMotion=${reducedMotion} ${kind} ${JSON.stringify(arg)} (ledger ${spec.ledger}): ${bad.join("; ")}`);
+          }
         }
       }
       await send("Target.closeTarget", { targetId });

@@ -75,7 +75,12 @@ Checks:
 |---|---|
 | `nowrap: <sel>` | every matched element's text sits on one line, and no text starts below an inline checkbox/indicator inside it |
 | `fits: <sel>` | `scrollWidth ≤ clientWidth + 1` and the element's right edge is inside its parent's |
-| `js: "<expr>"` | the expression is truthy in the page — escape hatch; the ledger entry says why |
+| `js: "<expr>"` | the expression resolves to a truthy value in the page; promises are awaited and rejections fail — escape hatch; the ledger entry says why |
+
+A fixture may opt into `"reducedMotion": [false, true]` to run each viewport
+with both motion preferences. The default is `[false]`; the runner sets the
+preference before each navigation. Lifecycle checks must await native browser
+events, not dispatch synthetic completion events or remove failed nodes.
 
 A check may carry its own `"viewports": [...]` (a mobile card layout wraps on
 purpose). Capture the DOM from a device running this theme (`.dev/mocks/`
