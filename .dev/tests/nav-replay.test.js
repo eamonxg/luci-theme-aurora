@@ -135,6 +135,10 @@ const run = ({
 test("header.ut carries the replay and the login-page clear", () => {
   assert.ok(replaySource, "replay script not found");
   assert.ok(loginSource, "login-page script not found");
+  assert.match(
+    header,
+    /\[nav_type, dispatcher\.lang, ctx\?\.authuser \?\? '', ctx\?\.authsession \?\? ''\]/,
+  );
 });
 
 test("a sidebar replay paints inert and re-marks the current page", () => {

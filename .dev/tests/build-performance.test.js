@@ -34,7 +34,9 @@ test("production assets stay within raw-transfer budgets", () => {
   // 16K: the router now ships from @eamonxg/luci-theme-devkit — theme hooks
   // as document events, the title format read off the document, and the
   // inner-scroller restoration shared with shadcn (+0.8 KB raw, +0.3 KB gz).
-  assert.ok(router <= 16_000, "router-aurora.js exceeds 16 KB");
+  // 18 KiB: bounded dependency prewarm adds 2,035 B raw / 778 B gzip,
+  // with a two-request limit, retry/timeout handling and data-saver gates.
+  assert.ok(router <= 18_432, "router-aurora.js exceeds 18 KiB");
   assert.ok(logo <= 16_000, "logo.svg exceeds 16 KB");
   assert.ok(
     main + menu + router + font + logo <= 264_000,

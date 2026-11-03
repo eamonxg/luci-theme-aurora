@@ -227,7 +227,7 @@
 		{% endif %}
 	</head>
 
-	<body class="lang_{{ dispatcher.lang }}" data-page="{{ entityencode(page, true) }}" data-nav-type="{{ nav_type }}" data-asset-version="{# PKG_VERSION #}"{% if (!blank_page): %} data-nav-stamp="{{ entityencode(join(':', [nav_type, dispatcher.lang, ctx?.authuser ?? '']), true) }}:{# PKG_VERSION #}"{% endif %}{% if (length(patch_all)): %} data-patches="{{ entityencode(join(' ', patch_all), true) }}"{% endif %}{% if (blank_page ? tokens.struct_login_bg : tokens.struct_main_bg): %} data-bg{% endif %}>
+	<body class="lang_{{ dispatcher.lang }}" data-page="{{ entityencode(page, true) }}" data-nav-type="{{ nav_type }}" data-asset-version="{# PKG_VERSION #}"{% if (!blank_page): %} data-nav-stamp="{{ entityencode(join(':', [nav_type, dispatcher.lang, ctx?.authuser ?? '', ctx?.authsession ?? '']), true) }}:{# PKG_VERSION #}"{% endif %}{% if (length(patch_all)): %} data-patches="{{ entityencode(join(' ', patch_all), true) }}"{% endif %}{% if (blank_page ? tokens.struct_login_bg : tokens.struct_main_bg): %} data-bg{% endif %}>
 		{% if (!blank_page): %}
 		{% if (nav_type == 'sidebar'): %}
 		{# First in body: once anything resolves body's style (the page-bg script does), the column would ease shut on load. #}
@@ -339,7 +339,7 @@
 			(() => {
 				try {
 					const body = document.body, cache = JSON.parse(sessionStorage.getItem('aurora.nav'));
-					{# The stamp (nav type, language, user, version) is rendered on body; a different user sees a different menu. #}
+					{# The stamp (nav type, language, user, session, version) is rendered on body; a different user sees a different menu. #}
 					{# luci-base's one-session store loses its menu on ui.menu.flushCache() (package changes): never replay past that. #}
 					const luci = Object.values(JSON.parse(sessionStorage.getItem('luci-session-store')) ?? {})[0];
 					if (!luci?.menu || cache?.[0] !== body.dataset.navStamp) return;

@@ -11,7 +11,6 @@
   <a href="https://www.mozilla.org/firefox/"><img alt="Firefox" src="https://img.shields.io/badge/Firefox-%E2%89%A5128-FF7139?logo=firefoxbrowser&logoColor=white"></a>
   <a href="https://github.com/eamonxg/luci-theme-aurora/releases/latest"><img alt="GitHub release" src="https://img.shields.io/github/v/release/eamonxg/luci-theme-aurora"></a>
   <a href="https://github.com/eamonxg/luci-theme-aurora/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/eamonxg/luci-theme-aurora/total"></a>
-  <a href="https://discord.gg/EBncRrzfTw"><img alt="Discord" src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white"></a>
   <a href="#contributing"><img alt="Contributors" src="https://img.shields.io/github/contributors/eamonxg/luci-theme-aurora?color=orange"></a>
 </div>
 
@@ -80,11 +79,11 @@ OpenWrt 25.12+ and snapshots use `apk`; other versions use `opkg`:
 cd /tmp
 
 # opkg
-uclient-fetch -O luci-theme-aurora.ipk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora_1.4.1-r20261031_all.ipk
+uclient-fetch -O luci-theme-aurora.ipk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora_1.4.0-r20260920_all.ipk
 opkg install luci-theme-aurora.ipk
 
 # apk
-uclient-fetch -O luci-theme-aurora.apk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora-1.4.1-r20261031.apk
+uclient-fetch -O luci-theme-aurora.apk https://github.com/eamonxg/luci-theme-aurora/releases/latest/download/luci-theme-aurora-1.4.0-r20260920.apk
 apk add --allow-untrusted luci-theme-aurora.apk
 ```
 
@@ -132,8 +131,6 @@ make package/luci-theme-aurora/compile -j$(nproc) V=s
 ## Contributing
 
 Aurora uses **Vite** and a modern front-end toolchain, and is experimenting with end-to-end AI integration across the full development workflow. See [Development Documentation](.dev/docs/DEVELOPMENT.md) to get started. Suggestions and PRs are always welcome.
-
-[discord.gg/EBncRrzfTw](https://discord.gg/EBncRrzfTw)
 
 Thanks goes to these wonderful people:
 
