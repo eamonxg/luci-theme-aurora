@@ -19,7 +19,8 @@ test("production assets stay within raw-transfer budgets", () => {
 
   // 187K: pseudo-elements are nested rules, one content declaration each.
   assert.ok(main <= 187_000, "main.css exceeds 187 KB");
-  assert.ok(login <= 12_000, "login.css exceeds 12 KB");
+  // 12.5K: auth_plugin warning tokens added ~0.35 KB.
+  assert.ok(login <= 12_500, "login.css exceeds 12.5 KB");
   // 22K: palette recents (record on pick, pure-LRU browse order, storage
   // validation) added ~0.8 KB and the ">" logout command ~0.2 KB. The total
   // budget below moved by the same amount.

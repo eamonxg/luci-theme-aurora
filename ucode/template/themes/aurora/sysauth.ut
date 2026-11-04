@@ -54,11 +54,51 @@ const loginIconVer = themeTokens.icon_cache_version || '0';
 							<input name="luci_password" id="luci_password" type="password" class="login-input" autocomplete="current-password">
 						</div>
 					</div>
+
+					{% if (auth_fields): %}
+						{% for (let field in auth_fields): %}
+							<div class="login-field">
+								<label class="login-label" for="{{ field.name }}">{{ _(field.label ?? field.name) }}</label>
+								<div class="input-wrap">
+									<input
+										name="{{ field.name }}"
+										id="{{ field.name }}"
+										type="{{ field.type ?? 'text' }}"
+										class="login-input"
+										{% if (field.placeholder): %}placeholder="{{ field.placeholder }}"{% endif %}
+										{% if (field.inputmode): %}inputmode="{{ field.inputmode }}"{% endif %}
+										{% if (field.pattern): %}pattern="{{ field.pattern }}"{% endif %}
+										{% if (field.maxlength): %}maxlength="{{ field.maxlength }}"{% endif %}
+										{% if (field.autocomplete): %}autocomplete="{{ field.autocomplete }}"{% endif %}
+										{% if (field.required): %}required{% endif %}
+									>
+								</div>
+							</div>
+						{% endfor %}
+					{% endif %}
+
+					{% if (auth_html): %}
+						<div class="login-field">
+							{{ auth_html }}
+						</div>
+					{% endif %}
+
+					{% if (auth_assets): %}
+						{% for (let asset in auth_assets): %}
+							{% if (asset.type == 'script'): %}
+								<script src="{{ asset.src }}"></script>
+							{% endif %}
+						{% endfor %}
+					{% endif %}
 				</div>
 
-				{% if (fuser): %}
-				<div class="login-error" role="alert">{{ _('Invalid username and/or password! Please try again.') }}</div>
+				{% if (auth_message || fuser): %}
+				<div class="login-error{% if (auth_plugin): %} warning{% endif %}" role="alert">
+					{{ auth_message || _('Invalid username and/or password! Please try again.') }}
+				</div>
 				{% endif %}
+
+				<input type="hidden" name="luci_magic" value="{{ luci_magic }}">
 
 				<div class="login-actions">
 					<button type="submit" class="login-submit">{{ _('Log in') }}</button>

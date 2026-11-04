@@ -159,6 +159,10 @@ body[data-bg] .login-card {
 
 .login-error {
   @apply bg-danger-surface text-danger border-hairline rounded-2xl border px-3 py-2 text-center text-sm;
+
+  &.warning {
+    @apply bg-warning-surface text-warning;
+  }
 }
 
 .login-actions {
